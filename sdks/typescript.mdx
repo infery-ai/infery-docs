@@ -1,0 +1,325 @@
+---
+title: "TypeScript SDK"
+description: "The official client for TypeScript and JavaScript — every endpoint, typed, with the deferred-job and retry behaviour handled for you."
+---
+
+```bash
+npm install @infery/sdk
+```
+
+```ts
+import Infery from '@infery/sdk';
+
+const client = new Infery({ apiKey: process.env.INFERY_API_KEY! });
+
+const chat = await client.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Say hello in one line.' }],
+});
+
+console.log(chat.choices[0]?.message?.content);
+```
+
+Zero dependencies, Node 20 or newer, ESM and CommonJS. It also runs on edge
+runtimes; in a browser it refuses to start unless you pass
+`dangerouslyAllowBrowser: true`, because your API key would be readable by
+anyone who opens the page.
+
+## Why use it instead of the OpenAI SDK
+
+You can point the OpenAI SDK at this gateway, and for chat and embeddings that
+works. Past those, three things it cannot do for you:
+
+**Reach endpoints it has no methods for.** Video, music, 3D, upscaling,
+workflows and capabilities are not in the OpenAI API. Neither is
+`POST /v1/images/edits` in the shape this gateway takes it — that endpoint
+accepts JSON with the image base64-encoded, while the OpenAI SDK posts
+multipart.
+
+**Collect a deferred result.** A slow media generation answers `504` with a
+`job_id` and keeps working — and keeps billing. An OpenAI SDK caller sees a
+failure and pays for nothing. This SDK collects the finished result from the job
+endpoint for you.
+
+**Retry the right things.** Rate limiting here answers `403`, not `429`, so the
+OpenAI SDK's backoff never fires. And a `500` on a billed `POST` must NOT be
+retried blind, because it may arrive after your balance was already debited.
+
+See [OpenAI SDK compatibility](/sdks/openai-compatibility) for the
+endpoint-by-endpoint answer.
+
+## What it covers
+
+Every published operation. The namespaces:
+
+| Namespace | Covers |
+| --- | --- |
+| `chat.completions` | `create()` and `stream()` |
+| `embeddings` | `create()` |
+| `media` | `generate()`, `wait()` — one call for every media modality, when the modality is a runtime value |
+| `images` | `generate()`, `edit()`, `upscale()` |
+| `videos` | `submit()`, `retrieve()`, `generate()` (submits and polls), `upscale()` |
+| `music` | `generate()`, `stream()` |
+| `audio` | `speech.create()`, `transcriptions.create()`, `transformations.create()` |
+| `threeD` | `generate()` |
+| `files` | `create()`, `list()`, `retrieve()`, `content()`, `del()` |
+| `models` | `list()`, `estimate()` |
+| `tools` | `list()` |
+| `capabilities` | `run()` |
+| `workflows` | CRUD, `estimate()`, and `runs.create()` / `runs.stream()` / `runs.retrieve()` / `runs.logs()` / `runs.cancel()` |
+| `jobs` | `retrieve()`, `wait()` — the durable media job behind every deferral |
+
+## Streaming
+
+```ts
+for await (const chunk of client.chat.completions.stream({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Write a haiku about the sea.' }],
+})) {
+  process.stdout.write(chunk.choices[0]?.delta?.content ?? '');
+}
+```
+
+The last chunk before the stream ends carries `credits_used` and an **empty**
+`choices` array. It is yielded like any other chunk rather than hidden, because
+it is the only place the cost of a streamed call appears.
+
+## One call for every media modality
+
+Each media modality also has its own method — `images.generate`,
+`videos.generate`, and the rest below. That is the wrong shape when the modality
+is a **runtime value**: a model picked from the catalogue, a choice in a UI, a row
+in a queue. Then every call site needs a `switch`, and every one of those has to
+be edited when a modality is added.
+
+`media.generate()` takes the modality as data:
+
+```ts
+// `modality` is exactly what GET /v1/models reports as `_infery.modality`,
+// so it can come straight off a model you looked up.
+const result = await client.media.generate({
+  modality: 'video',          // 'image' | 'video' | 'audio' | 'music' | 'object_3d' | 'upscale'
+  model: 'veo-3.1',
+  prompt: 'a drone shot over a coastline',
+  duration: 8,                // model-specific params pass straight through
+});
+
+console.log(result.artifacts[0]?.url);
+```
+
+Switch the modality and nothing else changes:
+
+```ts
+async function make(job: { modality: MediaModality; model: string; prompt: string }) {
+  const result = await client.media.generate(job);
+  return result.artifacts.map((a) => a.url ?? a.b64 ?? a.bytes);
+}
+```
+
+It waits by default, which is what lets one code path serve every modality —
+images answer in seconds, video takes minutes, and a caller that had to know
+which is which would be branching again. Progress arrives through one callback
+regardless of modality:
+
+```ts
+await client.media.generate(
+  { modality: 'video', model: 'veo-3.1', prompt: 'a reef' },
+  { onProgress: (p) => console.log(p.status, p.progress) },
+);
+```
+
+For a handle instead of a result, and then to collect it — the same deferral
+[the next section](#media-that-takes-minutes) describes, reached through one
+option:
+
+```ts
+const started = await client.media.generate(
+  { modality: 'image', model: 'flux-pro', prompt: 'a topographic map' },
+  { background: true },
+);
+
+// `modality` is required here too: video jobs and every other modality's jobs
+// live at different endpoints, and a job id does not say which it is.
+const done = await client.media.wait({ modality: 'image', jobId: started.jobId! });
+```
+
+### The result shape
+
+```ts
+interface MediaResult {
+  modality: MediaModality;
+  artifacts: MediaArtifact[];
+  created?: number;
+  creditsUsed?: number;
+  jobId?: string;            // background: true only
+  artifactsExpired?: boolean;
+  raw: unknown;              // the untouched per-modality payload
+}
+```
+
+Exactly one of `url`, `b64` and `bytes` is set on an artifact, and which one is a
+property of the endpoint rather than of your request:
+
+| Field | When |
+| --- | --- |
+| `url` | every asynchronous modality, and images unless you asked for base64 |
+| `b64` | images with `response_format: 'b64_json'`, and inline music tracks |
+| `bytes` | `audio` only — `POST /v1/audio/speech` answers with an audio body, so there is nothing to link to |
+
+`upscale` routes on the source, not the model: pass `image_url` or `video_url`.
+The gateway refuses an image upscaler on the video route and vice versa, and the
+model slug alone does not say which it is, so the SDK cannot guess — it asks.
+
+### What it gives up
+
+Worth seeing before you choose it, because the named methods are still there and
+still better when you know the modality:
+
+- **Named parameter checking.** `MediaGenerateParams` is open, so a misspelled
+  `duration_secnods` compiles. `videos.generate()` rejects that one specifically,
+  because the gateway ignores unknown keys and a silent default costs money.
+- **`withResponse()`.** There is no honest uniform envelope — video polls a job,
+  so there is no single response to hand back.
+- **Fields with no cross-modality meaning** — `revised_prompt`, `lyrics`,
+  `resolution`. They are on `result.raw`.
+
+Full signatures and every field of `MediaGenerateParams` and `MediaResult` are on the
+[reference](/sdks/typescript-reference#clientmedia).
+
+## Media that takes minutes
+
+Generation is submitted and awaited inside one request. If the gateway's own
+wait runs out it answers `504` with a job id and keeps working — the SDK collects
+the result:
+
+```ts
+// Waits, and collects the result if the gateway defers. Either way you get an image.
+const image = await client.images.generate({ model: 'dall-e-3', prompt: 'an isometric dashboard' });
+console.log(image.data[0]?.url);
+```
+
+If you would rather manage the job yourself, ask for the handle:
+
+```ts
+const deferred = await client.images.generate(
+  { model: 'flux-pro', prompt: 'a topographic map' },
+  { background: true },
+);
+
+if (deferred.job_id) {
+  const job = await client.jobs.wait(deferred.job_id, { intervalMs: 5_000 });
+  console.log(job.data?.[0]?.url);
+}
+```
+
+Video generation is asynchronous by design and has its own poll:
+
+```ts
+const video = await client.videos.generate({ model: 'veo-3', prompt: 'a drone shot over a coastline' });
+// A finished video carries its file on `result`, not on `data[]`.
+console.log(video.result?.url);
+```
+
+## Workflows
+
+```ts
+const run = await client.workflows.runs.create({
+  pipeline_id: 'wf_abc123',
+  input: { topic: 'quarterly summary' },
+});
+```
+
+To watch a run as it happens, `runs.stream()` yields a typed event per step:
+
+```ts
+for await (const event of client.workflows.runs.stream({ pipeline_id: 'wf_abc123', input: {} })) {
+  switch (event.type) {
+    case 'step.started':
+      console.log('running', event.stepId);
+      break;
+    case 'step.completed':
+      console.log('done', event.stepId, event.creditsUsed);
+      break;
+    case 'pipeline.completed':
+      console.log('total', event.creditsUsed);
+      break;
+  }
+}
+```
+
+Request bodies say `pipeline_id` while the product says Workflow: the rename
+stopped at the HTTP boundary, and the SDK types what the wire accepts rather
+than inventing a nicer name for it.
+
+## Errors
+
+```ts
+import { APIError, InsufficientCreditsError, ConflictError } from '@infery/sdk';
+
+try {
+  await client.chat.completions.create({ model: 'gpt-4o', messages });
+} catch (err) {
+  if (err instanceof InsufficientCreditsError) {
+    // 403 with a balance shortfall — top up, do not retry.
+  } else if (err instanceof ConflictError && err.code === 'upload_in_progress') {
+    // Retry in a moment.
+  } else if (err instanceof APIError) {
+    console.error(err.status, err.code, err.requestId);
+  } else {
+    throw err;
+  }
+}
+```
+
+Every error the SDK raises descends from `InferyError`, so one `instanceof`
+catches all of them. `err.requestId` is the handle support uses to attribute a
+charge — quote it when asking about a bill.
+
+Branch on `err.code` when the class is not specific enough. `ConflictError` is
+the clearest case: `upload_in_progress` means retry in a moment, while
+`idempotency_in_progress` means a billed run is already in flight and a retry
+could start a second one.
+
+## Cancelling and timeouts
+
+Every method that makes a request takes `{ signal, timeout }`:
+
+```ts
+const controller = new AbortController();
+setTimeout(() => controller.abort(), 10_000);
+
+const models = await client.models.list({ timeout: 5_000 });
+const answer = await client.chat.completions.create(
+  { model: 'gpt-4o', messages },
+  { signal: controller.signal, timeout: 30_000 },
+);
+```
+
+The client-wide default is **310 seconds**, deliberately above the gateway's own
+300-second wait so a slow generation reaches the deferral handoff instead of
+being abandoned while it keeps billing. That is the right ceiling for generation
+and far too long for a catalogue read, which is why the knob is per call.
+
+Cancelling does not cancel work the gateway has already started, and does not
+refund it. An aborted generation is still billed.
+
+## Retries
+
+Connection failures, `408`/`429`/`5xx` and `409 upload_in_progress` are retried
+with exponential backoff — **but only** on a `GET` or on the two endpoints that
+honour `Idempotency-Key` (`POST /v1/files`, `POST /v1/workflows/runs`). On every
+other billed `POST`, a `500` is not retried: the gateway collapses several
+distinct upstream failures, including ones that happen after your balance was
+debited, into the same generic `500`, and retrying blind risks paying twice.
+
+Two things are never retried. `403 rate_limit_exceeded` is a 60-second sliding
+window that counts refused requests too, so retrying inside it pushes your own
+recovery further out. And any response carrying a `job_id` means the work exists
+and is already billed — the SDK collects it rather than paying for a second one.
+
+## Reference
+
+- Package: [`@infery/sdk`](https://www.npmjs.com/package/@infery/sdk)
+- Source: [`sdks/typescript`](https://github.com/infery-ai/infery/tree/main/sdks/typescript)
+- Browsable build: [infery-typescript](https://github.com/infery-ai/infery-typescript)
+- [Endpoint-by-endpoint OpenAI SDK compatibility](/sdks/openai-compatibility)

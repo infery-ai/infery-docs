@@ -1,0 +1,109 @@
+---
+title: "Subscription plans"
+description: "Monthly credit allowance, team size, limits and feature flags per plan."
+---
+
+See live pricing at **[infery.ai/pricing](https://infery.ai/pricing)**.
+
+## Plans at a glance
+
+| Plan | Price | Monthly credits | Team | Workflows at once | API keys | Projects | History | Storage | Rate limit |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **Free** | $0 | 50 trial only | 1 | 1 | 2 | 5 | 7 days | 1 GB | 20 rpm |
+| **Creator** | $19 | 1 200 | 3 | 3 | 5 | 25 | 30 days | 5 GB | 60 rpm |
+| **Studio** | $49 | 3 500 | 5 | 5 | 15 | 75 | 90 days | 10 GB | 150 rpm |
+| **Team** | $99 | 8 000 | 10 | 10 | 40 | 200 | 360 days | 50 GB | 350 rpm |
+| **Enterprise** | Contact | Custom | Unlimited | Unlimited | Unlimited | Unlimited | Unlimited | Custom | 1 000 rpm |
+
+Scheduling is not capped by count on any plan — what a tier buys is how OFTEN a
+schedule may fire, in the table further down.
+
+Free is pay-as-you-go: the full catalog, the playground and the API are all
+available, and every run is charged against your balance. The monthly credits on a
+paid plan are a grant, not a cap — spend past them and usage continues at list
+price, topped up manually or by auto-recharge.
+
+**Unused monthly credits roll over, up to three months' worth.** On a paid plan
+the unspent part of an allowance carries into the next cycle; anything above
+three times your monthly allowance expires at renewal. Free grants no monthly
+credits, so it banks none, and topped-up credits never expire either way. Your
+credit history records both what was carried and what expired.
+
+**Storage is a threshold, not a wall.** The figure above is what the plan
+includes; anything beyond it is billed separately at **10 credits per GB-month**,
+charged daily against your balance. Uploads are refused only if that overage goes
+unpaid — see [Storage usage](/billing/usage).
+
+## Paying by the year
+
+Creator, Studio and Team can be paid annually at **ten months for twelve** —
+$190, $490 and $990 a year. The discount is on the **fee**, not on usage: the
+monthly credit allowance and the Studio spend discount are identical on both
+periods, because usage carries a margin that has no room to give and the platform
+fee does.
+
+<Note>
+Annual checkout is not switched on yet. The plan rows and Stripe prices exist;
+what is missing is the monthly credit grant for an annual subscriber, since a
+year is one Stripe invoice and the credits have to arrive twelve times.
+</Note>
+
+## Studio spend discount
+
+Paid plans spend credits further **in the Studio** — the dashboard, the
+playground and workflows you run from them:
+
+| Plan | Discount on Studio spend |
+| --- | --- |
+| **Creator** | 5% |
+| **Studio** | 8% |
+| **Team** | 10% |
+| **Enterprise** | negotiated |
+
+It applies to what a run **costs**, not to the credits a plan grants: credits are
+granted at par and go further when spent from the Studio. The charge you see on a
+Studio run is already discounted, and the credit-history row records the
+percentage that was applied.
+
+**It never applies to the API.** A call authenticated with an API key is always
+charged list price, on every plan. Requests are told apart by which credential
+they carry, so the discount cannot be obtained by calling the API from a browser.
+
+## Feature flags
+
+Some features are only available on higher plans:
+
+- `streamingEnabled` — streaming SSE responses (every plan)
+- `apiAccess` — API keys available (every plan, Free included)
+- `customQuotas` — presets and per-key limits (Creator+)
+- `fallbackChains` — auto-fallback on errors (Studio+)
+- `priorityQueue` — faster routing to providers (Team+)
+- `require2faForPrivilegedRoles` — 2FA mandatory for admins (Team+)
+- `scheduledPipelines` — [run a workflow on a schedule](/workflows/schedules) (Creator+)
+- `dedicatedSupport` — Slack Connect with our team (Enterprise only)
+- `sso` + `sla` — Enterprise only
+
+Scheduling also carries a floor on how often a schedule may fire, and the floor is
+what the higher plans buy:
+
+| Plan | Shortest interval |
+| --- | --- |
+| **Creator** | every hour |
+| **Studio** | every 15 minutes |
+| **Team** | every 5 minutes |
+| **Enterprise** | every minute |
+
+## Switching plans
+
+Settings → Billing → **Change plan**. Upgrades take effect immediately (prorated). Downgrades take effect at next billing cycle.
+
+## Enterprise
+
+Custom plans for organisations with:
+- Bespoke credit allowances
+- Dedicated GPU capacity
+- SLA guarantees (99.9 % / 99.95 %)
+- SSO / SAML
+- Custom contracts, invoicing and legal
+
+Talk to sales at **[infery.ai/contact](https://infery.ai/contact)**.

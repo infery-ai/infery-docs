@@ -1,0 +1,124 @@
+{/*
+  GENERATED FILE — do not hand-edit the table below.
+  Source: sdks/typescript/src/operations.ts
+  Generator: scripts/generate-openai-compat-matrix.js
+  Refresh: node scripts/generate-openai-compat-matrix.js
+  Check (CI): node scripts/generate-openai-compat-matrix.js --check
+*/}
+---
+title: "OpenAI SDK compatibility matrix"
+description: "Every gateway operation: whether the official OpenAI SDK reaches it, and what to do when it doesn't."
+---
+
+This page is generated from the same operation list the Infery TypeScript SDK is
+built from, so it can't drift from what actually ships the way a hand-written
+table would. For the migration story and the reasoning behind the gaps, read
+[Migrating from OpenAI](/guides/openai-sdk-migration) first — this page is the
+full reference table it links to.
+
+**7 operations** work with the OpenAI SDK unchanged, **4 are
+partial** (they work for the common case but have a documented divergence — read
+the note), and **24 have no OpenAI SDK method at all** (call them over
+plain HTTP, or use the matching Infery SDK method named below once it ships).
+
+<Note>
+The **Infery SDK** column names the TypeScript SDK method that serves each
+operation. The `infery` package is not published to npm yet — there is
+deliberately no install snippet on this page. Until it ships, every "Infery
+SDK" and every "no"/"partial" row is reached the same way: plain HTTP.
+</Note>
+
+### Chat & embeddings
+
+| Operation | Infery SDK | OpenAI SDK | Notes / how to reach it otherwise |
+| --- | --- | --- | --- |
+| `POST /v1/chat/completions` | `chat.completions.create` | ✅ Yes | — |
+| `POST /v1/embeddings` | `embeddings.create` | ✅ Yes | — |
+
+### Images
+
+| Operation | Infery SDK | OpenAI SDK | Notes / how to reach it otherwise |
+| --- | --- | --- | --- |
+| `POST /v1/images/generations` | `images.generate` | ⚠️ Partial | Works for the common case. A fal/replicate-routed model can instead answer 504 with a `job_id` (the request is still running and still billed) — poll `GET /v1/images/jobs/{job_id}`, which the OpenAI SDK will not do for you. |
+| `POST /v1/images/edits` | `images.edit` | ❌ No | The OpenAI SDK posts multipart; this endpoint takes JSON with image_base64. |
+| `POST /v1/images/upscale` | `images.upscale` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+| `GET /v1/images/jobs/{id}` | `jobs.retrieve` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+
+### Video
+
+| Operation | Infery SDK | OpenAI SDK | Notes / how to reach it otherwise |
+| --- | --- | --- | --- |
+| `POST /v1/videos/generations` | `videos.submit` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+| `GET /v1/videos/generations/{jobId}` | `videos.retrieve` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+| `POST /v1/video/upscale` | `videos.upscale` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+
+### Music
+
+| Operation | Infery SDK | OpenAI SDK | Notes / how to reach it otherwise |
+| --- | --- | --- | --- |
+| `POST /v1/music/generations` | `music.generate` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+
+### Audio
+
+| Operation | Infery SDK | OpenAI SDK | Notes / how to reach it otherwise |
+| --- | --- | --- | --- |
+| `POST /v1/audio/speech` | `audio.speech.create` | ⚠️ Partial | Works for the common case — answers audio bytes. A fal/replicate-routed voice can instead answer a JSON 504 with a `job_id` in place of audio (still billed) — poll `GET /v1/images/jobs/{job_id}` for a signed download URL; the OpenAI SDK has no path for a JSON body where it expects bytes. |
+| `POST /v1/audio/transcriptions` | `audio.transcriptions.create` | ⚠️ Partial | Works, but timestamp_granularities is dropped and srt/vtt/text come back as a JSON envelope. |
+| `POST /v1/audio/transformations` | `audio.transformations.create` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+
+### 3D
+
+| Operation | Infery SDK | OpenAI SDK | Notes / how to reach it otherwise |
+| --- | --- | --- | --- |
+| `POST /v1/3d/generations` | `threeD.generate` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+
+### Files
+
+| Operation | Infery SDK | OpenAI SDK | Notes / how to reach it otherwise |
+| --- | --- | --- | --- |
+| `POST /v1/files` | `files.create` | ✅ Yes | — |
+| `GET /v1/files` | `files.list` | ✅ Yes | — |
+| `GET /v1/files/{fileId}` | `files.retrieve` | ✅ Yes | — |
+| `GET /v1/files/{fileId}/content` | `files.content` | ✅ Yes | — |
+| `DELETE /v1/files/{fileId}` | `files.del` | ✅ Yes | — |
+
+### Models & tools
+
+| Operation | Infery SDK | OpenAI SDK | Notes / how to reach it otherwise |
+| --- | --- | --- | --- |
+| `GET /v1/models` | `models.list` | ⚠️ Partial | Reachable, but the _infery extension and client-side modality filtering are ours. |
+| `POST /v1/models/{slug}/estimate` | `models.estimate` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+| `GET /v1/tools` | `tools.list` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+
+### Capabilities
+
+| Operation | Infery SDK | OpenAI SDK | Notes / how to reach it otherwise |
+| --- | --- | --- | --- |
+| `POST /v1/capabilities/{id}/run` | `capabilities.run` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+
+### Workflows
+
+| Operation | Infery SDK | OpenAI SDK | Notes / how to reach it otherwise |
+| --- | --- | --- | --- |
+| `GET /v1/workflows` | `workflows.list` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+| `POST /v1/workflows` | `workflows.create` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+| `GET /v1/workflows/{id}` | `workflows.retrieve` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+| `PUT /v1/workflows/{id}` | `workflows.update` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+| `DELETE /v1/workflows/{id}` | `workflows.del` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+| `POST /v1/workflows/estimate` | `workflows.estimate` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+| `POST /v1/workflows/runs` | `workflows.runs.create` | ❌ No | mode: "stream" is refused here at compile time; workflows.runs.stream() is the SAME route, read as SSE. |
+| `GET /v1/workflows/runs/{id}` | `workflows.runs.retrieve` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+| `GET /v1/workflows/runs/{id}/logs` | `workflows.runs.logs` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+| `POST /v1/workflows/runs/{id}/cancel` | `workflows.runs.cancel` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+| `GET /v1/workflows/templates` | `workflows.templates.list` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+| `GET /v1/workflows/templates/{slug}` | `workflows.templates.retrieve` | ❌ No | Not reachable via the OpenAI SDK — call it over plain HTTP. |
+
+## Reading "Partial"
+
+A "Partial" verdict means the OpenAI SDK's own method for that route sends a
+request this gateway accepts and can parse the normal response — but there is
+at least one real, non-hypothetical situation where the response diverges from
+what the OpenAI SDK expects (a different status code, a dropped parameter, an
+enveloped body where the SDK wants a bare one). The note says exactly what
+diverges and what to do about it. Treat "Partial" as "read the note before you
+ship," not as "basically yes."

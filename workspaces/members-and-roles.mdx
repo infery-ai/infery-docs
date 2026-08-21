@@ -1,0 +1,66 @@
+---
+title: "Members and roles"
+description: "Invite teammates, assign roles, and keep each person on a need-to-know basis."
+---
+
+## Roles
+
+| Role | Studio | API keys | Billing | Admin settings |
+| --- | --- | --- | --- | --- |
+| **Owner** | full | full | full | full |
+| **Admin** | full | full | view only | full |
+| **Developer** | full | create & manage **own** keys | — | — |
+| **Billing** | full | — | full | — |
+| **Viewer** | read-only | — | — | — |
+
+Only **one owner** per workspace (workspace creator). Transfer ownership via Settings → Members → `⋯` menu.
+
+## Inviting
+
+<Frame caption="The members list: who is in, and who has been invited but has not joined">
+  <img src="/samples/settings-members.png" alt="The Members tab under Settings, alongside General, Profile, Quotas, Notifications, Budget Alerts, Fallbacks and Secrets. An Invite member button sits above a list with two rows: the owner, marked with a crown and a you badge, and a pending row marked Invited, reading Developer, expiring Aug 25 2026, with the name of whoever sent it and an X to cancel." />
+</Frame>
+
+An invitation sits in the list as its own row until it is accepted, carrying the
+role it will grant and the date it expires. Cancelling it is the X on that row.
+
+<Frame caption="Inviting someone: the role decides what they can reach, the quota decides how much">
+  <img src="/samples/settings-invite.png" alt="A dialog headed Invite team member with an email field, then four role choices: Admin, full access and can manage members; Developer, selected, can use API and the Studio; Billing, invoices, plans and payment methods with no API access; and Viewer, read-only dashboard but can use the Studio and it uses credits. Below them a Quota (optional) dropdown set to None, described as applying rate limits and usage quotas to this member, and a Send invitation button." />
+</Frame>
+
+The **Quota** dropdown on that dialog is the same preset list as
+[Quotas and presets](/workspaces/quotas-and-presets) — you can cap someone at the
+moment you invite them rather than remembering to do it afterwards.
+
+
+Settings → **Members** → **Invite** → enter email + pick role. The invitee gets an email with a secure link (24-hour expiry) to accept.
+
+Accepted invitations become active immediately.
+
+## Billing role
+
+The Billing role combines **financial access with basic product use**:
+
+- Can view and change the plan, purchase topups, update payment methods
+- Can manage budget alerts and view usage
+- Can use Studio (own chats only)
+- **Cannot** manage API keys or Files
+- **Cannot** see other members' chat content
+
+Useful for finance / ops teammates who need to manage credits and also evaluate the product.
+
+## Developer role
+
+Developers manage **their own** API keys. They can't see or revoke keys owned by Admins or other Developers. Quotas set at the plan and member levels still apply.
+
+## Changing roles
+
+Owner and Admins can change roles via the member row `⋯` menu. Role changes take effect immediately (their current session refreshes).
+
+## Removing a member
+
+Settings → Members → `⋯` → **Remove**. Removed members:
+
+- Lose access to the workspace immediately
+- Their API keys are revoked
+- Their chats remain (owned by the removed user for attribution) — Admins can fork or delete

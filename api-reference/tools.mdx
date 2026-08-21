@@ -1,0 +1,9 @@
+---
+title: "List capabilities"
+description: "GET /v1/tools"
+openapi: "openapi.json GET /v1/tools"
+---
+
+The capability catalogue: the deterministic media, document, archive, web and code operations that workflow steps — and [`POST /v1/capabilities/{id}/run`](/api-reference/capabilities/run) — can invoke.
+
+These are **not** inference models. [`GET /v1/models`](/api-reference/models) lists those. A capability does a fixed job (resize this, extract that) at a fixed price; a model generates.

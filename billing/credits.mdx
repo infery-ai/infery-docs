@@ -1,0 +1,62 @@
+---
+title: "Credits"
+description: "One balance, every modality, predictable costs."
+---
+
+Everything on Infery is priced in **credits**. 1 credit ≈ $0.01. All modalities (chat tokens, generated images, voice seconds, video frames, embeddings) use the same balance.
+
+## Your balance
+
+The top of every page shows your remaining credits. Hover for a breakdown:
+
+- **Monthly credits remaining** — from your subscription plan, resets each cycle (may roll over on higher plans)
+- **Topup credits remaining** — one-off purchases, never expire
+
+Both pools are used transparently — we draw from **monthly first**, then topup.
+
+## How costs are calculated
+
+Each model has its own credit price, visible in the model catalog (`GET /v1/models`) and on the pricing page.
+
+- **Text models** — priced per token (input and output rates may differ)
+- **Image / video / music** — flat per-asset or per-second rates
+
+Response header `x-credits-used` shows the exact cost of each request. Streaming responses include `credits_used` in the final SSE chunk.
+
+## Seeing usage
+
+Settings → **Usage** shows charts by:
+- Day / week / month
+- Modality
+- Model
+- API key
+- Workspace member
+
+Export as CSV for your own BI.
+
+
+
+<Frame caption="Billing overview: the plan on the left, the wallet on the right">
+  <img src="/samples/billing-overview.png" alt="A Billing page with Overview, Plans, Payments and Credit history tabs. The current plan card names Enterprise, its description, credits included, renewal date, status active and price, then a list of what the plan includes: unlimited members, 50 GB storage, API access, priority queue, scheduled workflows, 250 MB max file, 1,000 requests per minute, fallback chains, custom quotas and dedicated support. The wallet card shows an available balance of 994 credits split into monthly and top-up, with lifetime spent, and a note that monthly credits are used first. Below, top-up buttons from 10 to 200 euro and an auto-recharge toggle." />
+</Frame>
+
+The wallet splits the balance because the two halves behave differently:
+**monthly credits reset**, top-up credits do not, and monthly is spent first so
+the ones with an expiry date go before the ones without.
+
+## Credit lifecycle
+
+- **Monthly credits** renew on your billing cycle start. Unused ones **roll over up to three months' worth** of your allowance (`monthlyCreditRolloverMultiple: 3` on every paid plan); the excess expires at renewal. Topped-up credits never expire.
+- **Topup credits** are permanent — no expiry.
+
+## When you run out
+
+- `402 insufficient_credits` on API calls
+- Studio shows a banner "Out of credits — top up to continue"
+- If **Auto-pause on exhaustion** is enabled in Budget alerts, new inferences are blocked until you top up.
+
+## Invoices
+
+Monthly invoices for subscriptions are sent by email and stored in Settings → Billing → History. Topup invoices are emailed immediately on payment.
+
+Stripe powers payment. All cards (Visa, Mastercard, Amex) accepted, SEPA on EU plans, wire transfer on Enterprise.

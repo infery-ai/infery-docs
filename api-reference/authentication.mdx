@@ -1,0 +1,86 @@
+---
+title: "Authentication"
+description: "Bearer API keys, per-key quotas, and key lifecycle."
+---
+
+## Bearer tokens
+
+All API requests require an `Authorization` header:
+
+```
+Authorization: Bearer inf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+Keys are issued via **Settings → API Keys → Create key** in the dashboard. The plaintext key is shown **exactly once** — copy it immediately. We only store a SHA-256 hash after that.
+
+## Key format
+
+```
+inf_<36 characters of base62>
+```
+
+Example: `inf_1hR9xTPZqK4mVLc2nJ7fY5wB8dA3sE6gH`
+
+## Scope
+
+Each key is scoped to **one workspace**. The key itself resolves to a workspaceId on every request — you don't pass it in the URL or body.
+
+
+
+<Frame caption="Keys in the dashboard: what each one is allowed, and when it was last used">
+  <img src="/samples/api-keys.png" alt="An API Keys page with a Create key button and a table of columns Name, Key, Quota, Status, Last used, Expires and Created. Two active keys named Curl and Debug show masked prefixes beginning inf_live_, a quota of None and green Active badges. A separate Revoked and Expired table below lists a third key with a red Revoked badge and both an expiry and a revocation date." />
+</Frame>
+
+**Last used** is the column to read before revoking anything: a key nobody has
+used in months is safe to remove, and one used minutes ago is load-bearing
+somewhere you may not remember.
+
+Revoked and expired keys stay listed rather than disappearing, so a key that
+stops working can be explained rather than merely missed.
+
+## Quotas on a key
+
+A key inherits quotas from (in cascade):
+1. Platform defaults
+2. Your subscription plan
+3. Your member preset (the person who created the key)
+4. Key-specific preset (optional override)
+
+The tightest wins. See [Quotas](/workspaces/quotas-and-presets).
+
+## Scope-limited keys
+
+You can attach a preset to limit:
+- `allowedModels` — e.g. `['gpt-4o', 'claude-opus-4-6']`
+- `maxRequestsPerMinute` — e.g. 30 for a staging key
+- `maxBudgetMonthlyCredits` — e.g. 2 000 for a CI runner
+
+## Revoking a key
+
+Settings → API Keys → key row → **Revoke**. Takes effect within 5 seconds. Requests made with the revoked key return:
+
+```json
+{
+  "error": {
+    "message": "Invalid API key",
+    "type": "invalid_request_error",
+    "code": "invalid_api_key"
+  }
+}
+```
+
+## Rotating
+
+Create the new key, update your app, then revoke the old one. We don't support automatic rotation — keys are explicit to make audit trails clean.
+
+## Key health
+
+Each key row shows:
+- **Last used** — timestamp and IP of the last successful request
+- **Status** — active / expired / revoked
+- **Expires at** — if you set an expiry at creation
+- **Quota preset** — the attached preset, if any
+
+## Internal service tokens
+
+Our control plane (apps/api) talks to the gateway with a special **internal token** prefixed `inf_internal_`. You cannot create or use these from client code — they're server-to-server only.

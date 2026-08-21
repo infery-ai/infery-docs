@@ -1,0 +1,49 @@
+---
+title: "Speech-to-text"
+description: "POST /v1/audio/transcriptions — transcribe audio to text."
+openapi: "openapi.json POST /v1/audio/transcriptions"
+---
+
+We accept **both multipart and JSON base64** for STT, so the OpenAI SDK works out of the box.
+
+## Multipart (OpenAI SDK default)
+
+```python
+from openai import OpenAI
+client = OpenAI(api_key=API_KEY, base_url="https://api.infery.ai/v1")
+tr = client.audio.transcriptions.create(
+    model="whisper-1",
+    file=open("meeting.mp3", "rb"),
+    response_format="verbose_json",
+)
+print(tr.text)
+```
+
+## JSON base64 (light HTTP clients)
+
+```bash
+curl https://api.infery.ai/v1/audio/transcriptions \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "whisper-1",
+    "file_base64": "<base64 audio>",
+    "filename": "meeting.mp3",
+    "response_format": "json"
+  }'
+```
+
+## Response formats
+
+`json` (default), `text`, `srt`, `verbose_json` (with segments), `vtt`.
+
+The response body is **always JSON**, whichever format you ask for: `srt`, `vtt` and `text` put the rendered document in the `text` field rather than returning it bare. The OpenAI SDK hands you the raw body for those three, so parse it as JSON and read `["text"]` before writing a subtitle file.
+
+`verbose_json` carries segment-level timestamps in `segments[]`. Word-level timestamps are not supported — `timestamp_granularities` is dropped before the request reaches the provider, so `words` comes back empty.
+
+There is no `/v1/audio/translations` endpoint. To translate, transcribe first and pass the text to a chat completion.
+
+## Limits
+
+- Max 25 MB audio per request
+- Formats: MP3, MP4, M4A, WAV, WebM, OGG, FLAC

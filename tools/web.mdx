@@ -1,0 +1,128 @@
+---
+title: "Web tools"
+description: "Web tools available as workflow steps and through /v1/capabilities."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+**1 tools.** Each one is deterministic: the same input gives the same output, and
+nothing is inferred. Call one directly with
+[`POST /v1/capabilities/{id}/run`](/api-reference/capabilities/run), or use it as a step in a
+[workflow](/workflows/step-types).
+
+Prices are on the [live catalogue](https://infery.ai/models) — they change, and a stale price here would be
+worse than none.
+
+| Tool | Does | In → out |
+| --- | --- | --- |
+| [`web.search`](#websearch) | Search the web. Returns a grounded `answer` plus source links in `results`. Gateway picks provider by latency/cost. | any → text |
+
+## `web.search`
+
+**any → text** · Billed per request
+
+Search the web and return ranked results. The gateway routes to the best available provider (Brave, Gemini, OpenAI, or Anthropic) based on latency and cost.
+
+### When to use
+
+- **Research queries** — retrieve up-to-date information from the live web.
+- **Fact checking** — ground LLM responses in current sources.
+- **News & events** — look up recent happenings beyond a model's training cutoff.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | None (query is a parameter) |
+| **Output modality** | Text (a grounded answer plus a list of sources) |
+| **Max query length** | 500 characters |
+| **Max results** | 50 |
+
+### Output: which field carries the content
+
+The step returns `{ answer, results, citations, metadata }`.
+
+**Bind `answer`, not `results`.** `results` is a list of *sources* — url, title,
+rank, domain. It is not the text of those pages. `answer` is the provider's
+grounded, synthesised answer to the query, and it is what a downstream model
+step can summarise.
+
+| Field | What it holds |
+|---|---|
+| `answer` | The grounded answer. `null` only on Brave, which does not synthesise. |
+| `results[]` | `{ url, title, rank, domain, snippet? }` — the sources. |
+| `results[].snippet` | An extract of the source page, **when the provider returns one**. Absent otherwise — never an empty string. |
+| `citations[]` | `{ url, title, quote?, start_index?, end_index? }` — which source backs which part of `answer`. |
+| `metadata.snippet_support` | Whether `snippet` can be populated at all on the provider that served this request. |
+
+`snippet` depends on the provider the gateway routed to, which you cannot choose
+and cannot see in advance, so `metadata.snippet_support` states it in the output:
+
+| `snippet_support` | Meaning |
+|---|---|
+| `full` | Every result carries a page extract. |
+| `cited_only` | Only the results the answer cited carry one. |
+| `none` | The provider's API returns no page text at all. Use `answer`. |
+
+A binding that must work whatever the router picks should use the fallback
+operator: `${steps.search.output.answer | steps.search.output.results}` — it
+takes the grounded answer where there is one and the (snippet-bearing) result
+list where there is not. This is what the `web-research-summary` template does.
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `query` | yes | Search query string (1–500 chars) |
+| `max_results` | no | Number of results to return (1–50). Default: `10` |
+
+These are the only parameters accepted; any other key is rejected.
+
+### Examples
+
+#### Basic web search
+
+```json
+{
+  "type": "web.search",
+  "input": {},
+  "params": { "query": "best LLMs 2026", "max_results": 10 }
+}
+```
+
+#### Non-English search
+
+Results follow the language of the query — there is no locale parameter.
+
+```json
+{
+  "type": "web.search",
+  "input": {},
+  "params": { "query": "Bundesliga Ergebnisse", "max_results": 5 }
+}
+```
+
+### Pricing
+
+Billed per search request. The gateway routes to the most appropriate provider; see pricing dashboard for current rates.
+
+### Related capabilities
+
+- `code.run_python` — process or summarise search results with inline Python
+- `code.run_node` — transform result data with Node.js
+
+### Examples
+
+**Basic search**
+
+```json
+{
+  "type": "web.search",
+  "params": {
+    "query": "best LLMs 2026",
+    "max_results": 10
+  }
+}
+```
+

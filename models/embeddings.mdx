@@ -1,0 +1,31 @@
+---
+title: "Embedding models"
+description: "Every embedding model on Infery, grouped by what it takes as input."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+Called through `POST /v1/embeddings`.
+
+**9 models.** Grouped by input, because that is the choice you make first — a model that
+turns an image into a video is not interchangeable with one that starts from a prompt.
+
+Prices are not listed here: they change, and a stale price is worse than none. See the
+[live catalogue](https://infery.ai/models) for current rates, and each model's own page there for its full
+parameter schema.
+
+## Text → vector (9)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `qwen-text-embedding-v3` | alibaba | — | 8k ctx |
+| `qwen-text-embedding-v4` | alibaba | — | 8k ctx |
+| `bge-base-en-v1.5` | BAAI | — | 1k ctx |
+| `gemini-embedding-001` | google | — | 2k ctx, 0k out |
+| `gemini-embedding-2` | google | — | 8k ctx, 0k out, vision, pdf |
+| `multilingual-e5-large-instruct` | intfloat | — | 1k ctx |
+| `text-embedding-3-large` | openai | — | 8k ctx |
+| `text-embedding-3-small` | openai | — | 8k ctx |
+| `text-embedding-ada-002` | openai | — | 8k ctx |
+

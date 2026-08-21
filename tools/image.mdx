@@ -1,0 +1,724 @@
+---
+title: "Image tools"
+description: "Image tools available as workflow steps and through /v1/capabilities."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+**9 tools.** Each one is deterministic: the same input gives the same output, and
+nothing is inferred. Call one directly with
+[`POST /v1/capabilities/{id}/run`](/api-reference/capabilities/run), or use it as a step in a
+[workflow](/workflows/step-types).
+
+Prices are on the [live catalogue](https://infery.ai/models) — they change, and a stale price here would be
+worse than none.
+
+| Tool | Does | In → out |
+| --- | --- | --- |
+| [`image.add_alpha_channel`](#imageadd_alpha_channel) | Ensure the image has an alpha (transparency) channel. | image → image |
+| [`image.add_padding`](#imageadd_padding) | Extend canvas with padding. | image → image |
+| [`image.composite`](#imagecomposite) | Overlay one image on top of another. | image → image |
+| [`image.convert_format`](#imageconvert_format) | Convert image to png / jpeg / webp. | image → image |
+| [`image.crop`](#imagecrop) | Crop image to a rectangle. | image → image |
+| [`image.flatten`](#imageflatten) | Remove alpha channel; fill transparent areas with background colour. | image → image |
+| [`image.pipeline`](#imagepipeline) | Chain multiple image operations in one step. | image → image |
+| [`image.resize`](#imageresize) | Resize image to target dimensions. | image → image |
+| [`image.rotate`](#imagerotate) | Rotate image by angle (degrees). | image → image |
+
+## `image.add_alpha_channel`
+
+**image → image** · Billed per request
+
+Ensure an image has an RGBA (transparency) channel, converting RGB images to RGBA without modifying existing pixels.
+
+### When to use
+
+- **Pre-compositing** — images without alpha cannot be used as overlays; add the channel first.
+- **Downstream transparency edits** — prepare an opaque image for a pipeline step that will make parts transparent.
+- **Safe no-op** — if the image already has alpha, this operation is a no-op, making it safe to include unconditionally.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Image file (URL) |
+| **Output modality** | Image file (GCS URL) |
+| **Max input size** | 50 MB |
+| **Supported formats** | JPEG, PNG, WebP, TIFF |
+
+### Parameters
+
+This capability takes no parameters — the alpha channel is always added at full opacity (255).
+
+| Param | Required | Description |
+|---|---|---|
+| *(none)* | — | No parameters required. |
+
+### Examples
+
+#### Convert JPEG to RGBA for compositing
+
+```json
+{
+  "type": "image.add_alpha_channel",
+  "input": { "image_url": "https://example.com/photos/background.jpg" },
+  "params": {}
+}
+```
+
+### Pricing
+
+Billed per megapixel of output image. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `image.flatten` — inverse operation: remove alpha and fill with a solid colour
+- `image.composite` — overlay images; both base and overlay should have alpha for best results
+- `image.pipeline` — chain add_alpha_channel with other ops in a single execution
+
+### Examples
+
+**Convert RGB → RGBA**
+
+```json
+{
+  "type": "image.add_alpha_channel",
+  "params": {}
+}
+```
+
+## `image.add_padding`
+
+**image → image** · Billed per request
+
+Extend an image canvas by adding padding on each side with a specified background colour.
+
+### When to use
+
+- **Square up an image** — add equal padding to all sides to make a non-square image fill a square container.
+- **Add breathing room** — provide whitespace around product photos for marketplace listings.
+- **Pre-print margins** — add bleed margins before sending to a print pipeline.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Image file (URL) |
+| **Output modality** | Image file (GCS URL) |
+| **Max input size** | 50 MB |
+| **Supported formats** | JPEG, PNG, WebP, TIFF |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `top` | yes | Pixels to add at the top edge (integer ≥ 0). |
+| `right` | yes | Pixels to add at the right edge (integer ≥ 0). |
+| `bottom` | yes | Pixels to add at the bottom edge (integer ≥ 0). |
+| `left` | yes | Pixels to add at the left edge (integer ≥ 0). |
+| `background` | no | Hex fill colour for the new canvas area (default `#ffffff`). |
+
+### Examples
+
+#### 50 px white padding on all sides
+
+```json
+{
+  "type": "image.add_padding",
+  "input": { "image_url": "https://example.com/products/item.jpg" },
+  "params": { "top": 50, "right": 50, "bottom": 50, "left": 50, "background": "#ffffff" }
+}
+```
+
+#### Top and bottom letterbox bars
+
+```json
+{
+  "type": "image.add_padding",
+  "input": { "image_url": "https://example.com/photos/wide.jpg" },
+  "params": { "top": 100, "right": 0, "bottom": 100, "left": 0, "background": "#000000" }
+}
+```
+
+### Pricing
+
+Billed per megapixel of output image. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `image.resize` — resize to specific dimensions instead of extending canvas
+- `image.flatten` — flatten alpha after padding to prepare for JPEG output
+- `image.pipeline` — chain padding with other ops in a single execution
+
+### Examples
+
+**50px each side white**
+
+```json
+{
+  "type": "image.add_padding",
+  "params": {
+    "top": 50,
+    "right": 50,
+    "bottom": 50,
+    "left": 50,
+    "background": "#ffffff"
+  }
+}
+```
+
+## `image.composite`
+
+**image → image** · Billed per request
+
+Overlay one image on top of a base image at a specified gravity and blend mode.
+
+### When to use
+
+- **Add a logo or watermark** — place a brand mark in a corner of product images.
+- **Combine design layers** — merge a background with a foreground graphic.
+- **Apply a frame or border overlay** — superimpose a decorative frame PNG over photographs.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Image file (URL) |
+| **Output modality** | Image file (GCS URL) |
+| **Max input size** | 50 MB (base + overlay combined) |
+| **Supported formats** | JPEG, PNG, WebP |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `overlay_url` | yes | URL of the image to overlay on the base. Must be publicly accessible or a GCS URL. |
+| `gravity` | no | Position of the overlay — `nw`, `n`, `ne`, `w`, `center` (default), `e`, `sw`, `s`, `se`. |
+| `blend` | no | Blend mode — `over` (default), `multiply`, `screen`, `overlay`, `darken`, `lighten`. |
+
+### Examples
+
+#### Logo in bottom-right corner
+
+```json
+{
+  "type": "image.composite",
+  "input": { "image_url": "https://example.com/photos/product.jpg" },
+  "params": {
+    "overlay_url": "https://example.com/assets/logo.png",
+    "gravity": "se",
+    "blend": "over"
+  }
+}
+```
+
+#### Screen-blend texture overlay
+
+```json
+{
+  "type": "image.composite",
+  "input": { "image_url": "https://example.com/photos/portrait.jpg" },
+  "params": {
+    "overlay_url": "https://example.com/textures/light-leak.png",
+    "gravity": "center",
+    "blend": "screen"
+  }
+}
+```
+
+### Pricing
+
+Billed per megapixel of output image. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `image.resize` — resize overlay to desired dimensions before compositing
+- `image.add_alpha_channel` — ensure overlay has transparency before blending
+- `image.pipeline` — chain composite with other ops in a single execution
+
+### Examples
+
+**Logo bottom-right**
+
+```json
+{
+  "type": "image.composite",
+  "params": {
+    "overlay_url": "https://example.com/logo.png",
+    "gravity": "se",
+    "blend": "over"
+  }
+}
+```
+
+## `image.convert_format`
+
+**image → image** · Billed per request
+
+Re-encode an image to PNG, JPEG, or WebP with optional quality control.
+
+### When to use
+
+- **Reduce file size** — convert PNG screenshots to JPEG or WebP for web delivery.
+- **Ensure transparency** — convert JPEG to PNG or WebP when alpha channel is needed downstream.
+- **Quality/size trade-off** — lower JPEG/WebP quality (e.g. 75) for bandwidth-constrained environments.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Image file (URL) |
+| **Output modality** | Image file (GCS URL) |
+| **Max input size** | 50 MB |
+| **Supported input formats** | JPEG, PNG, WebP, TIFF, AVIF, GIF |
+| **Supported output formats** | `png`, `jpeg`, `webp` |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `format` | yes | Target format — `png`, `jpeg`, or `webp`. |
+| `quality` | no | Integer 1–100. Applies to `jpeg` and `webp`. Ignored for `png`. |
+
+### Examples
+
+#### PNG to JPEG at quality 80
+
+```json
+{
+  "type": "image.convert_format",
+  "input": { "image_url": "https://example.com/assets/screenshot.png" },
+  "params": { "format": "jpeg", "quality": 80 }
+}
+```
+
+#### Convert to WebP for modern browsers
+
+```json
+{
+  "type": "image.convert_format",
+  "input": { "image_url": "https://example.com/photos/hero.jpg" },
+  "params": { "format": "webp", "quality": 85 }
+}
+```
+
+### Pricing
+
+Billed per megapixel of output image. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `image.resize` — resize before converting format
+- `image.flatten` — remove alpha before converting to JPEG (alpha not supported in JPEG)
+- `image.pipeline` — chain format conversion with other ops in a single execution
+
+### Examples
+
+**PNG → JPEG quality 80**
+
+```json
+{
+  "type": "image.convert_format",
+  "params": {
+    "format": "jpeg",
+    "quality": 80
+  }
+}
+```
+
+## `image.crop`
+
+**image → image** · Billed per request
+
+Extract a rectangular region from an image at a specified offset and size.
+
+### When to use
+
+- **Focus on subject** — cut out the relevant part of a photograph, removing borders or whitespace.
+- **Prepare for compositing** — extract a sub-image before overlaying it on another canvas.
+- **Aspect-ratio normalization** — crop to exact dimensions for social media or print templates.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Image file (URL) |
+| **Output modality** | Image file (GCS URL) |
+| **Max input size** | 50 MB |
+| **Supported formats** | JPEG, PNG, WebP, TIFF, AVIF, GIF |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `x` | yes | Left offset in pixels from the top-left corner (integer ≥ 0). |
+| `y` | yes | Top offset in pixels from the top-left corner (integer ≥ 0). |
+| `width` | yes | Width of the crop rectangle in pixels (integer > 0). |
+| `height` | yes | Height of the crop rectangle in pixels (integer > 0). |
+
+### Examples
+
+#### Center-crop to 400 × 400
+
+```json
+{
+  "type": "image.crop",
+  "input": { "image_url": "https://example.com/photos/original.jpg" },
+  "params": { "x": 200, "y": 100, "width": 400, "height": 400 }
+}
+```
+
+#### Extract top-left banner region
+
+```json
+{
+  "type": "image.crop",
+  "input": { "image_url": "https://example.com/banners/full.png" },
+  "params": { "x": 0, "y": 0, "width": 1200, "height": 300 }
+}
+```
+
+### Pricing
+
+Billed per megapixel of output image. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `image.resize` — resize to target dimensions before or after cropping
+- `image.rotate` — rotate before cropping to align content
+- `image.pipeline` — chain crop with other ops in a single execution
+
+### Examples
+
+**Center 400×400**
+
+```json
+{
+  "type": "image.crop",
+  "params": {
+    "x": 200,
+    "y": 100,
+    "width": 400,
+    "height": 400
+  }
+}
+```
+
+## `image.flatten`
+
+**image → image** · Billed per request
+
+Remove the alpha (transparency) channel from an image, filling transparent areas with a solid background colour.
+
+### When to use
+
+- **Prepare for JPEG output** — JPEG does not support transparency; flatten before converting format.
+- **Consistent rendering** — ensure transparent PNGs display a predictable background in all viewers.
+- **Reduce file size** — images without alpha compress more efficiently in JPEG/WebP lossy mode.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Image file (URL) |
+| **Output modality** | Image file (GCS URL) |
+| **Max input size** | 50 MB |
+| **Supported formats** | PNG, WebP, TIFF, AVIF (any format with alpha) |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `background` | no | Hex colour to use for transparent areas (default `#ffffff`). Accepts 6-digit (`#rrggbb`) or 8-digit (`#rrggbbaa`) hex. |
+
+### Examples
+
+#### Flatten to white background
+
+```json
+{
+  "type": "image.flatten",
+  "input": { "image_url": "https://example.com/assets/logo-transparent.png" },
+  "params": { "background": "#ffffff" }
+}
+```
+
+#### Flatten to dark background for dark-mode export
+
+```json
+{
+  "type": "image.flatten",
+  "input": { "image_url": "https://example.com/icons/icon.png" },
+  "params": { "background": "#1a1a2e" }
+}
+```
+
+### Pricing
+
+Billed per megapixel of output image. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `image.convert_format` — convert to JPEG after flattening (JPEG requires no alpha)
+- `image.add_alpha_channel` — inverse operation: add alpha to an opaque image
+- `image.pipeline` — chain flatten with other ops in a single execution
+
+### Examples
+
+**White background**
+
+```json
+{
+  "type": "image.flatten",
+  "params": {
+    "background": "#ffffff"
+  }
+}
+```
+
+## `image.pipeline`
+
+**image → image** · Billed per request
+
+Chain up to 10 image operations in a single request, executing them sequentially on the same image.
+
+### When to use
+
+- **Reduce round-trips** — combine resize + flatten + convert_format in one API call instead of three.
+- **Atomic image transforms** — all operations run as a single Sharp pipeline; the image is never written to intermediate storage.
+- **Complex workflows** — build reusable transform recipes (e.g. "thumbnail preset") that apply several ops at once.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Image file (URL) |
+| **Output modality** | Image file (GCS URL) |
+| **Max operations** | 10 |
+| **Max input size** | 50 MB |
+| **Supported formats** | JPEG, PNG, WebP, TIFF, AVIF |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `operations` | yes | Array of 1–10 operation objects. Each object has a single key matching a Sharp op name: `resize`, `extract`, `rotate`, `png`, `jpeg`, `webp`, `composite`, `extend`, `flatten`, or `ensureAlpha`. |
+
+### Examples
+
+#### Resize then convert to JPEG quality 80
+
+```json
+{
+  "type": "image.pipeline",
+  "input": { "image_url": "https://example.com/uploads/raw.png" },
+  "params": {
+    "operations": [
+      { "resize": { "width": 800, "height": 600, "fit": "cover" } },
+      { "jpeg": { "quality": 80 } }
+    ]
+  }
+}
+```
+
+#### Rotate, add padding, flatten, save as PNG
+
+```json
+{
+  "type": "image.pipeline",
+  "input": { "image_url": "https://example.com/photos/sideways.jpg" },
+  "params": {
+    "operations": [
+      { "rotate": { "angle": 90 } },
+      { "extend": { "top": 20, "right": 20, "bottom": 20, "left": 20, "background": "#ffffff" } },
+      { "flatten": { "background": "#ffffff" } },
+      { "png": {} }
+    ]
+  }
+}
+```
+
+### Pricing
+
+Billed per megapixel of output image, once per pipeline execution (not per operation). See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `image.resize` — standalone resize op
+- `image.convert_format` — standalone format conversion
+- `image.composite` — standalone compositing
+
+### Examples
+
+**Resize → JPEG quality 80**
+
+```json
+{
+  "type": "image.pipeline",
+  "params": {
+    "operations": [
+      {
+        "resize": {
+          "width": 800
+        }
+      },
+      {
+        "jpeg": {
+          "quality": 80
+        }
+      }
+    ]
+  }
+}
+```
+
+## `image.resize`
+
+**image → image** · Billed per request
+
+Scale an image to target dimensions using the Sharp library's high-performance resize engine.
+
+### When to use
+
+- **Generate thumbnails** — produce preview images at fixed width or height.
+- **Normalize uploads** — standardize user-uploaded images to a maximum size before storage.
+- **Responsive variants** — generate multiple resolutions (1x, 2x) for a responsive image pipeline.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Image file (URL) |
+| **Output modality** | Image file (GCS URL) |
+| **Max input size** | 50 MB |
+| **Supported formats** | JPEG, PNG, WebP, TIFF, AVIF, GIF |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `width` | one of | Target width in pixels (integer > 0). |
+| `height` | one of | Target height in pixels (integer > 0). At least one of `width` or `height` is required. |
+| `fit` | no | Resize strategy — `cover` (default), `contain`, `fill`, `inside`, `outside`. |
+
+### Examples
+
+#### Thumbnail at 300 × 300 cover
+
+```json
+{
+  "type": "image.resize",
+  "input": { "image_url": "https://example.com/photos/original.png" },
+  "params": { "width": 300, "height": 300, "fit": "cover" }
+}
+```
+
+#### Constrain to max 1280 px wide (preserve aspect)
+
+```json
+{
+  "type": "image.resize",
+  "input": { "image_url": "https://example.com/photos/original.jpg" },
+  "params": { "width": 1280, "fit": "inside" }
+}
+```
+
+### Pricing
+
+Billed per megapixel of output image. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `image.crop` — crop to a specific rectangle after resizing
+- `image.convert_format` — change format/quality after resize
+- `image.pipeline` — chain resize with other ops in a single execution
+
+### Examples
+
+**800×600 cover**
+
+```json
+{
+  "type": "image.resize",
+  "params": {
+    "width": 800,
+    "height": 600,
+    "fit": "cover"
+  }
+}
+```
+
+## `image.rotate`
+
+**image → image** · Billed per request
+
+Rotate an image by an arbitrary angle in degrees using the Sharp library.
+
+### When to use
+
+- **Fix orientation** — correct portrait photos taken sideways (90°, 180°, 270°).
+- **Creative angle** — apply non-orthogonal rotations (e.g. 15°) for design compositions.
+- **Normalize EXIF orientation** — rotate and strip EXIF so all consumers see the same orientation.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Image file (URL) |
+| **Output modality** | Image file (GCS URL) |
+| **Max input size** | 50 MB |
+| **Supported formats** | JPEG, PNG, WebP, TIFF, AVIF |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `angle` | yes | Rotation angle in degrees. Positive = clockwise. Any number accepted (e.g. 45, -30, 270). |
+| `background` | no | Hex colour to fill exposed corners after rotation (e.g. `#ffffff`). Defaults to transparent for PNG, black for JPEG. |
+
+### Examples
+
+#### 90° clockwise rotation
+
+```json
+{
+  "type": "image.rotate",
+  "input": { "image_url": "https://example.com/photos/sideways.jpg" },
+  "params": { "angle": 90 }
+}
+```
+
+#### 15° tilt with white background fill
+
+```json
+{
+  "type": "image.rotate",
+  "input": { "image_url": "https://example.com/photos/product.png" },
+  "params": { "angle": 15, "background": "#ffffff" }
+}
+```
+
+### Pricing
+
+Billed per megapixel of output image. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `image.crop` — crop after rotating to remove exposed corners
+- `image.flatten` — flatten transparency before converting to JPEG
+- `image.pipeline` — chain rotate with other ops in a single execution
+
+### Examples
+
+**90° clockwise**
+
+```json
+{
+  "type": "image.rotate",
+  "params": {
+    "angle": 90
+  }
+}
+```
+

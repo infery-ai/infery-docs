@@ -1,0 +1,58 @@
+---
+title: "Comparing models"
+description: "Run one prompt across several models side by side, and optionally have a model review the results."
+---
+
+Open the compare panel with the **Compare** icon in the message bar, pick the
+models, then type your prompt and send it as usual. Each model answers
+independently and its result appears as its own card the moment it is ready.
+
+<Frame caption="One prompt, three models, and a verdict — each card carries what that model cost and how long it took">
+  <img src="/samples/chat-comparison.png" alt="A chat comparing three models on the prompt Explain exponential backoff with jitter in three sentences. Three answer cards are labelled GPT-4.1 Mini 0.11 credits 1.8 seconds, Gemini 3.5 Flash 0.06 credits 0.9 seconds, and Grok 4.5 0.14 credits 2.3 seconds. Below them a Verdict panel names Grok 4.5 the most useful and explains why." />
+</Frame>
+
+Every card shows what that model charged and how long it took, so a comparison
+answers two questions at once: which answer is better, and what the better
+answer costs. The cheapest and the slowest are rarely the same model.
+
+## What you can compare
+
+- Between **2 and 5 models** per comparison.
+- Pick what you want out (**Chat**, **Image**, **Video**, …) and, where it
+  matters, what you are starting from (a prompt, or an image you attach).
+  Changing either one clears the selection — models of one kind cannot be
+  compared against models of another.
+- When the models take an image — editing one, upscaling one, analysing one, or
+  animating one into a video — attach it first. Every model gets the same image,
+  which is the point of the comparison.
+- Some combinations are not offered because we cannot run them honestly: a
+  video-from-video comparison, for instance, would quietly fall back to
+  generating from your prompt instead of using your video.
+
+## Reviewing the results
+
+Turn on **Review the results** to have a model judge the answers and name a
+winner. The judgement arrives as a **Verdict** panel under the cards: which
+model won, and the reasoning for it — in the screenshot above, the winner is
+picked for naming the failure mode the others left out, not for being the
+longest answer. Leave the selector on *Default* to use the agent's own model, or pick
+any chat model. For an image comparison or image edit, the list is limited to
+models that can see images — a judge that cannot see them can only compare price
+and speed, and will say so.
+
+For a media comparison (image, video, audio, …), whatever you choose here is
+final for that turn: with Review on, the judgement runs right away; with
+Review off, you will not be asked again afterwards. This is deliberate — you
+already answered the question in the form.
+
+## Cost
+
+The panel shows an approximate total before you send: every selected model runs,
+so a comparison costs about the sum of its parts. Video comparisons, and any
+comparison over the confirmation threshold, ask you to confirm the price before
+anything runs.
+
+## What a comparison is not
+
+A failed model stays a failed card. Nothing is silently re-run on a different
+model — you picked these models, so these are the ones that answer.

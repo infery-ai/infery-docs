@@ -1,0 +1,106 @@
+---
+title: "Usage & invoices"
+description: "See exactly what you spent, on what model, by which API key — and export it."
+---
+
+Every request — Studio or API — is metered the moment it completes. You can break that data down in the dashboard or pull it out via API for your own BI.
+
+## Where to look
+
+Settings → **Usage** has four views:
+
+| View | What it shows |
+| --- | --- |
+| **Overview** | Credits spent today, this week, this month vs. plan allowance |
+| **By model** | Spend grouped by model slug (sortable, filterable by date) |
+| **By key** | Spend grouped by API key — find which integration is heaviest |
+| **By member** | Workspace member who initiated each request (Studio only — API calls attribute to the key, not the human) |
+
+All charts respect the date range picker (last 24h, 7d, 30d, custom).
+
+## Drilling into a single request
+
+<Frame caption="The usage overview: totals for the window, and the daily shape of it">
+  <img src="/samples/usage-overview.png" alt="A Usage page headed Track API requests, tokens and credits, with Today, 7 days, 30 days, 90 days and Custom range buttons and 7 days selected. Four cards read Total requests 473, Total tokens 825,510, Credits spent 268 and Credits remaining 994. Below them a Daily usage area chart across a week with a CSV download, and a tooltip on Aug 13 reading Credits 0.161161 and Requests 37." />
+</Frame>
+
+Every panel below the chart answers "where did it go" from a different angle,
+and each exports its own CSV.
+
+<Frame caption="By model — where the credits actually went">
+  <img src="/samples/usage-by-model.png" alt="A By model table with columns Model, Requests, Input tokens, Output tokens and Credits, listing rows such as Nano Banana 2, Nano Banana Pro, Gemini 3.6 Flash, Grok 4.5, GPT-5.4, Imagen 3, Chatterbox and Gemini Embedding 2, sorted with the most expensive first." />
+</Frame>
+
+Note that **requests and credits do not rank the same way**. In that table the
+138-request embedding model costs 1 credit while a 10-request image model costs
+102 — which is the whole reason this panel is by credits rather than by count.
+
+<Frame caption="By API key">
+  <img src="/samples/usage-by-key.png" alt="A By API key table listing two keys by name with their masked key prefixes, requests, input and output tokens and credits." />
+</Frame>
+
+<Frame caption="By user">
+  <img src="/samples/usage-by-user.png" alt="A By user table with one row, showing requests, input and output tokens and credits for that member." />
+</Frame>
+
+Requests made with an **API key** are attributed to the key; requests made in the
+Studio are attributed to the **member** who made them. Both panels are shown
+because neither is the whole picture.
+
+<Frame caption="File storage, which is charged separately from inference">
+  <img src="/samples/usage-storage.png" alt="A File storage panel showing disk usage of 498.9 MB out of 50.00 GB and a file count of 162 out of 9,999,999, each with a progress bar." />
+</Frame>
+
+
+Click any row in **Recent requests** to see:
+
+- Full timing: gateway in/out, provider in/out, total
+- Token counts (`prompt_tokens`, `completion_tokens`, `total_tokens`)
+- Credits used
+- Whether a [fallback](/workspaces/fallback-chains) fired and which model actually served the call
+- Request ID — paste this into a support ticket and we find the trace instantly
+
+Prompts and outputs are **not** stored on API requests by default. Studio calls keep history per [retention rules](/playground/chats-and-projects).
+
+## Per-request cost in the response
+
+Every API response includes:
+
+```
+x-credits-used: 2
+x-model-used: gpt-4o
+x-fallback-from: (only when fallback fired)
+x-request-id: req_01HK9X...
+```
+
+Streaming responses also emit a final SSE chunk:
+
+```
+data: {"choices":[],"usage":{...},"credits_used":2}
+```
+
+So you can attribute cost in your own logs without polling Usage.
+
+## Exporting
+
+**CSV export** (Settings → Usage → top-right): pick a date range, choose grouping, download. Columns include `timestamp`, `model`, `api_key_id`, `prompt_tokens`, `completion_tokens`, `credits_used`, `request_id`, `latency_ms`, `fallback_depth`.
+
+**API**: `GET /v1/usage?start=...&end=...&group_by=model` returns the same data as JSON. Useful for nightly ingestion into your warehouse.
+
+## Invoices
+
+Settings → **Billing** → **History** lists every invoice — subscription renewals and topups. Each row links to:
+
+- A PDF invoice (UK VAT applied where required)
+- The Stripe receipt
+- The exact credit pack delivered
+
+Invoices are emailed to the **billing contact** on the workspace. Update it in Settings → Workspace → Billing contact.
+
+## Reconciling with Stripe
+
+Each Infery invoice references a Stripe `pi_...` (payment intent) and `in_...` (invoice) id. If you reconcile via Stripe export, match on `metadata.workspace_id` and `metadata.infery_invoice_id` — both are set on every charge.
+
+## Anomaly alerts
+
+Set in Settings → Workspace → **Budget alerts**: get an email when daily spend exceeds your normal range by more than X%. Catches runaway loops and leaked keys before the bill does. See [Budget alerts](/workspaces/budget-alerts).

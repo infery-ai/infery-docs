@@ -1,0 +1,76 @@
+---
+title: "API overview"
+description: "OpenAI-compatible REST API for text, images, voice, video, music and embeddings."
+---
+
+The Infery API is **OpenAI-compatible at the wire level**. Point the official OpenAI SDK at our gateway and 99 % of your code keeps working.
+
+## Base URL
+
+```
+https://api.infery.ai
+```
+
+## Versioning
+
+All endpoints are prefixed with `/v1`. We follow OpenAI's surface closely so `POST /v1/chat/completions`, `POST /v1/embeddings`, `POST /v1/images/generations`, `POST /v1/audio/speech`, `POST /v1/audio/transcriptions` and `POST /v1/files` all work as you'd expect.
+
+## Authentication
+
+```
+Authorization: Bearer inf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+Get a key from Settings → API Keys. See [Authentication](/api-reference/authentication).
+
+## Compatibility
+
+<Check>**Works today** (drop-in)</Check>
+- Chat completions (streaming + non-streaming, tool calls, JSON mode, vision, multimodal content blocks)
+- Embeddings
+- Images: generations (edits are ours-only JSON — the SDK's `images.edit` does not fit)
+- Audio: TTS + STT (STT accepts both multipart and base64 JSON)
+- Files API: upload, list, retrieve, delete, download content
+- Referencing `file_id` in chat completion content blocks
+
+<Warning>**Gotchas**</Warning>
+- Audio input on Anthropic models — returns 400 `audio_not_supported_by_model` (Claude doesn't support audio). Transcribe first with `/v1/audio/transcriptions` and pass the text.
+- Video generation is async — the response returns the job under `id`, and you poll `GET /v1/videos/generations/{id}` for status. Music generation, by contrast, is one synchronous call with no job to poll.
+- No OpenAI SDK method covers video or music; call those endpoints over plain HTTP.
+- `client.audio.translations.create(...)` has no endpoint here — transcribe, then translate with a chat completion.
+- `response_format=url` on image gen returns a **provider-hosted URL** (ephemeral, ~1 hour). For persistent URLs, upload the base64 result via `POST /v1/files`.
+
+## Request IDs
+
+Every response includes an `x-request-id` header. Include this in support tickets for quick lookup.
+
+## Useful response headers
+
+| Header | Meaning |
+| --- | --- |
+| `x-request-id` | UUID of the request in our logs |
+| `x-credits-used` | Cost of this request in credits |
+| `x-model-used` | Final model that served the request (may differ from requested if fallback fired) |
+| `x-fallback-from` | Original requested model if a fallback ran |
+| `x-fallback-depth` | How many fallbacks were tried before success |
+| `x-storage-used-bytes` / `x-storage-limit-bytes` | On `/v1/files` — current and max storage |
+
+## Rate limits
+
+- **Per API key:** configurable, typically 30–400 req/min depending on plan and key preset
+- **Global safety net:** 5 k req / 10 min per IP (DoS protection)
+
+See [Rate limits](/api-reference/rate-limits).
+
+## Explore endpoints
+
+<CardGroup cols={2}>
+  <Card title="Chat completions" href="/api-reference/chat-completions" icon="comments">POST /v1/chat/completions</Card>
+  <Card title="Embeddings" href="/api-reference/embeddings" icon="vector-square">POST /v1/embeddings</Card>
+  <Card title="Images" href="/api-reference/images" icon="image">POST /v1/images/generations</Card>
+  <Card title="Audio" href="/api-reference/audio" icon="microphone">/v1/audio/speech, /v1/audio/transcriptions</Card>
+  <Card title="Videos" href="/api-reference/videos" icon="video">POST /v1/videos/generations (async)</Card>
+  <Card title="Music" href="/api-reference/music" icon="music">POST /v1/music/generations</Card>
+  <Card title="Files" href="/api-reference/files" icon="file">POST /v1/files, file_id resolver</Card>
+  <Card title="Models" href="/api-reference/models" icon="list">GET /v1/models</Card>
+</CardGroup>

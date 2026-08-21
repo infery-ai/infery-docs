@@ -1,0 +1,56 @@
+---
+title: "Studio overview"
+description: "A full UI for chatting with models, generating content and organising work into projects."
+---
+
+The Studio at **[app.infery.ai](https://app.infery.ai)** is the in-browser product surface. Everything you can do via API is available here, plus team-friendly features that only make sense in a UI: project organisation, bookmarks, granular sharing.
+
+## Layout
+
+- **Sidebar (left)** — projects, chats, shared items, bookmarks and quick filters (Mine · Shared · Bookmarks)
+- **Main area (center)** — message thread of the current chat
+- **Modality tabs (top)** — switch between Chat · Generate Image · Text-to-Speech · Speech-to-Text · Generate Video · Generate Music
+- **Input zone (bottom)** — textarea, file attachment button, model picker, settings (duration, aspect ratio, voice, etc), send button
+- **Cost meter (bottom-right)** — credits remaining, approximate cost of the current message
+
+## What you can do
+
+<CardGroup cols={2}>
+  <Card title="Chat with 150+ models" href="/models/catalog">
+    Switch between frontier and open-source models mid-conversation. Credits are metered uniformly.
+  </Card>
+  <Card title="Generate images, video, voice, music" href="/playground/modalities">
+    Six modalities, same UI, same credit balance.
+  </Card>
+  <Card title="Organise into projects" href="/playground/chats-and-projects">
+    Group chats with shared settings — default model, system prompt, sharing scope.
+  </Card>
+  <Card title="Attach files" href="/playground/files-and-attachments">
+    Drop PDFs, images, audio. Reuse generated images across messages.
+  </Card>
+  <Card title="Share granularly" href="/playground/sharing">
+    Keep chats private, share with the whole workspace, or invite specific users with read or write access.
+  </Card>
+  <Card title="Bookmark answers" href="/playground/bookmarks">
+    Pin important messages and revisit them across the workspace.
+  </Card>
+  <Card title="Work across every past chat" href="/playground/memory-and-context">
+    The assistant recalls relevant passages from your earlier conversations, and shows you exactly which ones it used.
+  </Card>
+  <Card title="See how your chats connect" href="/playground/topics-and-graph">
+    Topics link chats that share a subject; the graph shows the shape, and pinning one steers what a conversation draws on.
+  </Card>
+</CardGroup>
+
+## Keyboard shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| `Enter` | Send message |
+| `Shift + Enter` | New line in input |
+| `Cmd/Ctrl + K` | Quick search chats |
+| `Esc` | Close modal / cancel streaming |
+
+## Under the hood
+
+Every Studio message is a normal inference call through the same gateway that serves the API — same models, same credits, same fallback behaviour. Generated images and videos are mirrored to our GCS storage automatically so they survive past the provider's ephemeral URLs.

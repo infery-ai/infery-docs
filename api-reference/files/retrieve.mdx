@@ -1,0 +1,14 @@
+---
+title: "Retrieve file metadata"
+description: "GET /v1/files/{fileId} — fetch metadata for a single file."
+openapi: "openapi.json GET /v1/files/{fileId}"
+---
+
+```bash
+curl https://api.infery.ai/v1/files/file_abc123... \
+  -H "Authorization: Bearer $INFERY_API_KEY"
+```
+
+Returns metadata only (id, size, filename, purpose, timestamps). For bytes use [GET /v1/files/{fileId}/content](/api-reference/files/content).
+
+**Workspace-scoped**: cross-workspace lookup returns 404 (we don't leak existence).

@@ -1,0 +1,217 @@
+---
+title: "Rate limits & retries"
+description: "Survive rate limits with backoff, queueing, and fallbacks — without hammering the gateway."
+---
+
+For the actual limits per plan, see [Rate limits](/api-reference/rate-limits). This guide is the playbook for handling them in real applications.
+
+<Warning>
+  **We answer rate limiting with `403`, not `429`, and send no `Retry-After` header.** If you have code that waits for a `429` or reads `Retry-After`, it will never fire here. See [Migrating from the OpenAI SDK](/guides/openai-sdk-migration) for what that means for the OpenAI SDK's built-in retry logic.
+</Warning>
+
+## The failure modes
+
+| Code | Meaning | Retry? |
+| --- | --- | --- |
+| `403 rate_limit_exceeded` | Your workspace burst above its requests-per-minute limit | Not sooner than 60 s — see below |
+| `403 daily_tokens_exceeded` | Your workspace hit its daily token cap | No — not until UTC midnight |
+| `403 insufficient_credits` | Out of balance | No — top up |
+| `409 upload_in_progress` | Another `POST /v1/files` holds this workspace's upload lock | Yes — after a moment |
+| `500 / 503` | Upstream provider transient | Only if the call is safe to repeat — see below |
+| `400 / 401 / 404 / 422` | Caller error | No — fix the request |
+
+Don't blanket-retry. Retrying caller errors burns your rate-limit budget for nothing.
+
+## Rate limiting: wait out the window
+
+The limit is a **60-second sliding window** per workspace. When you exceed it:
+
+```
+HTTP 403 Forbidden
+```
+
+```json
+{
+  "error": {
+    "message": "Rate limit exceeded: 61/60 requests per minute",
+    "type": "quota_exceeded",
+    "code": "rate_limit_exceeded"
+  }
+}
+```
+
+There is **no `Retry-After` header**, and there is one thing you need to know before you write a retry loop: **a refused request is counted into the window too.** Every retry inside those 60 seconds occupies another slot and pushes your recovery further out. A tight backoff loop can keep a workspace refused indefinitely.
+
+So don't back off in milliseconds. Either wait out the window, or — much better — stay under the limit on purpose (see below).
+
+```python python
+import time
+
+def call_with_rate_limit(req, attempts=2):
+    for _ in range(attempts):
+        resp = req()
+        if resp.status_code != 403:
+            return resp
+        if resp.json().get("error", {}).get("code") != "rate_limit_exceeded":
+            return resp          # a different 403 — permissions, credits — is not a wait
+        time.sleep(60)           # the whole window; a shorter sleep extends it
+    return resp
+```
+
+## Exponential backoff with jitter (for 5xx)
+
+For upstream transients, where a repeat is safe — a `GET`, or a `POST` you sent an `Idempotency-Key` on:
+
+```python python
+import random, time
+
+def with_backoff(req, max_attempts=5):
+    for attempt in range(max_attempts):
+        resp = req()
+        if resp.status_code < 500:
+            return resp
+        delay = (2 ** attempt) + random.random() * 0.5
+        time.sleep(delay)
+    return resp  # last attempt's response, even if failed
+```
+
+Jitter (`+ random()`) is critical — without it, every client retries at the same instant and you get a stampede.
+
+<Warning>
+  **A 500 on a generation call is not safely retryable.** Our error handling collapses several distinct upstream failures — including ones that happen *after* your balance has been debited — into the same generic 500, so a blind retry can pay for a second image, video or speech clip. Only `POST /v1/files` and `POST /v1/pipelines/runs` honour `Idempotency-Key`; everywhere else, retry a 5xx only if you can afford to be charged twice.
+</Warning>
+
+## `job_id` in an error body is not a failure
+
+If an error body carries a `job_id`, the work exists server-side and is billed whether or not you wait for it — a media generation that outran the gateway's wait budget (`504`), or speech that was generated and settled but could not be read back (`500 artifact_unreadable`). **Do not resend the request.** Collect the result:
+
+```
+GET /v1/images/jobs/{job_id}
+```
+
+That endpoint serves every media modality despite the `/v1/images` path. Resending instead starts and bills a second generation for a result you already own.
+
+## Don't retry 4xx
+
+`400/401/404/422` are deterministic — retrying just wastes your rate-limit budget and money. Fix the request, then resubmit. Common offenders:
+
+- Wrong model slug → check `GET /v1/models`
+- Missing required parameter → check the endpoint reference
+- Image too large → resize before resending
+- Malformed JSON → fix the producer
+
+## SDK-level retries
+
+The OpenAI SDK retries `429`s and 5xx automatically:
+
+```python python
+client = OpenAI(
+    api_key=API_KEY,
+    base_url="https://api.infery.ai/v1",
+    max_retries=4,           # default 2
+    timeout=60.0,
+)
+```
+
+**That does not cover our rate limiting.** A `403` is a hard client error to the OpenAI SDK, so it is not retried and not backed off — a caller leaning on `max_retries` to ride out bursts gets an immediate, unretried failure instead. And its 5xx retry is the blind one the warning above is about. For rate limiting, handle the `403` yourself; for bursts, queue.
+
+Our own [TypeScript SDK](https://www.npmjs.com/package/infery) applies the rules on this page for you: it does not retry `403 rate_limit_exceeded`, does not retry a 5xx on a billed `POST`, does retry `409 upload_in_progress`, and collects a `job_id` rather than resending.
+
+## Stay under the limit on purpose
+
+Reactive retry is the floor. Proactive limiting is the ceiling. Token-bucket on your side, capped at ~80% of the key's RPM:
+
+```python python
+import threading, time, collections
+
+class TokenBucket:
+    def __init__(self, rate_per_min: int):
+        self.capacity = rate_per_min
+        self.tokens = float(rate_per_min)
+        self.refill_per_sec = rate_per_min / 60.0
+        self.last = time.monotonic()
+        self.lock = threading.Lock()
+
+    def take(self, n: int = 1):
+        while True:
+            with self.lock:
+                now = time.monotonic()
+                self.tokens = min(self.capacity, self.tokens + (now - self.last) * self.refill_per_sec)
+                self.last = now
+                if self.tokens >= n:
+                    self.tokens -= n
+                    return
+            time.sleep(0.05)
+
+bucket = TokenBucket(rate_per_min=int(120 * 0.8))  # 80% of a 120 rpm key
+
+def safe_call(req):
+    bucket.take(1)
+    return req()
+```
+
+Result: zero refusals under steady load. Bursts above 120 rpm spike → bucket pauses → resumes when refilled. Queue any requests that need to go through. This is the only approach that beats the sliding window rather than feeding it.
+
+## Fallback chains: the better answer for production
+
+Per-call retries help, but [fallback chains](/workspaces/fallback-chains) help more. Configure once:
+
+```
+Source: gpt-4o
+└─ Fallback 1: gpt-4o-mini
+└─ Fallback 2: gemini-2.5-flash
+```
+
+Now a *provider-side* refusal on `gpt-4o` — OpenAI's own 429, or a 5xx — is invisible to your code: the gateway routes to `gpt-4o-mini` and you see:
+
+```
+x-model-used: gpt-4o-mini
+x-fallback-from: gpt-4o
+x-fallback-depth: 1
+```
+
+This shifts retry from your client to the gateway, with a sub-100 ms hop instead of an exponential wait.
+
+It does **not** help with *your workspace's* rate limit. `403 rate_limit_exceeded` is refused before any model is chosen, so there is no source to advance to — for that, the token bucket above is the answer.
+
+## Per-environment keys — and per-environment workspaces
+
+Don't share one key across dev/staging/prod. Reasons:
+
+- Leaked dev keys have lower blast radius if scoped to a low-limit preset
+- Per-env analytics are clearer
+
+Settings → API Keys → Create. Pick a [quota preset](/workspaces/quotas-and-presets) per environment.
+
+<Note>
+  Separate keys do **not** buy separate rate-limit budgets. The preset that sets the *limit* is attached to the key, but the sliding window that *counts* is per **workspace** — so a dev key hammering a loop consumes the same window prod is refused on. If dev traffic must not be able to starve prod, put them in different workspaces.
+</Note>
+
+## Daily token caps
+
+Some plans cap **total tokens per day** in addition to requests per minute. Hitting the cap is also a `403`, with its own code, and the counter resets at **UTC midnight**:
+
+```json
+{
+  "error": {
+    "message": "Daily token limit exceeded: 1000000/1000000",
+    "type": "quota_exceeded",
+    "code": "daily_tokens_exceeded"
+  }
+}
+```
+
+Branch on `code`, not on the status — `rate_limit_exceeded` and `daily_tokens_exceeded` share the `403` and need opposite responses. There is nothing to wait out here within the day:
+
+- Reduce request volume
+- Switch to a cheaper model
+- Top up to a higher plan
+
+## When you are still being refused
+
+If you have waited out the window and still get `403 rate_limit_exceeded`:
+
+1. Look at **Settings → Usage → By key** — is one key dominating?
+2. Check **Settings → API Keys → preset** — is the preset lower than you remember?
+3. Did you ship a loop without rate limiting? Look at request volume in the last hour.
+4. Open a ticket — sometimes it's our problem and we want to know.

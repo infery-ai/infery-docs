@@ -1,0 +1,79 @@
+---
+title: "Rate limits"
+description: "Per-workspace and global rate limits, and what to do when you hit them."
+---
+
+## Requests-per-minute limits
+
+Primary rate-limiting is a **60-second sliding window** in Redis. Two halves worth keeping apart:
+
+- the **limit** comes from the plan and from any quota preset attached to the API key you are calling with;
+- the **counter** is per **workspace**, shared by every key in it.
+
+So a second key raises nothing on its own — if you need budgets that cannot starve each other, use separate workspaces.
+
+Limit varies by plan and any attached quota preset:
+
+| Plan | Default RPM | Configurable max (preset) |
+| --- | --- | --- |
+| Free | 20 | 20 |
+| Creator | 60 | 120 |
+| Studio | 150 | 300 |
+| Team | 350 | 700 |
+| Enterprise | 1 000 | Custom |
+
+You see the effective value in Settings → API Keys next to each key.
+
+## Exceeded response
+
+```
+HTTP 403 Forbidden
+```
+
+```json
+{
+  "error": {
+    "message": "Rate limit exceeded: 61/60 requests per minute",
+    "type": "quota_exceeded",
+    "code": "rate_limit_exceeded"
+  }
+}
+```
+
+<Warning>
+  **`403`, not `429`, and there is no `Retry-After` header.** Client libraries that back off on `429` — the OpenAI SDK included — treat this as a hard client error and do not retry it at all. Branch on `error.code`, not on the status: several unrelated refusals share this `403`.
+</Warning>
+
+A **refused request is counted into the window too**, so retrying inside those 60 seconds occupies another slot and pushes your recovery further out. Wait out the window, or stay under the limit — see [Rate limits & retries](/guides/rate-limits-and-retries) for the playbook.
+
+## Daily token budgets
+
+In addition to requests per minute, some plans cap **total tokens per day** (`rateLimitTpd` in your quota preset). Hitting this is a `403` with its own code, and the counter resets at **UTC midnight**:
+
+```json
+{
+  "error": {
+    "message": "Daily token limit exceeded: 1000000/1000000",
+    "type": "quota_exceeded",
+    "code": "daily_tokens_exceeded"
+  }
+}
+```
+
+## Global safety net
+
+We enforce a **5 000 req / 10 min per IP** ceiling at the edge to stop scraping. This almost never trips for real users — only poorly-configured crawlers.
+
+## Best practices
+
+1. **Don't retry inside the window.** There is no `Retry-After` to honour, and a retry sooner than 60 seconds extends the wait rather than shortening it.
+2. **Queue on your side.** A local token bucket at ~80% of your limit is the only approach that beats the window instead of feeding it.
+3. **Use exponential backoff with jitter for 5xx** — 1s → 2s → 4s → 8s (+random 0–500 ms) — but only where repeating the call is safe. A 500 on a generation call may already have been billed; see [Rate limits & retries](/guides/rate-limits-and-retries).
+4. **Consider fallback chains.** They cover a *provider's* refusal on `gpt-4o` by advancing to `gpt-4o-mini` or `gemini-2.5-flash`. They do not cover your own workspace limit, which is refused before a model is chosen.
+5. **Separate environments by workspace, not just by key.** Keys share their workspace's window; only a separate workspace gives dev its own.
+
+## Rate limits on specific endpoints
+
+- `/contact/sales` — **5 req / hour per IP** (spam protection)
+- `/public/plans` and `/public/models` — **30 req / min per IP**
+- `/v1/files` upload — the RPM limit applies; additionally serialised by workspace (one upload at a time), so a concurrent upload answers `409 upload_in_progress` — that one *is* safe to retry in a moment, and our SDKs do

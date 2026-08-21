@@ -1,0 +1,83 @@
+---
+title: "Core concepts"
+description: "Workspaces, plans, credits, Studio and API — a mental model for the platform."
+---
+
+## Workspace
+
+A **workspace** is the container for everything: members, subscription plan, API keys, credits, chats, projects and files. Every API call and every Studio message is scoped to exactly one workspace.
+
+You can belong to multiple workspaces (switch via the top-left selector in the app).
+
+<Frame caption="Workspace settings: the id the API wants, the name people see, and the slug that never changes">
+  <img src="/samples/settings-general.png" alt="The General tab of Settings showing a Workspace card with a Workspace ID field and a copy button, a Name field reading Family, a Slug field reading family with a note that the slug cannot be changed, and a Save changes button. Below it a Danger zone card warning that deleting a workspace is permanent and that all API keys, usage history, billing data and Studio chats will be removed, with a field requiring the workspace name to be typed to confirm and a Delete workspace button." />
+</Frame>
+
+The **Workspace ID** on that page is what every workspace-scoped API route wants.
+The **slug** is fixed at creation — the name above it is free to change, so
+anything that has to stay stable keys on the slug rather than on the name.
+
+## Members and roles
+
+Each member has a role that controls what they can do:
+
+| Role | Studio | API keys | Billing | Admin settings |
+| --- | --- | --- | --- | --- |
+| **Owner** | ✓ | full | full | full |
+| **Admin** | ✓ | full | view | full |
+| **Developer** | ✓ | own | — | — |
+| **Billing** | ✓ | — | full | — |
+| **Viewer** | ✓ read-only | — | — | — |
+
+See [Members and roles](/workspaces/members-and-roles) for details.
+
+## Credits
+
+Everything on Infery is priced in **credits**. 1 credit ≈ $0.01. Every
+chat token, every generated image, every second of voice is metered to the same
+balance — no per-provider invoices to juggle.
+
+Two sources of credits:
+- **Monthly plan credits** — granted at the start of each billing cycle (may roll over on higher-tier plans)
+- **Topups** — one-off purchases that never expire
+
+Details: [Credits](/billing/credits), [Plans](/billing/subscription-plans).
+
+## Studio
+
+The **Studio** is the in-browser product surface: chats, projects, file uploads, generations, sharing with teammates, bookmarks. If you're evaluating or exploring — this is where you live.
+
+Learn more: [Studio overview](/playground/overview).
+
+## API
+
+The **API** is how you build with Infery in production. It's OpenAI-compatible at the wire level — `POST /v1/chat/completions`, `POST /v1/embeddings`, `POST /v1/images/generations`, etc — authenticated with a Bearer token (`inf_...`).
+
+Both Studio and API share the **same credit balance** and **same models**. A Studio message and an API call cost the same.
+
+Start: [API introduction](/api-reference/introduction).
+
+## Models
+
+~150 models from OpenAI, Anthropic, Google, xAI, DeepSeek, Alibaba, Suno and more are available by slug (e.g. `gpt-4o`, `claude-opus-4.6`, `gemini-2.5-pro`). Every model speaks the OpenAI format through our gateway — no provider-specific SDK required.
+
+Browse the live list at [models/catalog](/models/catalog) or fetch programmatically via `GET /v1/models`.
+
+## Files
+
+Two kinds of files, kept separate:
+
+- **Studio files** — dropped into a chat message (inherits chat sharing scope, cascades via PlaygroundMessage references)
+- **API files** — uploaded via `POST /v1/files` with OpenAI-compatible semantics (id → `file_abc...`, referenced in chat completions as content blocks)
+
+Details: [Files API](/api-reference/files), [Files in chat](/playground/files-and-attachments).
+
+## Safety nets
+
+| Feature | What it does | Docs |
+| --- | --- | --- |
+| Fallback chains | Re-route to a backup model when primary errors/throttles | [Fallbacks](/workspaces/fallback-chains) |
+| Budget alerts | Email/Slack when spend hits a threshold | [Budget alerts](/workspaces/budget-alerts) |
+| Per-key quotas | RPM, daily tokens, allowed models, cost cap per API key | [Quotas](/workspaces/quotas-and-presets) |
+| Idempotency | `Idempotency-Key` on file uploads prevents duplicates | [Files API](/api-reference/files) |
+| CAPTCHA | Turnstile on contact forms and sign-up | [Security](/reference/security) |

@@ -1,0 +1,355 @@
+---
+title: "Running a workflow"
+description: "Sync, stream and async modes, cost estimates, stored workflows, cancellation and run logs."
+---
+
+Every endpoint on this page lives under `https://api.infery.ai` and takes the same
+`Authorization: Bearer <key>` header as the rest of the API.
+
+## Run a definition
+
+```bash curl
+curl https://api.infery.ai/v1/workflows/runs \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "definition": { "steps": [ … ], "inputs": [ … ] },
+    "input": { "topic": "cold brew" },
+    "mode": "sync"
+  }'
+```
+
+| Field | Notes |
+| --- | --- |
+| `definition` | An inline definition. Provide this **or** `pipeline_id`. |
+| `pipeline_id` | A stored workflow's UUID. |
+| `pipeline_version` | A specific version of `pipeline_id`. Defaults to the latest. |
+| `input` | Required. The object your `${input.…}` bindings read. |
+| `mode` | `sync` (default), `stream` or `async`. |
+| `only_step_id` | Run just this step, reusing the outputs its upstream steps recorded on earlier runs. Requires `pipeline_id`, and every step it reads must already have a succeeded result. Not available with `mode: "async"`. |
+| `resume_from_run_id` | Continue a **failed** run instead of starting over — see below. Not available with `mode: "async"` or alongside `only_step_id`. |
+| `rerun_from_step_id` | Sent **with** `resume_from_run_id`: run that step and everything that depends on it, reusing the rest of that run — see below. The run may be in any finished state. Not available with `mode: "async"`. |
+
+Send an `Idempotency-Key` header to make a retry safe: a second request carrying a key this
+workspace has already used returns the original run instead of starting a new one.
+
+For `mode: "stream"` that replay only applies once the original run has **finished**. Retry a
+key while its run is still going and you get `409 idempotency_in_progress` — handle it as
+"the first attempt is still alive", not as a failure to retry.
+
+Missing or wrongly-typed run inputs are reported **all at once** with the code
+`invalid_pipeline_input`, before anything is executed or charged.
+
+## Resuming a failed run
+
+A run that fails half way has still paid for the steps that ran. `resume_from_run_id` lets you
+keep that work: send the failed run's id, and every step it recorded as **succeeded** is reused
+instead of dispatched. Only the step that failed — and everything downstream of it — runs again,
+and a reused step costs nothing.
+
+```bash
+curl https://api.infery.ai/v1/workflows/runs \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "resume_from_run_id": "3c9a7e51-8b24-4f0d-9a17-6e2b5c4d8a03",
+    "input": { "topic": "cold brew" },
+    "definition": { "steps": [ … ] }
+  }'
+```
+
+Send `definition` (or `pipeline_id`) to **fix the step that failed** — swap the model, change the
+params, replace the step. Send neither and the run is resumed against the definition it originally
+executed.
+
+What gets re-run is decided by the binding graph: editing a step re-runs that step and everything
+that reads it, directly or through a `|` fallback alternative. A step whose result was never
+recorded — including one whose record was lost — simply runs again rather than being assumed
+complete.
+
+<Note>
+The reused steps appear in the resumed run as `status: "succeeded"` with
+`skippedReason: "resumed_from_prior_attempt"` and `creditsUsed: 0` — this run's result includes
+them, and this run did not produce them. That also means a resumed run can itself be resumed.
+</Note>
+
+Refused before anything is billed, with no run row created:
+
+| Code | When |
+| --- | --- |
+| `resume_run_not_failed` | The run succeeded, was cancelled, or is still going. |
+| `resume_upstream_definition_changed` | The edit changes a step that already produced a result. Everything below it would have to run again, so that is a new run rather than a resume. |
+| `resume_input_changed` | `input` differs from the input that run used. A resume continues that run, so it keeps that run's input. |
+| `resume_artifact_expired` | A reused step's artifact has since been deleted or evicted, so its `outputRef` names nothing. |
+| `resume_source_definition_unknown` | The run did not record which version of the workflow it executed, and the workflow has been saved since — so there is no way to tell which of its results are still valid. |
+| `resume_async_unsupported` / `resume_with_only_step` | Sent with `mode: "async"`, or alongside `only_step_id`. |
+
+### Re-running part of a workflow that already ran
+
+`resume_from_run_id` answers *it broke*. `rerun_from_step_id`, sent alongside it, answers *I want a
+different result from here on* — you changed a prompt, a model or a parameter and want the
+consequences recomputed without paying again for the work upstream of the change.
+
+```json
+{
+  "pipeline_id": "…",
+  "input": { "…": "…" },
+  "resume_from_run_id": "3c9a7e51-8b24-4f0d-9a17-6e2b5c4d8a03",
+  "rerun_from_step_id": "summarise"
+}
+```
+
+That step runs, **every step that transitively reads its output** runs, and everything else is reused
+from the named run — not dispatched and not billed. The credit hold covers only the steps that will
+actually run.
+
+**Dependency-based, not positional.** A step declared after `summarise` that does not read it
+(directly or through another step) could not have produced a different result, so it is neither
+re-run nor re-billed. Independent steps also execute concurrently, so "later" is not a well-defined
+ordering to bill by in the first place.
+
+Two ways it differs from a bare resume:
+
+- **The run may be in any finished state** — succeeded, failed or cancelled — not only failed.
+- **An edit to a step that already produced a result is not refused.** A bare resume answers
+  `resume_upstream_definition_changed`; here that step and everything below it simply join the set
+  that runs again, and the hold covers the wider set. Editing a step is the reason for the request.
+
+<Warning>
+  **A step with no recorded result always runs again**, and on a **cancelled** run that can mean
+  paying twice: a step still in flight when the run was cancelled may have been charged without its
+  result ever being written, so it re-runs and is charged again. Absence has to mean re-run — the
+  alternative is binding an output nobody has — but it is a real second charge.
+</Warning>
+
+| Refused with | when |
+|---|---|
+| `rerun_from_step_without_run` | Sent without `resume_from_run_id`. |
+| `rerun_run_not_finished` | The run is still queued or running. |
+| `rerun_from_step_unknown` | No step of the definition has that id. |
+| `rerun_async_unsupported` | Sent with `mode: "async"`. |
+
+`resume_input_changed`, `resume_artifact_expired` and `resume_source_definition_unknown` apply here
+too.
+
+## Modes
+
+### `sync` (default)
+
+Blocks until the run finishes, then returns the whole run.
+
+```json
+{
+  "id": "9c4b…",
+  "status": "succeeded",
+  "attempt": 1,
+  "maxAttempts": 1,
+  "output": { "post": "…" },
+  "creditsUsed": 214,
+  "durationMs": 8123,
+  "createdAt": "2026-08-12T09:14:02.001Z",
+  "stepRuns": [
+    {
+      "id": "outline",
+      "type": "model",
+      "status": "succeeded",
+      "output": { "…": "…" },
+      "creditsUsed": 31,
+      "durationMs": 1204,
+      "attempt": 1
+    }
+  ]
+}
+```
+
+A run status is one of `queued`, `running`, `succeeded`, `failed` or `cancelled`.
+
+<Warning>
+**A failed run is a normal response, not an HTTP error.** The call returns 2xx and the
+failure is in the body: `status: "failed"` with an `error` object naming the step. Check
+`status`, not the HTTP code.
+
+With `failure_mode: "continue"` the run finishes as `succeeded` even when individual steps
+failed — the per-step verdicts are in `stepRuns`.
+</Warning>
+
+Each entry of `stepRuns` carries `id`, `type`, `status` (`pending`, `running`, `succeeded`,
+`failed`, `skipped` or `cancelled`), `creditsUsed`, `durationMs`, `attempt`, and — where
+they apply — `output`, `outputRef`, `error`, `skippedReason` and `childRunIds`.
+
+### `stream`
+
+Returns `text/event-stream`. Each event is a named SSE event whose `data` is JSON; the
+stream ends with `data: [DONE]`. Comment lines (`: ping`) keep the connection alive when a
+step is slow.
+
+| Event | Carries |
+| --- | --- |
+| `pipeline.started` | `runId`, `totalSteps`, `createdAt` |
+| `step.started` | `stepId`, `stepType`, `startedAt`, `attempt` |
+| `step.delta` | `stepId`, `delta` — an OpenAI-shaped chat completion chunk |
+| `step.completed` | `stepId`, `output`, `outputRef`, `creditsUsed`, `durationMs`, `attempt` |
+| `step.failed` | `stepId`, `error`, `attempt` |
+| `step.skipped` | `stepId`, `reason` — `condition_false`, `resumed_from_prior_attempt` or `not_selected` |
+| `pipeline.completed` | `output`, `creditsUsed`, `durationMs`, `stepRuns` |
+| `pipeline.failed` | `error`, `creditsUsed`, `durationMs`, `stepRuns` |
+
+<Warning>
+**A container emits one `step.*` lifecycle, not one per item.** A `foreach` over 100
+items sends `step.started` when the loop begins and `step.completed` when the whole
+loop ends — nothing in between, however long it runs. Do not drive a progress bar off
+per-item events; there are none.
+
+Per-item detail arrives only at the end, in `stepRuns` on `pipeline.completed`, and
+from `GET /v1/workflows/runs/{id}` once the run has finished.
+
+A `sub_pipeline` child's own events are **not** proxied into the parent stream either.
+To follow a child while it runs, poll `GET /v1/workflows/runs/{childRunId}` — the child
+run id is on the parent step's `childRunIds`.
+</Warning>
+
+### `async`
+
+Enqueues the run and returns immediately:
+
+```json
+{ "id": "9c4b…", "status": "queued", "createdAt": "2026-08-12T09:14:02.001Z" }
+```
+
+Poll `GET /v1/workflows/runs/{id}` for the result, or subscribe a
+[notification channel](/workspaces/notifications) to the run events. There is no per-run
+webhook field — delivery is configured per workspace, and a channel can be scoped to a
+single workflow.
+
+<Note>
+Terminal notifications for a run may arrive **out of order**, and a run may send more than
+one: a run reaped as failed whose worker then finishes sends a second, corrected event. For
+a given `metadata.runId`, a terminal event carrying `metadata.correctsPriorStatus`
+supersedes any that does not, whatever the arrival order. Once you have applied a
+correction, discard later terminal events for that run that lack the field.
+</Note>
+
+## Estimating a run
+
+`POST /v1/workflows/estimate` prices a definition **without executing it**. No credits are
+held, nothing is persisted.
+
+In the workflow editor the same estimate sits in the run bar and updates as you edit, so you
+see what a change costs before you commit to it.
+
+<Frame caption="The run bar: what this workflow would cost, and the button that spends it">
+  <img src="/samples/workflow-run-bar.png" alt="A bar across the bottom of the canvas reading Est. (canvas) approximately 2.88 to 4.16 cr, with a green Run button on the right." />
+</Frame>
+
+It is a **range**, and the spread is the honest part: the estimate cannot know how
+many tokens a model will actually emit. Treat the top of the range as the number
+to budget against, and note that `(canvas)` means it priced what is on screen —
+your unsaved edits included, not the published version.
+
+```bash curl
+curl https://api.infery.ai/v1/workflows/estimate \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "definition": { "steps": [ … ] }, "input": { "topic": "cold brew" } }'
+```
+
+Pass **exactly one** of `definition` or `pipeline_id`; `pipeline_version` is required
+alongside `pipeline_id`. Anything else is refused with `invalid_estimate_request`. The
+optional `input` improves the estimate wherever it lets a binding resolve.
+
+```json
+{
+  "min_credits": 180,
+  "max_credits": 260,
+  "currency": "credits",
+  "breakdown": [
+    { "step_id": "outline", "type": "model", "model": "gpt-5", "min_credits": 20, "max_credits": 40 },
+    { "step_id": "hero", "type": "media", "model": "gpt-image-2", "min_credits": 160, "max_credits": 220 }
+  ]
+}
+```
+
+Every entry carries `step_id`, `type`, `min_credits` and `max_credits`, and sometimes a
+`note` explaining a spread. Container entries nest: a `parallel` entry carries `branches`, a
+`foreach` entry carries `body_steps` (each priced for **one** iteration) plus
+`max_iterations` and `items_known`, and a `sub_pipeline` entry carries `child_breakdown`.
+
+<Warning>
+An estimate is a **quote, not a cap**. Nothing refuses a run for exceeding it, and
+`min_credits` deliberately does not always reconcile against the breakdown: a `foreach`
+whose `items` is a binding reports `min_credits: 0`, because the loop may run zero times,
+and a `condition`-gated step is floored to 0 for the same reason.
+</Warning>
+
+## Storing a workflow
+
+| Method | Path | Does |
+| --- | --- | --- |
+| `POST` | `/v1/workflows` | Create. Body: `name`, `description`, `definition`. Returns `id`, `version`, `name`. |
+| `GET` | `/v1/workflows?limit=&offset=` | List. `limit` defaults to 20, max 100. Returns `items`, `total`, `limit`, `offset`. |
+| `GET` | `/v1/workflows/{id}?version=` | Fetch one, latest version by default. Returns the workflow plus `definition`, `version` and its declared `inputs`. |
+| `PUT` | `/v1/workflows/{id}` | Update. A changed `definition` creates a **new version**; older versions stay runnable. |
+| `DELETE` | `/v1/workflows/{id}` | Soft-delete. Returns `{"id": …, "deleted": true}`. |
+
+<Note>
+**Body fields other than `definition` are not validated as a shape.** `definition` is parsed
+strictly and refuses anything it does not recognise, but `name`, `description` and `mode` are
+not: `name` is bounded by the database column at 120 characters — exceeding it surfaces as a
+storage error rather than a clean 400 — `description` has no runtime limit, and an unknown
+`mode` falls through to `sync` rather than being rejected.
+
+Send `mode` exactly as `sync`, `stream` or `async`. `"SYNC"` is not the same thing.
+</Note>
+
+Pin `pipeline_version` on a run when you need a definition frozen — `sub_pipeline` steps
+require it for exactly that reason.
+
+## What a finished run looks like
+
+<Frame caption="A succeeded run: every step's result, cost and duration, still on the canvas">
+  <img src="/samples/workflow-run-result.png" alt="The workflow editor showing a finished run of a workflow called Watermarked social set. A banner reads: showing the succeeded run from 14 Aug 16:34, the canvas is v1, the version it ran, which is also the published one, Save publishes this canvas as v2. Two input cards feed a gpt-image-2 step that produced a logo, an image.resize step, and three parallel image.pipeline steps each carrying two operations and showing its own output thumbnail. The Output node lists named results MARK, WIDE and STORY, and one more. The bar along the bottom reads RUN Succeeded, Est. approximately 11 cr, 0.5 cr, then per-step entries: image.resize 0.125cr 1166ms, media 0cr 0ms, and three image.pipeline entries at 0.125cr and around 1.2 seconds each." />
+</Frame>
+
+Results stay **on the canvas**, on the steps that produced them, rather than in a
+separate log you have to correlate by hand. Each step shows what it made; the bar
+along the bottom shows what each one cost and how long it took.
+
+Three things in that run are worth reading closely.
+
+**The estimate was ~11 credits and it cost 0.5.** That is not a bug in either
+number. An estimate has to assume the expensive case — the tokens a model *might*
+emit, the operations that *might* run — and this workflow is mostly deterministic
+image work that came in far under. Budget against the estimate; expect to be
+pleasantly surprised by the invoice.
+
+**The three `image.pipeline` steps ran at the same time.** They each read the same
+photo and none reads another's output, so nothing makes them wait — see
+[independent steps](/workflows/overview#independent-steps-run-at-the-same-time).
+Their durations overlap rather than add up.
+
+**The banner names the version.** A run records the definition it executed, so
+opening an old run shows you what actually ran rather than what is published now.
+Here they happen to be the same (`v1`); when they are not, the banner says so, and
+saving the canvas publishes a new version rather than rewriting the one the run
+used.
+
+## Inspecting and stopping a run
+
+The same facts are on the API, for when the canvas is not where you are looking:
+
+| Method | Path | Does |
+| --- | --- | --- |
+| `GET` | `/v1/workflows/runs/{id}` | The run, in the same shape a sync run returns. |
+| `GET` | `/v1/workflows/runs/{id}/logs` | Per-step call records: `step_id`, `attempt`, `status`, `input_tokens`, `output_tokens`, `settled_credits`, `error_message`, `started_at`, `completed_at`. |
+| `POST` | `/v1/workflows/runs/{id}/cancel` | Best-effort cancel of a queued or running run. Returns `{"id": …, "status": …}`. |
+
+Cancellation is **best effort**. The runner checks for it between steps, so a step already
+in flight is not interrupted; what cancelling stops is everything that has not started yet.
+
+## Timeouts
+
+| Ceiling | Value |
+| --- | --- |
+| One step attempt (`timeout_seconds`) | up to 600 s |
+| One `http` step's request (`input.timeout_seconds`) | 1–60 s, default 30 s |
+| `pipeline_timeout_seconds` in a definition | values above 120 are refused |

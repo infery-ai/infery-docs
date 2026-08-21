@@ -1,0 +1,188 @@
+---
+title: "Archive tools"
+description: "Archive tools available as workflow steps and through /v1/capabilities."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+**2 tools.** Each one is deterministic: the same input gives the same output, and
+nothing is inferred. Call one directly with
+[`POST /v1/capabilities/{id}/run`](/api-reference/capabilities/run), or use it as a step in a
+[workflow](/workflows/step-types).
+
+Prices are on the [live catalogue](https://infery.ai/models) — they change, and a stale price here would be
+worse than none.
+
+| Tool | Does | In → out |
+| --- | --- | --- |
+| [`archive.pack`](#archivepack) | Pack files into zip or tar.gz. | any → archive |
+| [`archive.unpack`](#archiveunpack) | Unpack zip, tar.gz, or rar. | archive → any |
+
+## `archive.pack`
+
+**any → archive** · Billed per request
+
+Pack one or more files from GCS into a zip or tar.gz archive.
+
+### When to use
+
+- **Bundle multiple files** for download as a single archive.
+- **Compress outputs** from a pipeline (e.g., batch transcoded videos → zip).
+- **Package artefacts** before long-term cold storage.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | List of file URLs (via `entries` param) |
+| **Output modality** | Archive file (GCS URL) |
+| **Max entries** | 1 000 files |
+| **Max total uncompressed size** | 50 GB |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `format` | yes | Archive format — `zip` or `tar.gz` |
+| `compression` | no | Compression level — `none`, `fast`, `best`. Default: `best` |
+| `entries` | yes | Array of `{ sourceUrl, path }` — GCS URL + desired path inside the archive |
+
+### Examples
+
+#### ZIP two files with best compression
+
+```json
+{
+  "type": "archive.pack",
+  "input": {},
+  "params": {
+    "format": "zip",
+    "compression": "best",
+    "entries": [
+      { "sourceUrl": "https://example.com/out/a.txt", "path": "docs/a.txt" },
+      { "sourceUrl": "https://example.com/out/b.txt", "path": "docs/b.txt" }
+    ]
+  }
+}
+```
+
+#### tar.gz with no compression (pre-compressed media)
+
+```json
+{
+  "type": "archive.pack",
+  "input": {},
+  "params": {
+    "format": "tar.gz",
+    "compression": "none",
+    "entries": [
+      { "sourceUrl": "https://example.com/out/video.mp4", "path": "video.mp4" }
+    ]
+  }
+}
+```
+
+### Pricing
+
+Billed per GB of uncompressed input processed. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `archive.unpack` — extract files from an existing archive
+
+### Examples
+
+**ZIP of 2 files**
+
+```json
+{
+  "type": "archive.pack",
+  "params": {
+    "format": "zip",
+    "compression": "best",
+    "entries": [
+      {
+        "sourceUrl": "https://example.com/a.txt",
+        "path": "a.txt"
+      },
+      {
+        "sourceUrl": "https://example.com/b.txt",
+        "path": "b.txt"
+      }
+    ]
+  }
+}
+```
+
+## `archive.unpack`
+
+**archive → any** · Billed per request
+
+Unpack a zip, tar.gz, or rar archive stored in GCS into individual files.
+
+### When to use
+
+- **Unzip user uploads** before processing individual files in a pipeline.
+- **Extract assets** from a downloaded archive for further transformation.
+- **Decompress tar.gz artefacts** from CI/CD or build systems.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Archive file (URL) |
+| **Output modality** | Extracted files (GCS directory URL) |
+| **Supported formats** | `zip`, `tar.gz`, `rar` |
+| **Max archive size** | 10 GB |
+| **Max extracted size** | 50 GB |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `format` | yes | Archive format — `zip`, `tar.gz`, or `rar` |
+
+### Examples
+
+#### Unzip a user-uploaded bundle
+
+```json
+{
+  "type": "archive.unpack",
+  "input": { "archive_url": "https://example.com/uploads/bundle.zip" },
+  "params": { "format": "zip" }
+}
+```
+
+#### Extract a tar.gz release archive
+
+```json
+{
+  "type": "archive.unpack",
+  "input": { "archive_url": "https://example.com/releases/v1.0.tar.gz" },
+  "params": { "format": "tar.gz" }
+}
+```
+
+### Pricing
+
+Billed per GB of extracted output. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `archive.pack` — create a new archive from files
+
+### Examples
+
+**Unzip**
+
+```json
+{
+  "type": "archive.unpack",
+  "params": {
+    "format": "zip"
+  }
+}
+```
+

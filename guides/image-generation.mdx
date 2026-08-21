@@ -1,0 +1,157 @@
+---
+title: "Image generation"
+description: "Choose the right model, write better prompts, and persist what you generate."
+---
+
+For the endpoint contract see [Images API](/api-reference/images/generations). This guide covers the practical side: picking a model, prompting, sizes, edits, persistence.
+
+`client.images.generate(...)` works against our base URL for the common case. Two things it doesn't cover: image **edits** (see [Image edits](#image-edits) below), and a rare long-running generation answering a job to poll instead of an image (see the warning under [Persistence](#persistence)). See the [compatibility matrix](/sdks/openai-compatibility) for the full picture across every operation.
+
+## Pick a model
+
+| Model | Strong for | Notes |
+| --- | --- | --- |
+| `dall-e-3` | Following long prompts literally | OpenAI rewrites your prompt and returns the rewrite in `data[0].revised_prompt`; this is not switchable off |
+| `nano-banana` | Photorealism, edits, fast | Cheap; supports image-to-image edits |
+| `imagen-4` | High aesthetic quality | Slower; great for marketing visuals |
+| `qwen-image` | Multilingual prompts (CN/EN), text in image | PRC opt-in required |
+| `flux-pro` | Open-weights FLUX, permissive prompts | Served through an aggregator, like every other model here |
+| `grok-imagine-image` | Realistic + low refusal rate | xAI |
+
+List the catalog with `GET /v1/models` and keep the entries whose `_infery.modality` is `image`. There is no `modality` query parameter — filter client-side. Each entry's `_infery.allowed_params.sizes` tells you what to ask for.
+
+## Prompt patterns that work
+
+Across all current image models, structured prompts beat freeform descriptions:
+
+```
+[subject], [style], [composition], [lighting], [details], [mood]
+
+Example:
+A snow leopard on a rocky cliff,
+photorealistic wildlife photography,
+medium shot from below,
+golden-hour side lighting,
+visible whiskers and individual fur strands,
+solitary and watchful
+```
+
+Tips that generalise:
+
+- **Subject first.** Models weight early tokens more.
+- **Be concrete.** "Cinematic lighting" is vague; "low-key chiaroscuro from a single window" isn't.
+- **Specify what to avoid** with negative phrasing: "no text, no watermark, no humans".
+- **Anchor style** with reference styles or photographers ("in the style of National Geographic", "shot on Hasselblad H6D").
+- **Iterate small.** Change one variable at a time — model, then prompt, then size.
+
+## Sizes and aspect ratios
+
+Common, almost universally supported:
+
+| Use | Size | Aspect |
+| --- | --- | --- |
+| Square thumbnail | `1024x1024` | 1:1 |
+| Hero / blog | `1792x1024` | 16:9 |
+| Portrait / mobile | `1024x1792` | 9:16 |
+| Square small / icon | `512x512` | 1:1 |
+
+Always check the model's `_infery.allowed_params.sizes` in `GET /v1/models` before assuming — some models only support `1024x1024`.
+
+## Persistence
+
+Generated URLs are **ephemeral** — typically 1 hour. If you want to keep an image, do one of:
+
+```python python
+import base64, os
+from openai import OpenAI
+
+client = OpenAI(api_key=os.environ["INFERY_API_KEY"], base_url="https://api.infery.ai/v1")
+
+# Option 1: ask for base64 directly (DALL-E models)
+img = client.images.generate(
+    model="dall-e-3",
+    prompt="...",
+    response_format="b64_json",
+)
+png = base64.b64decode(img.data[0].b64_json)
+open("out.png", "wb").write(png)
+```
+
+```python python
+# Option 2: download the URL within the hour, then upload to Files
+import httpx
+
+img = client.images.generate(model="dall-e-3", prompt="...")
+png = httpx.get(img.data[0].url, follow_redirects=True).content
+f = client.files.create(file=("hero.png", png), purpose="user_data")
+# f.id is now a stable handle in your workspace storage
+```
+
+The second pattern keeps the bytes in your workspace storage and gives you a stable `file_id`.
+
+Some models skip this entirely: when a generation is served through our durable job path, each item in `data` already carries a `file_id` alongside its `url`, and that URL is signed over our own storage rather than the provider's. Read `file_id` first and only fall back to downloading when it is absent.
+
+<Warning>
+A generation that runs longer than 5 minutes answers **504** rather than an image, with a `job_id` in the error body. The job keeps running and is still billed, so treat this as "collect later", not as a failure: poll `GET /v1/images/jobs/{job_id}` until `status` is `completed`, then read `data[].url`. The same job endpoint serves image, speech and transcription jobs.
+</Warning>
+
+## Image edits
+
+Models with edit support (Nano Banana, Qwen Image, FLUX) take a source image plus a prompt.
+
+<Warning>
+`client.images.edit(...)` from the OpenAI SDK does **not** work here. The SDK posts `multipart/form-data` with an `image` file part; our `/v1/images/edits` takes JSON with a base64 `image_base64` field. Call it over plain HTTP instead.
+</Warning>
+
+```python python
+import base64, os, httpx
+
+src = base64.b64encode(open("portrait.jpg", "rb").read()).decode()
+
+edit = httpx.post(
+    "https://api.infery.ai/v1/images/edits",
+    headers={"Authorization": f"Bearer {os.environ['INFERY_API_KEY']}"},
+    json={
+        "model": "nano-banana",
+        "prompt": "Replace the background with a tropical beach, keep the subject and pose unchanged",
+        "image_base64": src,
+        "image_mime_type": "image/jpeg",
+    },
+    timeout=300,
+).json()
+
+url = edit["data"][0]["url"]
+```
+
+`image_mime_type` defaults to `image/png` — set it when your source is anything else. An optional `mask_base64` (transparent = the region to repaint) enables in-painting on the models that support a mask.
+
+Not every image model can serve an edit: the request is routed to one source, and if that source takes no input image the call is refused with `400 edit_not_supported` before anything is billed.
+
+Use cases: background swap, object removal, restyling, in-painting. Edit fidelity beats "regenerate from scratch" for any case where the subject needs to stay consistent.
+
+### Sample: generate vs. edit
+
+<Frame caption="Generation — 'Vibrant Japanese garden in autumn, koi pond, golden hour'">
+  <img src="/samples/image.png" alt="Generated autumn Japanese garden scene" />
+</Frame>
+
+<Frame caption="Edit — same source image, prompt: 'Transform into a snowy winter wonderland, keep layout intact'">
+  <img src="/samples/image-edit.png" alt="Edited to winter scene, composition preserved" />
+</Frame>
+
+*Both images produced by Nano Banana (`nano-banana`). Notice how the edit preserves the composition — bridge, lantern, pond — while swapping season, lighting and palette.*
+
+## Quality vs. cost
+
+Generation cost varies by model and size — check pricing in `GET /v1/models`. Rules of thumb:
+
+- DALL·E 3 standard ≈ 4 credits, HD ≈ 8 credits
+- Imagen 4 ≈ 8 credits
+- Nano Banana ≈ 1.5 credits
+- FLUX (self-hosted) ≈ 1 credit
+
+For experimentation in the [Studio](/playground/overview), pick the cheap models. For production hero images, pick by quality, not cost.
+
+## Safety
+
+All providers (except FLUX self-hosted) run their own safety filters. Refusals come back as a 400 with the provider's reason — they aren't transient and **fallback won't help**. If you hit refusals on legitimate content, try a different provider or rephrase. For the policy boundary, see [AUP](https://infery.ai/aup).

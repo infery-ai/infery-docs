@@ -1,0 +1,60 @@
+---
+title: "Fallback chains"
+description: "Route automatically to a backup model when the primary fails or rate-limits."
+---
+
+Fallback chains let you define **what happens when a model call fails**. Instead of the error bubbling up to your app, Infery transparently retries on a backup model of your choice.
+
+## Use cases
+
+- Primary **provider outage** — OpenAI 429s during peak hours → fall back to Google Gemini Flash
+- **Cost-tier progression** — try `gpt-4o`, on rate-limit step down to `gpt-4o-mini`, then `gemini-flash`
+- **Capability routing** — use a PDF-native model first; if unavailable, use a vision model with our PDF-to-image preprocessor
+- **Regional** — EU customers fall back from an OpenAI model to a Google one hosted in EU
+
+## Setting up a chain
+
+Settings → **Fallbacks** → **New chain** (or edit an existing one).
+
+A chain is attached to a **source model slug** and lists fallback models in priority order:
+
+```
+Source: gpt-4o
+├─ Priority 1: gpt-4o-mini
+├─ Priority 2: gemini-2.5-flash
+└─ Priority 3: claude-haiku-4.5
+```
+
+## When fallbacks fire
+
+The gateway steps through fallbacks when the primary (or prior fallback) fails with one of:
+
+- the provider's own `429` (its rate limit, not yours)
+- the provider's `500` / `502` / `503` / `504`
+- the provider's `404` / `410` — the model is gone from that source
+- Provider-specific errors tagged as retryable
+- Network timeout / connection reset
+
+**Not retried**: `4xx` errors from your code (bad prompt, invalid params, auth failure).
+
+**Not covered at all**: your own workspace limits. `403 rate_limit_exceeded`, `403 daily_tokens_exceeded` and `403 insufficient_credits` are refused *before* a source is chosen, so there is nothing to advance to — see [Rate limits](/api-reference/rate-limits).
+
+## Transparent to the caller
+
+Client code doesn't change. The response comes back in OpenAI format as normal, plus an extra header:
+
+```
+x-fallback-from: gpt-4o
+x-model-used: gpt-4o-mini
+x-fallback-depth: 1
+```
+
+Use these headers in logs/analytics to see which fallbacks are active in production.
+
+## Cost accounting
+
+The **final model that served the request** is billed. If fallback to a cheaper model succeeds, you pay the cheaper price. Rate-limit attempts don't incur cost.
+
+## Disabling per call
+
+Add header `x-disable-fallback: true` on an individual request to force primary-only behaviour (useful for testing which primary is actually up).

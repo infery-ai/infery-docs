@@ -1,0 +1,409 @@
+---
+title: "Text models"
+description: "Every text model on Infery, grouped by what it takes as input."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+Chat and completion models, called through `POST /v1/chat/completions`.
+
+**387 models.** Grouped by input, because that is the choice you make first — a model that
+turns an image into a video is not interchangeable with one that starts from a prompt.
+
+Prices are not listed here: they change, and a stale price is worse than none. See the
+[live catalogue](https://infery.ai/models) for current rates, and each model's own page there for its full
+parameter schema.
+
+## Text → text (387)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `aion-2.0` | aionlabs | — | 131k ctx, 33k out, streaming · Aion-2.0 is a variant of DeepSeek V3.2 optimized for immersive roleplaying and storytelling. |
+| `aion-3.0` | aionlabs | — | 131k ctx, 33k out, streaming, tools, json mode · Aion-3.0 is a multi-model roleplaying and storytelling system from AionLabs, built on the GLM family of models. |
+| `aion-3.0-mini` | aionlabs | — | 131k ctx, 33k out, streaming, tools, json mode · Aion-3.0 Mini is a multi-model roleplaying and storytelling system from AionLabs, built on the DeepSeek family of models. |
+| `aion-rp-llama-3.1-8b` | aionlabs | — | 33k ctx, 33k out, streaming · Aion-RP-Llama-3.1-8B ranks the highest in the character evaluation portion of the RPBench-Auto benchmark, a roleplaying-specific variant of… |
+| `qwen-flash` | alibaba | — | 1000k ctx, 33k out, streaming, tools, json mode |
+| `qwen-long` | alibaba | — | 10000k ctx, 33k out, streaming |
+| `qwen-plus` | alibaba | — | 1000k ctx, 33k out, streaming, tools, json mode · Qwen-Plus, based on the Qwen2.5 foundation model, is a 131K context model with a balanced performance, speed, and cost combination. |
+| `qwen-turbo` | alibaba | — | 131k ctx, 16k out, streaming, tools, json mode |
+| `qwen-vl-max` | alibaba | — | 131k ctx, 8k out, streaming, vision |
+| `qwen-vl-plus` | alibaba | — | 131k ctx, 8k out, streaming, vision |
+| `qwen3-coder-flash` | alibaba | — | 1000k ctx, 66k out, streaming, tools · Qwen3 Coder Flash is Alibaba's fast and cost efficient version of their proprietary Qwen3 Coder Plus. |
+| `qwen3-coder-plus` | alibaba | — | 1000k ctx, 66k out, streaming, tools · Qwen3 Coder Plus is Alibaba's proprietary version of the Open Source Qwen3 Coder 480B A35B. |
+| `qwen3-max` | alibaba | — | 262k ctx, 33k out, streaming, tools, vision, json mode · Qwen3-Max is an updated release built on the Qwen3 series, offering major improvements in reasoning, instruction following, multilingual… |
+| `qwen3-omni-flash` | alibaba | — | 66k ctx, 16k out, streaming, vision |
+| `qwen3-vl-flash` | alibaba | — | 262k ctx, 33k out, streaming, vision |
+| `qwen3-vl-plus` | alibaba | — | 262k ctx, 33k out, streaming, vision |
+| `qwen3.5-flash` | alibaba | — | 1000k ctx, 66k out, streaming, tools, vision, json mode |
+| `qwen3.5-omni-flash` | alibaba | — | 262k ctx, 33k out, streaming, vision |
+| `qwen3.5-omni-plus` | alibaba | — | 262k ctx, 33k out, streaming, vision |
+| `qwen3.5-plus` | alibaba | — | 1000k ctx, 66k out, streaming, tools, vision, json mode |
+| `qwen3.6-flash` | alibaba | — | 1000k ctx, 66k out, streaming, tools, vision, json mode · Qwen3.6 Flash is a fast, efficient language model from Alibaba's Qwen 3.6 series. |
+| `qwen3.7-max` | alibaba | — | 1000k ctx, 33k out, streaming, tools, vision, json mode · Qwen3.7-Max is the flagship model in Alibaba's Qwen3.7 series. 1,000,000 token context window, maximum output of 65,536 tokens. |
+| `qwen3.7-plus` | alibaba | — | 1000k ctx, 66k out, streaming, tools, vision, json mode · Qwen3.7-Plus is a cost-effective model in Alibaba's Qwen3.7 series. 1,000,000 token context window, maximum output of 65,536 tokens. |
+| `qwq-plus` | alibaba | — | 131k ctx, 8k out, streaming |
+| `olmo-3-32b-think` | allenai | — | 66k ctx, 66k out, streaming, json mode · Olmo 3.1 32B Think is a large-scale, 32-billion-parameter model designed for deep reasoning, complex multi-step logic, and advanced… |
+| `nova-2-lite-v1` | amazon | — | 1000k ctx, 66k out, streaming, tools, vision, pdf · Nova 2 Lite is a fast, cost-effective reasoning model for everyday workloads that can process text, images, and videos to generate text. |
+| `nova-lite-v1` | amazon | — | 300k ctx, 5k out, streaming, tools, vision · Amazon Nova Lite 1.0 is a very low-cost multimodal model from Amazon that focused on fast processing of image, video, and text inputs to… |
+| `nova-micro-v1` | amazon | — | 128k ctx, 5k out, streaming, tools · Amazon Nova Micro 1.0 is a text-only model that delivers the lowest latency responses in the Amazon Nova family of models at a very low… |
+| `nova-premier-v1` | amazon | — | 1000k ctx, 32k out, streaming, tools, vision · Amazon Nova Premier is the most capable of Amazon’s multimodal models for complex reasoning tasks and for use as the best teacher for… |
+| `nova-pro-v1` | amazon | — | 300k ctx, 5k out, streaming, tools, vision · Amazon Nova Pro 1.0 is a capable multimodal model from Amazon focused on providing a combination of accuracy, speed, and cost for a wide… |
+| `magnum-v4-72b` | anthracite-org | — | 16k ctx, 2k out, streaming, json mode · 32,768 token context window, maximum output of 2,048 tokens. |
+| `claude-3-haiku` | anthropic | — | 200k ctx, 4k out, streaming, tools, vision · Claude 3 Haiku is Anthropic's fastest and most compact model for near-instant responsiveness. Quick and accurate targeted performance. |
+| `claude-fable-5` | anthropic | — | 1000k ctx, 64k out, streaming, tools, vision, pdf, json mode · Claude Fable 5 is a Mythos-class model from Anthropic, built for autonomous knowledge work and coding. |
+| `claude-fable-latest` | anthropic | — | 1000k ctx, 128k out, streaming, tools, vision, pdf, json mode · This model always redirects to the latest model in the Claude Fable family. |
+| `claude-haiku-3.5` | anthropic | — | 200k ctx, 8k out, streaming, tools |
+| `claude-haiku-4.5` | anthropic | — | 200k ctx, 8k out, streaming, tools, vision, json mode · Claude Haiku 4.5 is Anthropic’s fastest and most efficient model, delivering near-frontier intelligence at a fraction of the cost and… |
+| `claude-haiku-latest` | anthropic | — | 200k ctx, 64k out, streaming, tools, vision, pdf, json mode · This model always redirects to the latest model in the Anthropic Claude Haiku family. |
+| `claude-opus-4.1` | anthropic | — | 200k ctx, 33k out, streaming, tools, vision, pdf, json mode · Claude Opus 4.1 is an updated version of Anthropic’s flagship model, offering improved performance in coding, reasoning, and agentic tasks. |
+| `claude-opus-4.5` | anthropic | — | 1000k ctx, 33k out, streaming, tools, vision, pdf, json mode · Claude Opus 4.5 is Anthropic’s frontier reasoning model optimized for complex software engineering, agentic workflows, and long-horizon… |
+| `claude-opus-4.6` | anthropic | — | 1000k ctx, 33k out, streaming, tools, vision, pdf, json mode · Opus 4.6 is Anthropic’s strongest model for coding and long-running professional tasks. |
+| `claude-opus-4.7` | anthropic | — | 1000k ctx, 33k out, streaming, tools, vision, pdf, json mode · Opus 4.7 is the next generation of Anthropic's Opus family, built for long-running, asynchronous agents. |
+| `claude-opus-4.7-fast` | anthropic | — | 1000k ctx, 128k out, streaming, tools, vision, pdf, json mode · Fast-mode variant of Opus 4.7 - identical capabilities with higher output speed at premium 6x pricing. |
+| `claude-opus-4.8` | anthropic | — | 1000k ctx, 128k out, streaming, tools, vision, pdf, json mode · Claude Opus 4.8 is Anthropic's most capable generally available model in the Opus family. |
+| `claude-opus-4.8-fast` | anthropic | — | 1000k ctx, 128k out, streaming, tools, vision, pdf, json mode · Fast-mode variant of Opus 4.8 - identical capabilities with higher output speed at 2x pricing relative to regular Opus 4.8. |
+| `claude-opus-5` | anthropic | — | 1000k ctx, 128k out, streaming, tools, vision, pdf, json mode · Claude Opus 5 is Anthropic’s flagship model for demanding reasoning, coding, and long-horizon agentic work. |
+| `claude-opus-5-fast` | anthropic | — | 1000k ctx, 128k out, streaming, tools, vision, pdf, json mode · Fast-mode variant of Opus 5 - identical capabilities with higher output speed at 2x pricing relative to regular Opus 5. |
+| `claude-opus-latest` | anthropic | — | 1000k ctx, 128k out, streaming, tools, vision, pdf, json mode · This model always redirects to the latest model in the Claude Opus family. 1,000,000 token context window, maximum output of 128,000 tokens. |
+| `claude-sonnet-4.5` | anthropic | — | 200k ctx, 16k out, streaming, tools, vision, pdf, json mode · Claude Sonnet 4.5 is Anthropic’s most advanced Sonnet model to date, optimized for real-world agents and coding workflows. |
+| `claude-sonnet-4.6` | anthropic | — | 1000k ctx, 33k out, streaming, tools, vision, pdf, json mode · Sonnet 4.6 is Anthropic's most capable Sonnet-class model yet, with frontier performance across coding, agents, and professional work. |
+| `claude-sonnet-5` | anthropic | — | 1000k ctx, 64k out, streaming, tools, vision, pdf, json mode · Sonnet 5 is Anthropic's most capable Sonnet-class model, with frontier performance across coding, agents, and professional work. |
+| `claude-sonnet-latest` | anthropic | — | 1000k ctx, 128k out, streaming, tools, vision, pdf, json mode · This model always redirects to the latest model in the Anthropic Claude Sonnet family. |
+| `trinity-large-thinking` | arcee-ai | — | 262k ctx, 262k out, streaming, tools, json mode · Trinity Large Thinking is a powerful open source reasoning model from the team at Arcee AI. |
+| `trinity-mini` | arcee-ai | — | 131k ctx, 131k out, streaming, tools, json mode |
+| `virtuoso-large` | arcee-ai | — | 131k ctx, 64k out, streaming, tools · Virtuoso‑Large is Arcee's top‑tier general‑purpose LLM at 72 B parameters, tuned to tackle cross‑domain reasoning, creative writing and… |
+| `qwen-2-1.5b-instruct` | arize-ai | — | 33k ctx, streaming |
+| `ernie-4.5-vl-424b-a47b` | baidu | — | 123k ctx, 16k out, streaming, vision · ERNIE-4.5-VL-424B-A47B is a multimodal Mixture-of-Experts (MoE) model from Baidu’s ERNIE 4.5 series, featuring 424B total parameters with… |
+| `ui-tars-1.5-7b` | bytedance | — | 128k ctx, 2k out, streaming, vision · UI-TARS-1.5 is a multimodal vision-language agent optimized for GUI-based environments, including desktop interfaces, web browsers, mobile… |
+| `seed-1.6` | bytedance-seed | — | 262k ctx, 33k out, streaming, tools, vision, json mode · Seed 1.6 is a general-purpose model released by the ByteDance Seed team. 262,144 token context window, maximum output of 32,768 tokens. |
+| `seed-1.6-flash` | bytedance-seed | — | 262k ctx, 33k out, streaming, tools, vision, json mode · Seed 1.6 Flash is an ultra-fast multimodal deep thinking model by ByteDance Seed, supporting both text and visual understanding. |
+| `seed-2-1-turbo` | bytedance-seed | — | 262k ctx, 262k out, streaming, tools, vision, json mode · Seed 2.1 Turbo is a multimodal model from ByteDance Seed for coding and long-horizon agent workflows. |
+| `seed-2.0-code` | bytedance-seed | — | 262k ctx, 131k out, streaming, tools, vision, json mode · Seed 2.0 Code is a model from ByteDance Seed optimized for agentic coding. 262,144 token context window, maximum output of 131,072 tokens. |
+| `seed-2.0-lite` | bytedance-seed | — | 262k ctx, 131k out, streaming, tools, vision, json mode · Seed-2.0-Lite is a versatile, cost‑efficient enterprise workhorse that delivers strong multimodal and agent capabilities while offering… |
+| `seed-2.0-mini` | bytedance-seed | — | 262k ctx, 131k out, streaming, tools, vision, json mode · Seed-2.0-mini targets latency-sensitive, high-concurrency, and cost-sensitive scenarios, emphasizing fast response and flexible inference… |
+| `dolphin-mistral-24b-venice-edition` | cognitivecomputations | — | 128k ctx, 8k out, streaming, json mode · Venice Uncensored Dolphin Mistral 24B Venice Edition is a fine-tuned variant of Mistral-Small-24B-Instruct-2501, developed by dphn.ai in… |
+| `command-a` | cohere | — | 256k ctx, 8k out, streaming, json mode · Command A is an open-weights 111B parameter model with a 256k context window focused on delivering great performance across agentic… |
+| `command-r-08-2024` | cohere | — | 128k ctx, 4k out, streaming, tools, json mode · command-r-08-2024 is an update of the Command R with improved performance for multilingual retrieval-augmented generation (RAG) and tool… |
+| `command-r-plus-08-2024` | cohere | — | 128k ctx, 4k out, streaming, tools, json mode · command-r-plus-08-2024 is an update of the Command R+ with roughly 50% higher throughput and 25% lower latencies as compared to the… |
+| `command-r7b-12-2024` | cohere | — | 128k ctx, 4k out, streaming, json mode · Command R7B (12-2024) is a small, fast update of the Command R+ model, delivered in December 2024. |
+| `cogito-v2-1-671b` | deepcogito | — | 164k ctx, streaming · Cogito v2.1 671B MoE represents one of the strongest open models globally, matching performance of frontier closed and open models. |
+| `deepseek-chat` | deepseek | — | 128k ctx, 8k out, streaming, tools, json mode · DeepSeek-V3 is the latest model from the DeepSeek team, building upon the instruction following and coding abilities of the previous… |
+| `deepseek-chat-v3-0324` | deepseek | — | 164k ctx, 16k out, streaming, tools, json mode · DeepSeek V3, a 685B-parameter, mixture-of-experts model, is the latest iteration of the flagship chat model family from the DeepSeek team. |
+| `deepseek-chat-v3.1` | deepseek | — | 164k ctx, 33k out, streaming, tools, json mode · DeepSeek-V3.1 is a large hybrid reasoning model (671B parameters, 37B active) that supports both thinking and non-thinking modes via prompt… |
+| `deepseek-r1` | deepseek | — | 64k ctx, 16k out, streaming, tools, json mode · DeepSeek R1 is here: Performance on par with OpenAI o1, but open-sourced and with fully open reasoning tokens. |
+| `deepseek-r1-0528` | deepseek | — | 164k ctx, 33k out, streaming, tools, json mode · May 28th update to the original DeepSeek R1 Performance on par with OpenAI o1, but open-sourced and with fully open reasoning tokens. |
+| `deepseek-r1-distill-llama-70b` | deepseek | — | 131k ctx, 16k out, streaming, json mode · DeepSeek R1 Distill Llama 70B is a distilled large language model based on Llama-3.3-70B-Instruct, using outputs from DeepSeek R1. |
+| `deepseek-reasoner` | deepseek | — | 128k ctx, 66k out, streaming, tools |
+| `deepseek-v3.1-terminus` | deepseek | — | 164k ctx, 33k out, streaming, tools, json mode · DeepSeek-V3.1 Terminus is an update to DeepSeek V3.1 that maintains the model's original capabilities while addressing issues reported by… |
+| `deepseek-v3.2-exp` | deepseek | — | 164k ctx, 66k out, streaming, tools, json mode · DeepSeek-V3.2-Exp is an experimental large language model released by DeepSeek as an intermediate step between V3.1 and future… |
+| `deepseek-v4-flash` | deepseek | — | 1000k ctx, 66k out, streaming, tools, json mode · DeepSeek V4 Flash is an efficiency-optimized Mixture-of-Experts model from DeepSeek with 284B total parameters and 13B activated… |
+| `deepseek-v4-flash-0731` | deepseek | — | 1049k ctx, 384k out, streaming, tools, json mode · DeepSeek V4 Flash 0731 is a sparse mixture-of-experts model from DeepSeek, with 13B active parameters out of 284B total. |
+| `deepseek-v4-flash-latest` | deepseek | — | 1049k ctx, 66k out, streaming, tools, json mode · This model always redirects to the latest model in the DeepSeek V4 Flash family. |
+| `deepseek-v4-flash-vision-exp` | deepseek | — | 1049k ctx, 384k out, streaming, tools, vision, json mode · DeepSeek V4 Flash Vision Exp is an experimental vision-enabled version of DeepSeek V4 Flash 0731 from DeepSeek, adding image understanding… |
+| `deepseek-v4-pro` | deepseek | — | 1000k ctx, 66k out, streaming, tools, json mode · DeepSeek V4 Pro is a large-scale Mixture-of-Experts model from DeepSeek with 1.6T total parameters and 49B activated parameters, supporting… |
+| `deepseek-v4-pro-0813` | deepseek | — | 1049k ctx, 384k out, streaming, tools, json mode · DeepSeek V4 Pro 0813 is a large-scale mixture-of-experts model from DeepSeek. |
+| `deepseek-coder-33b-instruct` | deepseek-ai | — | 16k ctx, streaming |
+| `deepseek-r1-distill-qwen-1.5b` | deepseek-ai | — | 131k ctx, streaming |
+| `deepseek-r1-distill-qwen-14b` | deepseek-ai | — | 131k ctx, streaming |
+| `deepseek-v3.1` | deepseek-ai | — | 131k ctx, streaming |
+| `gemini-2.5-computer-use` | google | — | 131k ctx, 66k out, streaming, vision |
+| `gemini-2.5-flash` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · Gemini 2.5 Flash is Google's state-of-the-art workhorse model, specifically designed for advanced reasoning, coding, mathematics, and… |
+| `gemini-2.5-flash-lite` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · Gemini 2.5 Flash-Lite is a lightweight reasoning model in the Gemini 2.5 family, optimized for ultra-low latency and cost efficiency. |
+| `gemini-2.5-flash-lite-preview-09-2025` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode |
+| `gemini-2.5-flash-native-audio` | google | — | 131k ctx, 8k out, streaming, vision |
+| `gemini-2.5-pro` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · Gemini 2.5 Pro is Google’s state-of-the-art AI model designed for advanced reasoning, coding, mathematics, and scientific tasks. |
+| `gemini-2.5-pro-preview` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · Gemini 2.5 Pro is Google’s state-of-the-art AI model designed for advanced reasoning, coding, mathematics, and scientific tasks. |
+| `gemini-2.5-pro-preview-05-06` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · Gemini 2.5 Pro is Google’s state-of-the-art AI model designed for advanced reasoning, coding, mathematics, and scientific tasks. |
+| `gemini-3-flash-preview` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · Gemini 3 Flash Preview is a high speed, high value thinking model designed for agentic workflows, multi turn chat, and coding assistance. |
+| `gemini-3.1-flash-lite` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · Gemini 3.1 Flash Lite is Google’s GA high-efficiency multimodal model optimized for low-latency, high-volume workloads. |
+| `gemini-3.1-flash-lite-preview` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · Gemini 3.1 Flash Lite Preview is Google's high-efficiency model optimized for high-volume use cases. |
+| `gemini-3.1-flash-live-preview` | google | — | 131k ctx, 66k out |
+| `gemini-3.1-pro-preview` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · Gemini 3.1 Pro Preview is Google’s frontier reasoning model, delivering enhanced software engineering performance, improved agentic… |
+| `gemini-3.1-pro-preview-customtools` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · Gemini 3.1 Pro Preview Custom Tools is a variant of Gemini 3.1 Pro that improves tool selection behavior by preventing overuse of a general… |
+| `gemini-3.5-flash` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · Gemini 3.5 Flash is Google's high-efficiency multimodal model, bringing near-Pro level coding and reasoning at Flash-tier cost and speed. |
+| `gemini-3.5-flash-lite` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · Gemini 3.5 Flash Lite is a high-efficiency model from Google with upgraded agentic capabilities. |
+| `gemini-3.6-flash` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · Gemini 3.6 Flash is a high-efficiency model from Google for coding, agentic workflows, and web and app development. |
+| `gemini-3.7-flash` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · Gemini 3.7 Flash is Google's latest and most capable Flash model, built for complex coding, agentic workflows and reliable multi-step… |
+| `gemini-flash-latest` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · This model always redirects to the latest model in the Google Gemini Flash family. |
+| `gemini-pro-latest` | google | — | 1049k ctx, 66k out, streaming, tools, vision, pdf, json mode · This model always redirects to the latest model in the Google Gemini Pro family. |
+| `gemini-robotics-er` | google | — | 1049k ctx, 66k out, streaming, vision |
+| `gemini-robotics-er-1.6` | google | — | 131k ctx, 66k out, streaming, vision |
+| `gemma-2-27b-it` | google | — | 8k ctx, 2k out, streaming, json mode · Gemma 2 27B by Google is an open model built from the same research and technology used to create the Gemini models. |
+| `gemma-3-12b-it` | google | — | 131k ctx, 16k out, streaming, tools, vision, json mode · Gemma 3 introduces multimodality, supporting vision-language input and text outputs. |
+| `gemma-3-27b-it` | google | — | 131k ctx, 16k out, streaming, tools, vision, json mode · Gemma 3 introduces multimodality, supporting vision-language input and text outputs. |
+| `gemma-3-4b-it` | google | — | 131k ctx, 16k out, streaming, vision, json mode · Gemma 3 introduces multimodality, supporting vision-language input and text outputs. |
+| `gemma-3n-e4b-it` | google | — | 33k ctx, streaming · Gemma 3n E4B-it is optimized for efficient execution on mobile and low-resource devices, such as phones, laptops, and tablets. |
+| `gemma-4-26b-a4b-it` | google | — | 262k ctx, streaming, tools, vision, json mode · Gemma 4 26B A4B IT is an instruction-tuned Mixture-of-Experts (MoE) model from Google DeepMind. 262,144 token context window. |
+| `gemma-4-31b-it` | google | — | 262k ctx, 16k out, streaming, tools, vision, json mode · Gemma 4 31B Instruct is Google DeepMind's 30.7B dense multimodal model supporting text and image input with text output. |
+| `mythomax-l2-13b` | gryphe | — | 4k ctx, 4k out, streaming, json mode · One of the highest performing and most popular fine-tunes of Llama 2 13B, with rich descriptions and roleplay. |
+| `granite-4.0-h-micro` | ibm-granite | — | 131k ctx, 131k out, streaming · Granite-4.0-H-Micro is a 3B parameter from the Granite 4 family of models. 131,000 token context window, maximum output of 131,000 tokens. |
+| `granite-4.1-8b` | ibm-granite | — | 131k ctx, 131k out, streaming, tools, json mode · Granite 4.1 8B is a dense, decoder-only 8-billion-parameter language model from IBM, part of the Granite 4.1 family. |
+| `mercury-2` | inception | — | 128k ctx, 50k out, streaming, tools, json mode · Mercury 2 is an extremely fast reasoning LLM, and the first reasoning diffusion LLM (dLLM). |
+| `ling-2.6-1t` | inclusionai | — | 262k ctx, 33k out, streaming, tools, json mode · Ling-2.6-1T is an instant (instruct) model from inclusionAI and the company’s trillion-parameter flagship, designed for real-world agents… |
+| `ling-2.6-flash` | inclusionai | — | 262k ctx, 33k out, streaming, tools, json mode · Ling-2.6-flash is an instant (instruct) model from inclusionAI with 104B total parameters and 7.4B active parameters, designed for… |
+| `ling-3.0-flash` | inclusionai | — | 131k ctx, 16k out, streaming, tools · Ling-3.0-flash is a 124B-parameter Mixture-of-Experts (MoE) model, with approximately 5.1B parameters activated per token. |
+| `ring-2.6-1t` | inclusionai | — | 262k ctx, 66k out, streaming, tools, json mode · Ring-2.6-1T is a 1T-parameter-scale thinking model with 63B active parameters, built for real-world agent workflows that require both… |
+| `kat-coder-air-v2.5` | kwaipilot | — | 256k ctx, 80k out, streaming, tools, json mode · KAT-Coder-Air V2.5 is a flagship-level Agentic Coding model that can directly hand over an entire issue or an entire business workflow to… |
+| `kat-coder-pro-v2` | kwaipilot | — | 256k ctx, 80k out, streaming, tools, json mode · KAT-Coder-Pro V2 is the latest high-performance model in KwaiKAT’s KAT-Coder series, designed for complex enterprise-grade software… |
+| `kat-coder-pro-v2.5` | kwaipilot | — | 256k ctx, 80k out, streaming, tools, json mode · KAT-Coder-Pro V2.5 is a flagship-level Agentic Coding model that can directly hand over an entire issue or an entire business workflow to… |
+| `longcat-2.0` | meituan | — | 1049k ctx, 262k out, streaming, tools · LongCat 2.0 is a sparse mixture-of-experts language model from Meituan, with 48B active parameters out of 1.6T total. |
+| `muse-glimmer-30b` | meta | — | 131k ctx, streaming, tools, vision, json mode · Muse Glimmer 30B is a dense, open-weight multimodal model from Meta Superintelligence Labs, distilled from Muse Spark and optimized for… |
+| `muse-spark-1.1` | meta | — | 1049k ctx, streaming, tools, vision, pdf, json mode · Muse Spark 1.1 is a multimodal reasoning model from Meta, built for agentic tasks. 1,048,576 token context window. |
+| `muse-spark-1.2` | meta | — | 1049k ctx, streaming, tools, vision, pdf, json mode · Muse Spark 1.2 is a reasoning model from Meta, designed for complex agentic tasks. 1,048,576 token context window. |
+| `llama-3-8b-chat` | meta-llama | — | 8k ctx, streaming |
+| `llama-3.1-405b-instruct` | meta-llama | — | 4k ctx, streaming |
+| `llama-3.1-70b-instruct` | meta-llama | — | 131k ctx, 16k out, streaming, tools, json mode · Meta's latest class of model (Llama 3.1) launched with a variety of sizes & flavors. |
+| `llama-3.1-8b-instruct` | meta-llama | — | 16k ctx, 16k out, streaming, tools, json mode · Meta's latest class of model (Llama 3.1) launched with a variety of sizes & flavors. |
+| `llama-3.2-1b-instruct` | meta-llama | — | 60k ctx, 60k out, streaming · Llama 3.2 1B is a 1-billion-parameter language model focused on efficiently performing natural language tasks, such as summarization… |
+| `llama-3.2-3b-instruct` | meta-llama | — | 80k ctx, 80k out, streaming · Llama 3.2 3B is a 3-billion-parameter multilingual large language model, optimized for advanced natural language processing tasks like… |
+| `llama-3.3-70b-instruct` | meta-llama | — | 131k ctx, 16k out, streaming, tools, json mode · The Meta Llama 3.3 multilingual large language model (LLM) is a pretrained and instruction tuned generative model in 70B (text in/text out). |
+| `llama-4-maverick` | meta-llama | — | 1049k ctx, 16k out, streaming, vision, json mode · Llama 4 Maverick 17B Instruct (128E) is a high-capacity multimodal language model from Meta, built on a mixture-of-experts (MoE)… |
+| `llama-4-scout` | meta-llama | — | 328k ctx, 16k out, streaming, tools, vision, json mode · Llama 4 Scout 17B Instruct (16E) is a mixture-of-experts (MoE) language model developed by Meta, activating 17 billion parameters out of a… |
+| `llama-4-scout-17b-16e-instruct` | meta-llama | — | 1049k ctx, streaming |
+| `llama-guard-4-12b` | meta-llama | — | 164k ctx, 16k out, streaming, vision, json mode · Llama Guard 4 is a Llama 4 Scout-derived multimodal pretrained model, fine-tuned for content safety classification. |
+| `meta-llama-3-70b-instruct` | meta-llama | — | 8k ctx, streaming |
+| `meta-llama-3-8b-instruct` | meta-llama | — | 8k ctx, streaming |
+| `meta-llama-3.1-70b-instruct` | meta-llama | — | 131k ctx, streaming |
+| `meta-llama-3.1-8b` | meta-llama | — | 16k ctx, streaming |
+| `meta-llama-3.1-8b-instruct` | meta-llama | — | 131k ctx, streaming |
+| `phi-4` | microsoft | — | 16k ctx, 16k out, streaming, json mode · Microsoft Research Phi-4 is designed to perform well in complex reasoning tasks and can operate efficiently in situations with limited… |
+| `wizardlm-2-8x22b` | microsoft | — | 66k ctx, 8k out, streaming, json mode · WizardLM-2 8x22B is Microsoft AI's most advanced Wizard model. 65,535 token context window, maximum output of 8,000 tokens. |
+| `minimax-01` | minimax | — | 1000k ctx, 1000k out, streaming, vision · MiniMax-01 is a combines MiniMax-Text-01 for text generation and MiniMax-VL-01 for image understanding. |
+| `minimax-m1` | minimax | — | 1000k ctx, 40k out, streaming, tools · MiniMax-M1 is a large-scale, open-weight reasoning model designed for extended context and high-efficiency inference. |
+| `minimax-m2` | minimax | — | 197k ctx, 197k out, streaming, tools, json mode · MiniMax-M2 is a compact, high-efficiency large language model optimized for end-to-end coding and agentic workflows. |
+| `minimax-m2-her` | minimax | — | 66k ctx, 2k out, streaming · MiniMax M2-her is a dialogue-first large language model built for immersive roleplay, character-driven chat, and expressive multi-turn… |
+| `minimax-m2.1` | minimax | — | 197k ctx, 197k out, streaming, tools, json mode · MiniMax-M2.1 is a lightweight, state-of-the-art large language model optimized for coding, agentic workflows, and modern application… |
+| `minimax-m2.5` | minimax | — | 197k ctx, 197k out, streaming, tools, json mode · MiniMax-M2.5 is a SOTA large language model designed for real-world productivity. |
+| `minimax-m2.7` | minimax | — | 197k ctx, 131k out, streaming, tools, json mode · MiniMax-M2.7 is a next-generation large language model designed for autonomous, real-world productivity and continuous improvement. |
+| `minimax-m3` | minimax | — | 1000k ctx, 131k out, streaming, tools, vision, json mode · MiniMax-M3 is a multimodal foundation model from MiniMax. 1,048,576 token context window, maximum output of 131,072 tokens. |
+| `codestral-2508` | mistralai | — | 256k ctx, streaming, tools, pdf, json mode · Mistral's cutting-edge language model for coding released end of July 2025. 256,000 token context window. |
+| `ministral-14b-2512` | mistralai | — | 262k ctx, streaming, tools, vision, json mode · The largest model in the Ministral 3 family, Ministral 3 14B offers frontier capabilities and performance comparable to its larger Mistral… |
+| `ministral-3-14b-instruct-2512` | mistralai | — | 262k ctx, streaming |
+| `ministral-3b-2512` | mistralai | — | 131k ctx, streaming, tools, vision, json mode · The smallest model in the Ministral 3 family, Ministral 3 3B is a powerful, efficient tiny language model with vision capabilities. |
+| `ministral-8b` | mistralai | — | 128k ctx, streaming, json mode · Ministral 8B is an 8B parameter model featuring a unique interleaved sliding-window attention pattern for faster, memory-efficient… |
+| `ministral-8b-2512` | mistralai | — | 262k ctx, streaming, tools, vision, json mode · A balanced model in the Ministral 3 family, Ministral 3 8B is a powerful, efficient tiny language model with vision capabilities. |
+| `mistral-7b-instruct-v0.1` | mistralai | — | 3k ctx, 3k out, streaming |
+| `mistral-7b-instruct-v0.3` | mistralai | — | 33k ctx, streaming |
+| `mistral-large` | mistralai | — | 128k ctx, streaming, tools, pdf, json mode · This is Mistral AI's flagship model, Mistral Large 2 (version mistral-large-2407). 128,000 token context window. |
+| `mistral-large-2407` | mistralai | — | 131k ctx, streaming, tools, pdf, json mode · This is Mistral AI's flagship model, Mistral Large 2 (version mistral-large-2407). 131,072 token context window. |
+| `mistral-large-2512` | mistralai | — | 262k ctx, streaming, tools, vision, pdf, json mode · Mistral Large 3 2512 is Mistral’s most capable model to date, featuring a sparse mixture-of-experts architecture with 41B active parameters… |
+| `mistral-medium-3` | mistralai | — | 131k ctx, streaming, tools, vision, pdf, json mode · Mistral Medium 3 is a high-performance enterprise-grade language model designed to deliver frontier-level capabilities at significantly… |
+| `mistral-medium-3-5` | mistralai | — | 262k ctx, streaming, tools, vision, pdf, json mode · Mistral Medium 3.5 is a dense 128B instruction-following model from Mistral AI. 262,144 token context window. |
+| `mistral-medium-3.1` | mistralai | — | 131k ctx, streaming, tools, vision, pdf, json mode · Mistral Medium 3.1 is an updated version of Mistral Medium 3, which is a high-performance enterprise-grade language model designed to… |
+| `mistral-nemo` | mistralai | — | 131k ctx, streaming, tools, json mode · A 12B parameter model with a 128k token context length built by Mistral in collaboration with NVIDIA. 131,072 token context window. |
+| `mistral-saba` | mistralai | — | 33k ctx, streaming, tools, pdf, json mode · Mistral Saba is a 24B-parameter language model specifically designed for the Middle East and South Asia, delivering accurate and… |
+| `mistral-small-24b-instruct-2501` | mistralai | — | 33k ctx, 16k out, streaming, json mode · Mistral Small 3 is a 24B-parameter language model optimized for low-latency performance across common AI tasks. |
+| `mistral-small-2603` | mistralai | — | 262k ctx, streaming, tools, vision, json mode · Mistral Small 4 is the next major release in the Mistral Small family, unifying the capabilities of several flagship Mistral models into a… |
+| `mistral-small-3.1-24b-instruct` | mistralai | — | 128k ctx, 128k out, streaming, vision · Mistral Small 3.1 24B Instruct is an upgraded variant of Mistral Small 3 (2501), featuring 24 billion parameters with advanced multimodal… |
+| `mistral-small-3.2-24b-instruct` | mistralai | — | 128k ctx, 16k out, streaming, tools, vision, json mode · Mistral-Small-3.2-24B-Instruct-2506 is an updated 24B parameter model from Mistral optimized for instruction following, repetition… |
+| `mixtral-8x22b-instruct` | mistralai | — | 66k ctx, streaming, tools, pdf, json mode · Mistral's official instruct fine-tuned version of Mixtral 8x22B. 65,536 token context window. |
+| `mixtral-8x7b-instruct-v0.1` | mistralai | — | 33k ctx, streaming |
+| `voxtral-small-24b-2507` | mistralai | — | 32k ctx, streaming, tools, pdf, json mode · Voxtral Small is an enhancement of Mistral Small 3, incorporating state-of-the-art audio input capabilities while retaining best-in-class… |
+| `kimi-k2` | moonshotai | — | 131k ctx, 33k out, streaming, tools · Kimi K2 Instruct is a large-scale Mixture-of-Experts (MoE) language model developed by Moonshot AI, featuring 1 trillion total parameters… |
+| `kimi-k2-0905` | moonshotai | — | 262k ctx, 262k out, streaming, tools, json mode · Kimi K2 0905 is the September update of Kimi K2 0711. 262,144 token context window, maximum output of 100,352 tokens. |
+| `kimi-k2-thinking` | moonshotai | — | 262k ctx, 262k out, streaming, tools, json mode · Kimi K2 Thinking is Moonshot AI’s most advanced open reasoning model to date, extending the K2 series into agentic, long-horizon reasoning. |
+| `kimi-k2.5` | moonshotai | — | 262k ctx, 262k out, streaming, tools, vision, json mode · Kimi K2.5 is Moonshot AI's native multimodal model, delivering state-of-the-art visual coding capability and a self-directed agent swarm… |
+| `kimi-k2.5-fp4` | moonshotai | — | 262k ctx, streaming |
+| `kimi-k2.6` | moonshotai | — | 262k ctx, 262k out, streaming, tools, vision, json mode · Kimi K2.6 is Moonshot AI's next-generation multimodal model, designed for long-horizon coding, coding-driven UI/UX generation, and… |
+| `kimi-k2.7-code` | moonshotai | — | 262k ctx, 262k out, streaming, tools, vision, json mode · MoonshotAI: Kimi K2.7 Code is a coding-focused model in Moonshot AI's Kimi K2 family, built to complete end-to-end programming tasks… |
+| `kimi-k3` | moonshotai | — | 1049k ctx, streaming, tools, vision, json mode · Kimi K3 is a 2.8T parameter open-weight multimodal reasoning model from Moonshot AI. 1,048,576 token context window. |
+| `kimi-latest` | moonshotai | — | 262k ctx, 262k out, streaming, tools, vision, json mode · This model always redirects to the latest model in the MoonshotAI Kimi family. 1,048,576 token context window. |
+| `morph-v3-fast` | morph | — | 82k ctx, 38k out, streaming · Morph's fastest apply model for code edits. 81,920 token context window, maximum output of 38,000 tokens. |
+| `morph-v3-large` | morph | — | 262k ctx, 131k out, streaming · Morph's high-accuracy apply model for complex code edits. 262,144 token context window, maximum output of 131,072 tokens. |
+| `nex-n2-mini` | nex-agi | — | 262k ctx, 262k out, streaming, tools, vision, json mode · Nex-N2-Mini is an open-source agentic mixture-of-experts model from Nex AGI, the smaller sibling in the Nex-N2 series. |
+| `nex-n2-pro` | nex-agi | — | 262k ctx, 262k out, streaming, tools, vision · Nex-N2-Pro is an agentic mixture-of-experts model from Nex AGI, with 17B active parameters out of 397B total. |
+| `hermes-3-llama-3.1-405b` | nousresearch | — | 131k ctx, 16k out, streaming, json mode · Hermes 3 is a generalist language model with many improvements over Hermes 2, including advanced agentic capabilities, much better… |
+| `hermes-3-llama-3.1-70b` | nousresearch | — | 131k ctx, 16k out, streaming, json mode · Hermes 3 is a generalist language model with many improvements over Hermes 2, including advanced agentic capabilities, much better… |
+| `hermes-4-405b` | nousresearch | — | 131k ctx, streaming, json mode · Hermes 4 is a large-scale reasoning model built on Meta-Llama-3.1-405B and released by Nous Research. 131,072 token context window. |
+| `hermes-4-70b` | nousresearch | — | 131k ctx, streaming, json mode · Hermes 4 70B is a hybrid reasoning model from Nous Research, built on Meta-Llama-3.1-70B. 131,072 token context window. |
+| `nous-hermes-2-mixtral-8x7b-dpo` | NousResearch | — | 33k ctx, streaming |
+| `llama-3.1-nemotron-70b-instruct` | nvidia | — | 33k ctx, streaming |
+| `nemotron-3-nano-30b-a3b` | nvidia | — | 262k ctx, 228k out, streaming, tools, json mode · NVIDIA Nemotron 3 Nano 30B A3B is a small language MoE model with highest compute efficiency and accuracy for developers to build… |
+| `nemotron-3-super-120b-a12b` | nvidia | — | 262k ctx, streaming, tools, json mode · NVIDIA Nemotron 3 Super is a 120B-parameter open hybrid MoE model, activating just 12B parameters for maximum compute efficiency and… |
+| `nemotron-3-ultra-550b-a55b` | nvidia | — | 262k ctx, 16k out, streaming, tools, json mode · NVIDIA Nemotron 3 Ultra is an open frontier-reasoning and orchestration model from NVIDIA, with 55B active parameters out of 550B total… |
+| `nemotron-3.5-lightning` | nvidia | — | 262k ctx, 262k out, streaming, json mode · NVIDIA Nemotron 3.5 Lightning is an open mixture-of-experts model from NVIDIA, with 3B active parameters out of 30B total. |
+| `nvidia-nemotron-nano-9b-v2` | nvidia | — | 131k ctx, streaming |
+| `babbage-002` | openai | — | 16k ctx, 4k out |
+| `codex-mini-latest` | openai | — | 200k ctx, 16k out, streaming, tools |
+| `computer-use-preview` | openai | — | 200k ctx, 16k out, streaming, vision · Specialized model for computer use tool |
+| `davinci-002` | openai | — | 16k ctx, 4k out |
+| `gpt-3.5-turbo` | openai | — | 16k ctx, 4k out, streaming, tools, json mode · GPT-3.5 Turbo is OpenAI's fastest model. 16,385 token context window, maximum output of 4,096 tokens. |
+| `gpt-3.5-turbo-0613` | openai | — | 4k ctx, 4k out, streaming, tools, json mode · GPT-3.5 Turbo is OpenAI's fastest model. 4,095 token context window, maximum output of 4,096 tokens. |
+| `gpt-3.5-turbo-16k` | openai | — | 16k ctx, 4k out, streaming, tools, json mode · This model offers four times the context length of gpt-3.5-turbo, allowing it to support approximately 20 pages of text in a single request… |
+| `gpt-3.5-turbo-instruct` | openai | — | 4k ctx, 4k out, streaming, json mode · This model is a variant of GPT-3.5 Turbo tuned for instructional prompts and omitting chat-related optimizations. |
+| `gpt-4` | openai | — | 8k ctx, 4k out, streaming, tools, json mode · OpenAI's flagship model, GPT-4 is a large-scale multimodal language model capable of solving difficult problems with greater accuracy than… |
+| `gpt-4-turbo` | openai | — | 128k ctx, 4k out, streaming, tools, vision · The latest GPT-4 Turbo model with vision capabilities. 128,000 token context window, maximum output of 4,096 tokens. |
+| `gpt-4-turbo-preview` | openai | — | 128k ctx, 4k out, streaming, tools, json mode · The preview GPT-4 model with improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more. |
+| `gpt-4.1` | openai | — | 200k ctx, 33k out, streaming, tools, vision, pdf, json mode · GPT-4.1 is a flagship large language model optimized for advanced instruction following, real-world software engineering, and long-context… |
+| `gpt-4.1-mini` | openai | — | 200k ctx, 33k out, streaming, tools, vision, json mode · GPT-4.1 Mini is a mid-sized model delivering performance competitive with GPT-4o at substantially lower latency and cost. |
+| `gpt-4.1-nano` | openai | — | 200k ctx, 16k out, streaming, tools, json mode · For tasks that demand low latency, GPT‑4.1 nano is the fastest and cheapest model in the GPT-4.1 series. |
+| `gpt-4o` | openai | — | 128k ctx, 16k out, streaming, tools, vision, pdf, json mode · GPT-4o ("o" for "omni") is OpenAI's latest AI model, supporting both text and image inputs with text outputs. |
+| `gpt-4o-2024-05-13` | openai | — | 128k ctx, 4k out, streaming, tools, vision · GPT-4o ("o" for "omni") is OpenAI's latest AI model, supporting both text and image inputs with text outputs. |
+| `gpt-4o-2024-08-06` | openai | — | 128k ctx, 16k out, streaming, tools, vision, pdf, json mode · The 2024-08-06 version of GPT-4o offers improved performance in structured outputs, with the ability to supply a JSON schema in the… |
+| `gpt-4o-2024-11-20` | openai | — | 128k ctx, 16k out, streaming, tools, vision, pdf, json mode · The 2024-11-20 version of GPT-4o offers a leveled-up creative writing ability with more natural, engaging, and tailored writing to improve… |
+| `gpt-4o-audio-preview` | openai | — | streaming, tools, json mode |
+| `gpt-4o-mini` | openai | — | 128k ctx, 16k out, streaming, tools, json mode · GPT-4o mini is OpenAI's newest model after GPT-4 Omni, supporting both text and image inputs with text outputs. |
+| `gpt-4o-mini-2024-07-18` | openai | — | 128k ctx, 16k out, streaming, tools, vision, pdf, json mode · GPT-4o mini is OpenAI's newest model after GPT-4 Omni, supporting both text and image inputs with text outputs. |
+| `gpt-4o-mini-audio-preview` | openai | — | streaming, tools, json mode |
+| `gpt-4o-mini-search-preview` | openai | — | 128k ctx, 16k out, streaming · GPT-4o mini Search Preview is a specialized model for web search in Chat Completions. |
+| `gpt-4o-search-preview` | openai | — | 128k ctx, 16k out, streaming · GPT-4o Search Previewis a specialized model for web search in Chat Completions. |
+| `gpt-5` | openai | — | 200k ctx, 33k out, streaming, tools, vision, pdf, json mode · GPT-5 is OpenAI’s most advanced model, offering major improvements in reasoning, code quality, and user experience. |
+| `gpt-5-codex` | openai | — | 200k ctx, 33k out, streaming, tools · GPT-5-Codex is a specialized version of GPT-5 optimized for software engineering and coding workflows. |
+| `gpt-5-mini` | openai | — | 200k ctx, 16k out, streaming, tools, json mode · GPT-5 Mini is a compact version of GPT-5, designed to handle lighter-weight reasoning tasks. |
+| `gpt-5-nano` | openai | — | 200k ctx, 16k out, streaming, tools, json mode · GPT-5-Nano is the smallest and fastest variant in the GPT-5 system, optimized for developer tools, rapid interactions, and ultra-low… |
+| `gpt-5-pro` | openai | — | 200k ctx, 33k out, streaming, tools, vision, pdf, json mode · GPT-5 Pro is OpenAI’s most advanced model, offering major improvements in reasoning, code quality, and user experience. |
+| `gpt-5-search-api` | openai | — | 200k ctx, 16k out, streaming |
+| `gpt-5.1` | openai | — | 200k ctx, 33k out, streaming, tools, vision, pdf, json mode · GPT-5.1 is the latest frontier-grade model in the GPT-5 series, offering stronger general-purpose reasoning, improved instruction… |
+| `gpt-5.1-codex` | openai | — | 200k ctx, 33k out, streaming, tools · GPT-5.1-Codex is a specialized version of GPT-5.1 optimized for software engineering and coding workflows. |
+| `gpt-5.1-codex-max` | openai | — | 200k ctx, 33k out, streaming · GPT-5.1-Codex-Max is OpenAI’s latest agentic coding model, designed for long-running, high-context software development tasks. |
+| `gpt-5.1-codex-mini` | openai | — | 200k ctx, 16k out, streaming · GPT-5.1-Codex-Mini is a smaller and faster version of GPT-5. 400,000 token context window, maximum output of 100,000 tokens. |
+| `gpt-5.2` | openai | — | 200k ctx, 33k out, streaming, tools, vision, pdf, json mode · GPT-5.2 is the latest frontier-grade model in the GPT-5 series, offering stronger agentic and long context perfomance compared to GPT-5.1. |
+| `gpt-5.2-chat` | openai | — | 128k ctx, 16k out, streaming, tools, vision, pdf, json mode · GPT-5.2 Chat (AKA Instant) is the fast, lightweight member of the 5.2 family, optimized for low-latency chat while retaining strong general… |
+| `gpt-5.2-codex` | openai | — | 200k ctx, 33k out, streaming, tools · GPT-5.2-Codex is an upgraded version of GPT-5.1-Codex optimized for software engineering and coding workflows. |
+| `gpt-5.2-pro` | openai | — | 200k ctx, 33k out, streaming, tools, vision, pdf, json mode · GPT-5.2 Pro is OpenAI’s most advanced model, offering major improvements in agentic coding and long context performance over GPT-5 Pro. |
+| `gpt-5.3-codex` | openai | — | 200k ctx, 33k out, streaming, tools · The most capable agentic coding model to date. |
+| `gpt-5.4` | openai | — | 200k ctx, 33k out, streaming, tools, vision, pdf, json mode · A more affordable model for coding and professional work. |
+| `gpt-5.4-mini` | openai | — | 200k ctx, 33k out, streaming, tools, vision, json mode · OpenAI's strongest mini model yet for coding, computer use, and subagents |
+| `gpt-5.4-nano` | openai | — | 200k ctx, 16k out, streaming, tools, json mode · OpenAI's cheapest GPT-5.4-class model for simple high-volume tasks |
+| `gpt-5.4-pro` | openai | — | 200k ctx, 33k out, streaming, tools, vision, pdf, json mode · Version of GPT-5.4 that produces smarter and more precise responses. |
+| `gpt-5.5` | openai | — | 272k ctx, 33k out, streaming, tools, vision, pdf, json mode · A new class of intelligence for coding and professional work. |
+| `gpt-5.5-pro` | openai | — | 272k ctx, 33k out, streaming, tools, vision, pdf, json mode · Version of GPT-5.5 that produces smarter and more precise responses. |
+| `gpt-5.6-luna` | openai | — | 272k ctx, 33k out, streaming, tools, vision, pdf, json mode · GPT-5.6 model optimized for cost-sensitive workloads |
+| `gpt-5.6-luna-pro` | openai | — | 1050k ctx, 128k out, streaming, tools, vision, pdf, json mode · GPT-5.6 Luna Pro is the same underlying model as GPT-5.6 Luna, served with reasoning.mode set to pro for higher-quality responses on… |
+| `gpt-5.6-sol` | openai | — | 272k ctx, 33k out, streaming, tools, vision, pdf, json mode · Frontier model for complex professional work |
+| `gpt-5.6-sol-pro` | openai | — | 1050k ctx, 128k out, streaming, tools, vision, pdf, json mode · GPT-5.6 Sol Pro is the same underlying model as GPT-5.6 Sol, served with reasoning.mode set to pro for higher-quality responses on complex… |
+| `gpt-5.6-terra` | openai | — | 272k ctx, 33k out, streaming, tools, vision, pdf, json mode · GPT-5.6 model that balances intelligence and cost |
+| `gpt-5.6-terra-pro` | openai | — | 1050k ctx, 128k out, streaming, tools, vision, pdf, json mode · GPT-5.6 Terra Pro is the same underlying model as GPT-5.6 Terra, served with reasoning.mode set to pro for higher-quality responses on… |
+| `gpt-audio` | openai | — | streaming, tools, json mode |
+| `gpt-audio-1.5` | openai | — | streaming, tools, json mode |
+| `gpt-audio-mini` | openai | — | streaming, tools, json mode |
+| `gpt-chat-latest` | openai | — | 400k ctx, 128k out, streaming, tools, vision, pdf, json mode · GPT Chat Latest points to OpenAI's stable API alias chat-latest that always resolves to the latest Instant chat model used in ChatGPT. |
+| `gpt-latest` | openai | — | 1050k ctx, 128k out, streaming, tools, vision, pdf, json mode · This model always redirects to the latest model in the OpenAI GPT family. 1,050,000 token context window, maximum output of 128,000 tokens. |
+| `gpt-mini-latest` | openai | — | 400k ctx, 128k out, streaming, tools, vision, pdf, json mode · This model always redirects to the latest model in the OpenAI GPT Mini family. |
+| `gpt-oss-120b` | openai | — | 131k ctx, streaming, tools, json mode · gpt-oss-120b is an open-weight, 117B-parameter Mixture-of-Experts (MoE) language model from OpenAI designed for high-reasoning, agentic… |
+| `gpt-oss-20b` | openai | — | 131k ctx, 131k out, streaming, tools, json mode · gpt-oss-20b is an open-weight 21B parameter model released by OpenAI under the Apache 2.0 license. 131,072 token context window. |
+| `gpt-oss-safeguard-20b` | openai | — | 131k ctx, 66k out, streaming, tools, json mode · gpt-oss-safeguard-20b is a safety reasoning model from OpenAI built upon gpt-oss-20b. |
+| `o1` | openai | — | 200k ctx, 100k out, streaming · The latest and strongest model family from OpenAI, o1 is designed to spend more time thinking before responding. |
+| `o1-mini` | openai | — | 200k ctx, 66k out, streaming |
+| `o1-pro` | openai | — | 200k ctx, 100k out, streaming · The o1 series of models are trained with reinforcement learning to think before they answer and perform complex reasoning. |
+| `o3` | openai | — | 200k ctx, 100k out, streaming, tools · o3 is a well-rounded and powerful model across domains. 200,000 token context window, maximum output of 100,000 tokens. |
+| `o3-deep-research` | openai | — | 200k ctx, 100k out, streaming · OpenAI's most powerful deep research model |
+| `o3-mini` | openai | — | 200k ctx, 100k out, streaming, tools · OpenAI o3-mini is a cost-efficient language model optimized for STEM reasoning tasks, particularly excelling in science, mathematics, and… |
+| `o3-mini-high` | openai | — | 200k ctx, 100k out, streaming, tools, pdf, json mode · OpenAI o3-mini-high is the same model as o3-mini with reasoning_effort set to high. |
+| `o3-pro` | openai | — | 200k ctx, 100k out, streaming, tools · The o-series of models are trained with reinforcement learning to think before they answer and perform complex reasoning. |
+| `o4-mini` | openai | — | 200k ctx, 100k out, streaming, tools · OpenAI o4-mini is a compact reasoning model in the o-series, optimized for fast, cost-efficient performance while retaining strong… |
+| `o4-mini-deep-research` | openai | — | 200k ctx, 100k out, streaming · Faster, more affordable deep research model |
+| `o4-mini-high` | openai | — | 200k ctx, 100k out, streaming, tools, vision, pdf, json mode · OpenAI o4-mini-high is the same model as o4-mini with reasoning_effort set to high. |
+| `omni-moderation-latest` | openai | — | 33k ctx, 4k out, vision |
+| `text-moderation-latest` | openai | — | 33k ctx, 4k out |
+| `perceptron-mk1` | perceptron | — | 33k ctx, 8k out, streaming, vision · Perceptron Mk1 (Mark One) is Perceptron's highest-quality vision-language model for video and embodied reasoning.** It accepts image and… |
+| `sonar` | perplexity | — | 127k ctx, streaming, vision · Sonar is lightweight, affordable, fast, and simple to use — now featuring citations and the ability to customize sources. |
+| `sonar-deep-research` | perplexity | — | 128k ctx, streaming · Sonar Deep Research is a research-focused model designed for multi-step retrieval, synthesis, and reasoning across complex topics. |
+| `sonar-pro` | perplexity | — | 200k ctx, 8k out, streaming, vision · Note: Sonar Pro pricing includes Perplexity search pricing. 200,000 token context window, maximum output of 8,000 tokens. |
+| `sonar-pro-search` | perplexity | — | 200k ctx, 8k out, streaming, vision · 200,000 token context window, maximum output of 8,000 tokens. |
+| `sonar-reasoning-pro` | perplexity | — | 128k ctx, streaming, vision · Note: Sonar Pro pricing includes Perplexity search pricing. 128,000 token context window. |
+| `laguna-s-2.1` | poolside | — | 1049k ctx, 131k out, streaming, tools · Laguna S 2.1 is the latest coding agent model from Poolside. 1,048,576 token context window, maximum output of 131,072 tokens. |
+| `laguna-xs-2.1` | poolside | — | 262k ctx, 33k out, streaming, tools · Laguna XS 2.1 is the latest coding agent model in the 33B-A3B category from Poolside and a step forward from their Laguna XS.2 model… |
+| `qwen-plus-2025-07-28` | qwen | — | 1000k ctx, 33k out, streaming, tools, json mode · Qwen Plus 0728, based on the Qwen3 foundation model, is a 1 million context hybrid reasoning model with a balanced performance, speed, and… |
+| `qwen2.5-7b-instruct` | qwen | — | 33k ctx, streaming · Qwen2.5 7B is the latest series of Qwen large language models. 32,768 token context window, maximum output of 32,768 tokens. |
+| `qwen2.5-vl-72b-instruct` | qwen | — | 32k ctx, streaming, vision, json mode · Qwen2.5-VL is proficient in recognizing common objects such as flowers, birds, fish, and insects. 128,000 token context window. |
+| `qwen3-14b` | qwen | — | 41k ctx, 41k out, streaming, tools, json mode · Qwen3-14B is a dense 14.8B parameter causal language model from the Qwen3 series, designed for both complex reasoning and efficient… |
+| `qwen3-235b-a22b` | qwen | — | 131k ctx, 8k out, streaming, tools, json mode · Qwen3-235B-A22B is a 235B parameter mixture-of-experts (MoE) model developed by Qwen, activating 22B parameters per forward pass. |
+| `qwen3-235b-a22b-2507` | qwen | — | 262k ctx, 16k out, streaming, tools, json mode · Qwen3-235B-A22B-Instruct-2507 is a multilingual, instruction-tuned mixture-of-experts language model based on the Qwen3-235B architecture… |
+| `qwen3-235b-a22b-thinking-2507` | qwen | — | 131k ctx, streaming, tools, json mode · Qwen3-235B-A22B-Thinking-2507 is a high-performance, open-weight Mixture-of-Experts (MoE) language model optimized for complex reasoning… |
+| `qwen3-30b-a3b` | qwen | — | 41k ctx, 20k out, streaming, tools, json mode · Qwen3, the latest generation in the Qwen large language model series, features both dense and mixture-of-experts (MoE) architectures to… |
+| `qwen3-30b-a3b-instruct-2507` | qwen | — | 262k ctx, 262k out, streaming, tools, json mode · Qwen3-30B-A3B-Instruct-2507 is a 30.5B-parameter mixture-of-experts language model from Qwen, with 3.3B active parameters per inference. |
+| `qwen3-30b-a3b-thinking-2507` | qwen | — | 131k ctx, 131k out, streaming, tools, json mode · Qwen3-30B-A3B-Thinking-2507 is a 30B parameter Mixture-of-Experts reasoning model optimized for complex tasks requiring extended multi-step… |
+| `qwen3-32b` | qwen | — | 41k ctx, 16k out, streaming, tools, json mode · Qwen3-32B is a dense 32.8B parameter causal language model from the Qwen3 series, optimized for both complex reasoning and efficient… |
+| `qwen3-8b` | qwen | — | 41k ctx, 8k out, streaming, tools, json mode · Qwen3-8B is a dense 8.2B parameter causal language model from the Qwen3 series, designed for both reasoning-heavy tasks and efficient… |
+| `qwen3-coder` | qwen | — | 262k ctx, 66k out, streaming, tools, json mode · Qwen3-Coder-480B-A35B-Instruct is a Mixture-of-Experts (MoE) code generation model developed by the Qwen team. |
+| `qwen3-coder-30b-a3b-instruct` | qwen | — | 160k ctx, 33k out, streaming, tools, json mode · Qwen3-Coder-30B-A3B-Instruct is a 30.5B parameter Mixture-of-Experts (MoE) model with 128 experts (8 active per forward pass), designed for… |
+| `qwen3-coder-next` | qwen | — | 262k ctx, 262k out, streaming, tools, json mode · Qwen3-Coder-Next is an open-weight causal language model optimized for coding agents and local development workflows. |
+| `qwen3-max-thinking` | qwen | — | 262k ctx, 33k out, streaming, tools, json mode · Qwen3-Max-Thinking is the flagship reasoning model in the Qwen3 series, designed for high-stakes cognitive tasks that require deep… |
+| `qwen3-next-80b-a3b-instruct` | qwen | — | 262k ctx, 16k out, streaming, tools, json mode · Qwen3-Next-80B-A3B-Instruct is an instruction-tuned chat model in the Qwen3-Next series optimized for fast, stable responses without… |
+| `qwen3-next-80b-a3b-thinking` | qwen | — | 131k ctx, 33k out, streaming, tools, json mode · Qwen3-Next-80B-A3B-Thinking is a reasoning-first chat model in the Qwen3-Next line that outputs structured “thinking” traces by default. |
+| `qwen3-vl-235b-a22b-instruct` | qwen | — | 262k ctx, 16k out, streaming, tools, vision, json mode · Qwen3-VL-235B-A22B Instruct is an open-weight multimodal model that unifies strong text generation with visual understanding across images… |
+| `qwen3-vl-235b-a22b-thinking` | qwen | — | 131k ctx, 33k out, streaming, tools, vision, json mode · Qwen3-VL-235B-A22B Thinking is a multimodal model that unifies strong text generation with visual understanding across images and video. |
+| `qwen3-vl-30b-a3b-instruct` | qwen | — | 131k ctx, 33k out, streaming, tools, vision, json mode · Qwen3-VL-30B-A3B-Instruct is a multimodal model that unifies strong text generation with visual understanding for images and videos. |
+| `qwen3-vl-30b-a3b-thinking` | qwen | — | 131k ctx, 33k out, streaming, tools, vision, json mode · Qwen3-VL-30B-A3B-Thinking is a multimodal model that unifies strong text generation with visual understanding for images and videos. |
+| `qwen3-vl-32b-instruct` | qwen | — | 131k ctx, 33k out, streaming, tools, vision, json mode · Qwen3-VL-32B-Instruct is a large-scale multimodal vision-language model designed for high-precision understanding and reasoning across… |
+| `qwen3-vl-8b-instruct` | qwen | — | 131k ctx, 33k out, streaming, tools, vision, json mode · Qwen3-VL-8B-Instruct is a multimodal vision-language model from the Qwen3-VL series, built for high-fidelity understanding and reasoning… |
+| `qwen3-vl-8b-thinking` | qwen | — | 131k ctx, 33k out, streaming, tools, vision, json mode · Qwen3-VL-8B-Thinking is the reasoning-optimized variant of the Qwen3-VL-8B multimodal model, designed for advanced visual and textual… |
+| `qwen3.5-122b-a10b` | qwen | — | 262k ctx, 262k out, streaming, tools, vision, json mode · The Qwen3.5 122B-A10B native vision-language model is built on a hybrid architecture that integrates a linear attention mechanism with a… |
+| `qwen3.5-27b` | qwen | — | 262k ctx, 66k out, streaming, tools, vision, json mode · The Qwen3.5 27B native vision-language Dense model incorporates a linear attention mechanism, delivering fast response times while… |
+| `qwen3.5-35b-a3b` | qwen | — | 262k ctx, streaming, tools, vision, json mode · The Qwen3.5 Series 35B-A3B is a native vision-language model designed with a hybrid architecture that integrates linear attention… |
+| `qwen3.5-397b-a17b` | qwen | — | 262k ctx, 66k out, streaming, tools, vision, json mode · The Qwen3.5 series 397B-A17B native vision-language model is built on a hybrid architecture that integrates a linear attention mechanism… |
+| `qwen3.5-9b` | qwen | — | 262k ctx, 82k out, streaming, tools, vision, json mode · Qwen3.5-9B is a multimodal foundation model from the Qwen3.5 family, designed to deliver strong reasoning, coding, and visual understanding… |
+| `qwen3.5-plus-02-15` | qwen | — | 1000k ctx, 66k out, streaming, tools, vision, json mode · The Qwen3.5 native vision-language series Plus models are built on a hybrid architecture that integrates linear attention mechanisms with… |
+| `qwen3.5-plus-20260420` | qwen | — | 1000k ctx, 66k out, streaming, tools, vision, json mode · Qwen3.5 Plus (April 2026) is a large-scale multimodal language model from Alibaba. |
+| `qwen3.6-27b` | qwen | — | 262k ctx, 262k out, streaming, tools, vision, json mode · Qwen3.6 27B is a dense 27-billion-parameter language model from the Qwen Team at Alibaba, released in April 2026. |
+| `qwen3.6-35b-a3b` | qwen | — | 262k ctx, 262k out, streaming, tools, vision, json mode · Qwen3.6-35B-A3B is an open-weight multimodal model from Alibaba Cloud with 35 billion total parameters and 3 billion active parameters per… |
+| `qwen3.6-max-preview` | qwen | — | 262k ctx, 66k out, streaming, tools, json mode · Qwen3.6-Max-Preview is a proprietary frontier model from Alibaba Cloud built on a sparse mixture-of-experts architecture with approximately… |
+| `qwen3.6-plus` | qwen | — | 1000k ctx, 66k out, streaming, tools, vision, json mode · Qwen 3.6 Plus builds on a hybrid architecture that combines efficient linear attention with sparse mixture-of-experts routing, enabling… |
+| `qwen3.7-flash` | qwen | — | 1000k ctx, 66k out, streaming, tools, vision, json mode · Qwen3.7 Flash is a vision-language reasoning model from Alibaba. 1,000,000 token context window, maximum output of 65,536 tokens. |
+| `qwen3.8-2.4t-a95b` | qwen | — | 262k ctx, 52k out, streaming, tools, json mode · Qwen3.8 2.4T A95B is an open-weight sparse mixture-of-experts model from Qwen and the open-weight variant of Qwen3.8 Max, with 95 billion… |
+| `qwen3.8-27b` | qwen | — | 262k ctx, 131k out, streaming, vision, json mode · Qwen3.8 27B is an open-weight dense vision-language model from Qwen. 262,144 token context window, maximum output of 131,072 tokens. |
+| `qwen3.8-max` | qwen | — | 1000k ctx, 131k out, streaming, tools, vision, json mode · Qwen3.8 Max is the flagship model in Alibaba's Qwen3.8 series, the general-availability successor to the Qwen3.8 Max Preview. |
+| `qwen2-1.5b-instruct` | Qwen | — | 33k ctx, streaming |
+| `qwen2-72b-instruct` | Qwen | — | 33k ctx, streaming |
+| `qwen2-vl-72b-instruct` | Qwen | — | 33k ctx, streaming |
+| `qwen2.5-14b-instruct` | Qwen | — | 33k ctx, streaming |
+| `qwen3-coder-480b-a35b-instruct-fp8` | Qwen | — | 262k ctx, streaming |
+| `qwen3-coder-next-fp8` | Qwen | — | 262k ctx, streaming |
+| `qwq-32b` | Qwen | — | 131k ctx, streaming |
+| `reka-edge` | rekaai | — | 16k ctx, 16k out, streaming, tools, vision · Reka Edge is an extremely efficient 7B multimodal vision-language model that accepts image/video+text inputs and generates text outputs. |
+| `reka-flash-3` | rekaai | — | 66k ctx, 66k out, streaming · Reka Flash 3 is a general-purpose, instruction-tuned large language model with 21 billion parameters, developed by Reka. |
+| `relace-apply-3` | relace | — | 256k ctx, 128k out, streaming · Relace Apply 3 is a specialized code-patching LLM that merges AI-suggested edits straight into your source files. |
+| `relace-search` | relace | — | 256k ctx, 128k out, streaming, tools · The relace-search model uses 4-12 view_file and grep tools in parallel to explore a codebase and return relevant files to the user request. |
+| `fugu-ultra` | sakana | — | 1000k ctx, 128k out, streaming, tools, vision · Fugu Ultra is the higher-performance model in Sakana AI's Fugu family. 1,000,000 token context window, maximum output of 128,000 tokens. |
+| `sakana-namazu` | sakana | — | 262k ctx, 66k out, streaming, tools, vision, pdf · Sakana Namazu is a Japanese-specialized reasoning model from Sakana AI, based on Kimi K2.6 with additional training for Japanese language… |
+| `l3-lunaris-8b` | sao10k | — | 8k ctx, 16k out, streaming, json mode · Lunaris 8B is a versatile generalist and roleplaying model based on Llama 3. 8,192 token context window, maximum output of 16,384 tokens. |
+| `l3.1-euryale-70b` | sao10k | — | 131k ctx, 16k out, streaming, tools, json mode · Euryale L3.1 70B v2.2 is a model focused on creative roleplay from Sao10k. 131,072 token context window, maximum output of 16,384 tokens. |
+| `l3.3-euryale-70b` | sao10k | — | 131k ctx, 16k out, streaming, json mode · Euryale L3.3 70B is a model focused on creative roleplay from Sao10k. 131,072 token context window, maximum output of 16,384 tokens. |
+| `ox-alpha` | stealth | — | 1049k ctx, 131k out, streaming, tools, vision, json mode · Ox Alpha is a reasoning model designed for coding, sustained agentic work, and production workloads. This model is free to use. |
+| `step-3.5-flash` | stepfun | — | 262k ctx, 16k out, streaming, tools, json mode · Step 3.5 Flash is StepFun's most capable open-source foundation model. 262,144 token context window, maximum output of 65,536 tokens. |
+| `step-3.7-flash` | stepfun | — | 256k ctx, 256k out, streaming, tools, vision, json mode · Step 3.7 Flash is StepFun's latest high-efficiency multimodal Mixture-of-Experts model. |
+| `hunyuan-a13b-instruct` | tencent | — | 131k ctx, 131k out, streaming, json mode · Hunyuan-A13B is a 13B active parameter Mixture-of-Experts (MoE) language model developed by Tencent, with a total parameter count of 80B… |
+| `hy-mt2-1.8b` | tencent | — | 8k ctx, 4k out, streaming · Hy-MT2-1.8B is a compact 1.8B-parameter translation model from Tencent. 8,192 token context window, maximum output of 4,096 tokens. |
+| `hy-mt2-30b-a3b` | tencent | — | 8k ctx, 4k out, streaming, json mode · Hy-MT2-30B-A3B is Tencent&#x27;s flagship translation model in the Hy-MT2 family. |
+| `hy3` | tencent | — | 262k ctx, streaming, tools, json mode · Hy3 is a 295B-parameter Mixture-of-Experts model from Tencent (21B active, 192 experts with top-8 routing) built for reasoning, agentic… |
+| `hy3-preview` | tencent | — | 262k ctx, streaming, tools · Hy3 preview is a high-efficiency Mixture-of-Experts model from Tencent designed for agentic workflows and production use. |
+| `cydonia-24b-v4.1` | thedrummer | — | 131k ctx, 131k out, streaming · Uncensored and creative writing model based on Mistral Small 3.2 24B with good recall, prompt adherence, and intelligence. |
+| `rocinante-12b` | thedrummer | — | 33k ctx, 33k out, streaming, tools, json mode · Rocinante 12B is designed for engaging storytelling and rich prose. 65,536 token context window, maximum output of 65,536 tokens. |
+| `skyfall-36b-v2` | thedrummer | — | 33k ctx, 33k out, streaming · Skyfall 36B v2 is an enhanced iteration of Mistral Small 2501, specifically fine-tuned for improved creativity, nuanced writing… |
+| `unslopnemo-12b` | thedrummer | — | 33k ctx, 33k out, streaming, tools, json mode · UnslopNemo v4.1 is the latest addition from the creator of Rocinante, designed for adventure writing and role-play scenarios. |
+| `inkling` | thinkingmachines | — | 524k ctx, streaming, tools, vision · Inkling is an open-weight multimodal mixture-of-experts model from Thinking Machines Lab, with 41B active parameters out of 975B total. |
+| `inkling-small` | thinkingmachines | — | 524k ctx, streaming · Inkling Small is an open-weight multimodal mixture-of-experts model from Thinking Machines Lab, with 12B active parameters out of 276B… |
+| `remm-slerp-l2-13b` | undi95 | — | 6k ctx, 4k out, streaming, json mode · A recreation trial of the original MythoMax-L2-B13 but with updated models. 6,144 token context window, maximum output of 2,048 tokens. |
+| `solar-pro-3` | upstage | — | 128k ctx, streaming, tools, json mode · Solar Pro 3 is Upstage's powerful Mixture-of-Experts (MoE) language model. 128,000 token context window. |
+| `solar-pro4` | upstage | — | 524k ctx, 131k out, streaming, tools, json mode · Solar Pro 4 is a large language model from Upstage. 524,288 token context window, maximum output of 131,072 tokens. |
+| `palmyra-x5` | writer | — | 1040k ctx, 8k out, streaming · Palmyra X5 is Writer's most advanced model, purpose-built for building and scaling AI agents across the enterprise. |
+| `grok-4.1-fast` | xai | — | 2000k ctx, 33k out, streaming, tools, vision, json mode |
+| `grok-4.1-fast-reasoning` | xai | — | 2000k ctx, 33k out, streaming, tools, vision, json mode |
+| `grok-4.20` | xai | — | 1000k ctx, 33k out, streaming, tools, vision, json mode · Grok 4.20 is a reasoning model from xAI with industry-leading speed and agentic tool calling capabilities. 2,000,000 token context window. |
+| `grok-4.20-multi-agent` | xai | — | 1000k ctx, 33k out, streaming, tools, vision, json mode · Grok 4.20 Multi-Agent is a variant of xAI’s Grok 4.20 designed for collaborative, agent-based workflows. 2,000,000 token context window. |
+| `grok-4.20-reasoning` | xai | — | 1000k ctx, 33k out, streaming, tools, vision, json mode |
+| `grok-4.3` | xai | — | 1000k ctx, streaming, tools, vision, json mode · Grok 4.3 is a reasoning model from xAI. 1,000,000 token context window. Includes independent benchmarks from Artificial Analysis. |
+| `grok-4.5` | xai | — | 500k ctx, 33k out, streaming, tools, vision, json mode · Grok 4.5 is SpaceXAI's smartest model with frontier performance on coding, knowledge work, and STEM. 500,000 token context window. |
+| `grok-4.6` | xai | — | 500k ctx, streaming, tools, vision, pdf, json mode · Grok 4.6 is SpaceXAI's smartest model with frontier performance on coding, knowledge work, and STEM. 500,000 token context window. |
+| `grok-build-0.1` | xai | — | 256k ctx, streaming, tools, vision, json mode · Grok Build 0.1 is xAI’s fast coding model trained specifically for agentic software engineering workflows. 256,000 token context window. |
+| `grok-latest` | xai | — | 500k ctx, streaming, tools, vision, pdf, json mode · This model always redirects to the latest Grok model from xAI. 500,000 token context window. |
+| `mimo-v2.5` | xiaomi | — | 1049k ctx, 131k out, streaming, tools, vision, json mode · MiMo-V2.5 is a native omnimodal model by Xiaomi. 1,050,000 token context window. Higher uptime with 7 providers. |
+| `mimo-v2.5-pro` | xiaomi | — | 1049k ctx, 131k out, streaming, tools, json mode · MiMo-V2.5-Pro is Xiaomi’s flagship model, delivering strong performance in general agentic capabilities, complex software engineering, and… |
+| `glm-4.5` | z-ai | — | 131k ctx, 98k out, streaming, tools, json mode · GLM-4.5 is our latest flagship foundation model, purpose-built for agent-based applications. |
+| `glm-4.5-air` | z-ai | — | 131k ctx, 131k out, streaming, tools, json mode · GLM-4.5-Air is the lightweight variant of our latest flagship model family, also purpose-built for agent-centric applications. |
+| `glm-4.5v` | z-ai | — | 66k ctx, 16k out, streaming, tools, vision, json mode · GLM-4.5V is a vision-language foundation model for multimodal agent applications. |
+| `glm-4.6` | z-ai | — | 203k ctx, 131k out, streaming, tools, json mode · Compared with GLM-4.5, this generation brings several key improvements: Longer context window: The context window has been expanded from… |
+| `glm-4.6v` | z-ai | — | 131k ctx, 24k out, streaming, tools, vision, json mode · GLM-4.6V is a large multimodal model designed for high-fidelity visual understanding and long-context reasoning across images, documents… |
+| `glm-4.7` | z-ai | — | 203k ctx, 131k out, streaming, tools, json mode · GLM-4.7 is Z.ai’s latest flagship model, featuring upgrades in two key areas: enhanced programming capabilities and more stable multi-step… |
+| `glm-4.7-flash` | z-ai | — | 203k ctx, 16k out, streaming, tools, json mode · As a 30B-class SOTA model, GLM-4.7-Flash offers a new option that balances performance and efficiency. |
+| `glm-5` | z-ai | — | 203k ctx, streaming, tools, json mode · GLM-5 is Z.ai’s flagship open-source foundation model engineered for complex systems design and long-horizon agent workflows. |
+| `glm-5-turbo` | z-ai | — | 203k ctx, 131k out, streaming, tools, json mode · GLM-5 Turbo is a new model from Z.ai designed for fast inference and strong performance in agent-driven environments such as OpenClaw… |
+| `glm-5.1` | z-ai | — | 203k ctx, streaming, tools, json mode · GLM-5.1 delivers a major leap in coding capability, with particularly significant gains in handling long-horizon tasks. |
+| `glm-5.2` | z-ai | — | 1024k ctx, 128k out, streaming, tools, json mode · GLM 5.2 is a large-scale reasoning model from Z.ai. 1,048,576 token context window, maximum output of 32,768 tokens. |
+| `glm-5.3` | z-ai | — | 1049k ctx, 131k out, streaming, tools, json mode · GLM-5.3 is a large-scale reasoning model from Z.ai, built for complex software engineering and long-horizon agent tasks. |
+| `glm-5v-turbo` | z-ai | — | 203k ctx, 131k out, streaming, tools, vision, json mode · GLM-5V-Turbo is Z.ai’s first native multimodal agent foundation model, built for vision-based coding and agent-driven tasks. |
+| `glm-latest` | z-ai | — | 1049k ctx, 131k out, streaming, tools, json mode · This model always redirects to the latest GLM model from Z.ai. 1,048,576 token context window, maximum output of 131,072 tokens. |
+| `glm-4.5-air-fp8` | zai-org | — | 131k ctx, streaming |
+

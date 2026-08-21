@@ -1,0 +1,42 @@
+---
+title: "Budget alerts"
+description: "Know before you run out. Automatic notifications at spend thresholds."
+---
+
+Budget alerts are **the emergency brake** for your credits. Set thresholds, pick channels, get notified before you accidentally run out.
+
+## Setting an alert
+
+Settings → **Budget alerts** → **New alert**.
+
+- **Threshold** — as a percent of the monthly plan allowance (50/75/90/100) or an absolute credit amount
+- **Channel** — which Notification channel gets pinged (email / Slack / webhook)
+- **Scope** — workspace-wide (all spend) or per-API-key (specific client)
+
+## Example
+
+Pro plan, 9 000 monthly credits. You set:
+
+- 50 % (4 500 credits used) → Slack #alerts
+- 75 % (6 750 credits used) → Slack #alerts + email owner
+- 90 % (8 100 credits used) → Slack #alerts + email + auto-pause new inferences
+
+## Auto-pause at 100 %
+
+Turn on **Auto-pause on exhaustion** and we stop serving requests the moment your remaining credits hit zero. New inferences return `402 payment_required` until you top up or the monthly allowance renews. This protects against runaway scripts.
+
+## Topup-triggered alerts
+
+You can also subscribe to **low topup balance** alerts — useful if your team relies on topups for unexpected usage spikes.
+
+## Per-API-key alerts
+
+Point-protection: alert when a specific API key's usage crosses a limit, not the whole workspace. Useful for production keys where unusual spend signals a customer churn, a bad query, or abuse.
+
+## Viewing history
+
+Settings → Budget alerts → each alert row shows the last 10 fires with timestamp and credit value at the time. Useful for audits and incident post-mortems.
+
+## Who can manage
+
+Owner, Admin and **Billing** roles can create and edit alerts. Developers and Viewers can see alerts but not modify.

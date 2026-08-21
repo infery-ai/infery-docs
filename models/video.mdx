@@ -1,0 +1,444 @@
+---
+title: "Video models"
+description: "Every video model on Infery, grouped by what it takes as input."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+Called through `POST /v1/videos/generations`. Generation is asynchronous — submit, then poll.
+
+**407 models.** Grouped by input, because that is the choice you make first — a model that
+turns an image into a video is not interchangeable with one that starts from a prompt.
+
+Prices are not listed here: they change, and a stale price is worse than none. See the
+[live catalogue](https://infery.ai/models) for current rates, and each model's own page there for its full
+parameter schema.
+
+## Text → video (155)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `happy-horse-text-to-video` | alibaba | Image | Generate 1080p video with synchronized native audio from a text prompt. Aspect ratios: 16:9, 9:16, 1:1, 4:3, 3:4. Duration: 3–15s. |
+| `happy-horse-v1.1-text-to-video` | alibaba | Image | Happy Horse 1.1 is Alibaba's #1-ranked video model. |
+| `happyhorse-1-1-i2v` | alibaba | — |  |
+| `happyhorse-1-1-r2v` | alibaba | — |  |
+| `happyhorse-1-1-t2v` | alibaba | — |  |
+| `happyhorse-1.0` | alibaba | Image | Generate video from text or animate an image with Happy Horse 1.0 by Alibaba. 720p/1080p, 3-15s, five aspect ratios. |
+| `happyhorse-1.1` | alibaba | Image | Generate video from text, animate an image, or combine reference images with Happy Horse 1.1 by Alibaba. |
+| `wan-25-preview-text-to-video` | alibaba | Image | Wan 2.5 text-to-video model. |
+| `wan-t2v` | alibaba | — | Wan-2.1 is a text-to-video model that generates high-quality videos with high visual quality and motion diversity from text prompts |
+| `wan-t2v-lora` | alibaba | — | Add custom LoRAs to Wan-2.1 is a text-to-video model that generates high-quality videos with high visual quality and motion diversity from… |
+| `wan-v2.2-5b-text-to-video` | alibaba | Image | Wan 2.2's 5B model produces up to 5 seconds of video 720p at 24FPS with fluid motion and powerful prompt understanding |
+| `wan-v2.2-5b-text-to-video-distill` | alibaba | — | Wan 2.2's 5B distill model produces up to 5 seconds of video 720p at 24FPS with fluid motion and powerful prompt understanding |
+| `wan-v2.2-5b-text-to-video-fast-wan` | alibaba | — | Wan 2.2's 5B FastVideo model produces up to 5 seconds of video 720p at 24FPS with fluid motion and powerful prompt understanding |
+| `wan-v2.2-a14b-text-to-video-lora` | alibaba | — | Wan-2.2 text-to-video is a video model that generates high-quality videos with high visual quality and motion diversity from text prompts. |
+| `wan-v2.2-a14b-text-to-video-turbo` | alibaba | — | Wan-2.2 turbo text-to-video is a video model that generates high-quality videos with high visual quality and motion diversity from text… |
+| `wan-v2.2-a14b-video-to-video` | alibaba | Image, Video | Wan-2.2 video-to-video is a video model that generates high-quality videos with high visual quality and motion diversity from text prompts… |
+| `wan-v2.7-text-to-video` | alibaba | Image | Wan 2.7 is the latest generation AI video model, delivering enhanced motion smoothness, superior scene fidelity, and greater visual… |
+| `wan2-2-i2v-flash` | alibaba | — |  |
+| `wan2-2-i2v-plus` | alibaba | — |  |
+| `wan2-2-t2v-plus` | alibaba | — |  |
+| `wan2.6-i2v` | alibaba | — |  |
+| `wan2.6-t2v` | alibaba | — |  |
+| `wan2.7-i2v` | alibaba | — |  |
+| `wan2.7-r2v` | alibaba | — |  |
+| `wan2.7-t2v` | alibaba | — |  |
+| `argil/avatars/text-to-video` | argil | Audio | High-quality avatar videos that feel real, generated from your text |
+| `bernini-r-text-to-video` | bernini-r | — | Generate high-quality video from a text prompt with Bernini-R, ByteDance's unified video generation and editing model. |
+| `flux-3` | blackforestlabs | Image, Video | FLUX.3 is Black Forest Labs' frontier video model. |
+| `flux-3-text-to-video-draft` | blackforestlabs | — | FLUX.3 is Black Forest Labs' frontier audio/video model. |
+| `bytedance-seedance-v1-pro-fast-text-to-video` | bytedance | Image | Text to Video endpoint for Seedance 1.0 Pro Fast, a next-generation video model designed to deliver maximum performance at minimal cost |
+| `bytedance-seedance-v1-pro-text-to-video` | bytedance | Image | Seedance 1.0 Pro, a high quality video generation model developed by Bytedance. |
+| `bytedance-seedance-v1.5-pro-text-to-video` | bytedance | Image | Generate videos with audio with Seedance 1.5 |
+| `seedance-1-lite` | bytedance | Image | Seedance 1 Lite by ByteDance generates 5s and 10s videos from text or images at 480p and 720p. Use Seedance 1 Lite with an API. |
+| `seedance-1-pro` | bytedance | Image | Seedance 1 Pro by ByteDance generates high-quality 5s and 10s videos from text or images at up to 1080p. Use Seedance 1 Pro with an API. |
+| `seedance-1-pro-fast` | bytedance | Image | Seedance 1.0 pro fast: 3x faster generation speed and 60% lower cost |
+| `seedance-1.5-pro` | bytedance | Image | Seedance 1.5 Pro by ByteDance generates cinema-quality video with synchronized audio, precise lip-syncing, and multilingual support. |
+| `seedance-2.0` | bytedance | Image, Audio, Video | Seedance 2.0 by ByteDance generates high-quality video with synchronized audio from text, images, video, and audio inputs. |
+| `seedance-2.0-fast-reference-to-video` | bytedance | Image, Audio, Video | ByteDance's most advanced reference-to-video model, fast tier. |
+| `seedance-2.0-mini-text-to-video` | bytedance | Image, Video, Audio | Seedance 2.0 Mini is a faster version of Seedance 2.0 that brings great performance and high generation speed at a lower cost. |
+| `seedance-2.5` | bytedance | Image, Video, Audio | Dreamina Seedance 2.5 animates a single still into a native 30-second clip at up to 720p, extending one frame into continuous, coherent… |
+| `veo-2` | google | Image | Veo 2 is Google's video generation model with realistic motion, real-world physics, and up to 4K resolution. Use Veo 2 with an API. |
+| `veo-3` | google | Image | Includes native audio generation, improved prompt adherence, and stunning hyperrealism. |
+| `veo-3-fast` | google | Image | Google's Veo 3 Fast video model — the advanced AI video generation model designed for ultra-high-speed, cinematic-quality video creation. |
+| `veo-3.1` | google | Image, Video | 0k ctx, 8k out · Veo 3.1 is Google&#x27;s latest video generation model with synchronized audio, reference image support, and enhanced prompt adherence. |
+| `veo-3.1-fast` | google | Image, Video | 0k ctx, 8k out · Veo 3.1 Fast is a faster version of Google&#x27;s Veo 3.1 video model with synchronized audio and high-fidelity output. |
+| `veo-3.1-lite` | google | Image | 0k ctx, 8k out |
+| `heygen-avatar3-digital-twin` | heygen | — | Heygen Avatar V3 Model for Digital Twin |
+| `heygen-avatar4-digital-twin` | heygen | — | Heygen Avatar 4 Digital Twin Model |
+| `heygen-avatar5-digital-twin` | heygen | — | Create natural HeyGen Avatar V digital twin videos from text or audio, with lip-sync, optional backgrounds, captions, and MP4/WebM output. |
+| `heygen-v2-video-agent` | heygen | — | Heygen Text to Video Generation Model |
+| `heygen-v3-video-agent` | heygen | — | Generate videos with a single prompt. |
+| `infinity-star-text-to-video` | infinity-star | — | InfinityStar’s unified 8B spacetime autoregressive engine to turn any text prompt into crisp 720p videos - 10× faster than diffusion models. |
+| `kling-video-o3-4k-text-to-video` | kling | Image | Kling's Native 4K is a video generation model that directly outputs professional-grade 4K video in one step, eliminating the need for… |
+| `kling-video-o3-pro-text-to-video` | kling | Image, Video | Generate realistic videos using Kling O3 from Kling Team! |
+| `kling-video-o3-standard-text-to-video` | kling | Image, Video | Generate realistic videos using Kling O3 from Kling Team! |
+| `kling-video-v1-standard-text-to-video` | kling | Image | Generate video clips from your prompts using Kling 1.0 |
+| `kling-video-v1.5-pro-text-to-video` | kling | Image | Generate video clips from your prompts using Kling 1.5 (pro) |
+| `kling-video-v1.6-pro-text-to-video` | kling | Image | Generate video clips from your prompts using Kling 1.6 (pro) |
+| `kling-video-v1.6-standard-text-to-video` | kling | Image | Generate video clips from your prompts using Kling 1.6 (std) |
+| `kling-video-v2-master-text-to-video` | kling | Image | Generate video clips from your prompts using Kling 2.0 Master |
+| `kling-video-v2.1-master-text-to-video` | kling | Image | Kling 2.1 Master: The premium endpoint for Kling 2.1, designed for top-tier text-to-video generation with unparalleled motion fluidity… |
+| `kling-video-v2.5-turbo-pro-text-to-video` | kling | Image | Kling 2.5 Turbo Pro: Top-tier text-to-video generation with unparalleled motion fluidity, cinematic visuals, and exceptional prompt… |
+| `kling-video-v2.6-pro-text-to-video` | kling | Image | Kling 2.6 Pro: Top-tier text-to-video with cinematic visuals, fluid motion, and native audio generation. |
+| `kling-video-v3-4k-text-to-video` | kling | Image | Kling's Native 4K is a video generation model that directly outputs professional-grade 4K video in one step, eliminating the need for… |
+| `kling-video-v3-pro-text-to-video` | kling | Image | Kling 3.0 Pro: Top-tier text-to-video with cinematic visuals, fluid motion, and native audio generation, with multi-shot support. |
+| `kling-video-v3-standard-text-to-video` | kling | Image | Kling 3.0 Standard: Top-tier text-to-video with cinematic visuals, fluid motion, and native audio generation, with multi-shot support. |
+| `kling-video-v3-turbo-pro-text-to-video` | kling | Image | Generate high quality 1080p videos using Kling's Turbo 3.0 model, with improved lipsync and multishot generation capabilities. |
+| `kling-video-v3-turbo-standard-text-to-video` | kling | Image | Kling 3.0 Turbo Standard is a fast, cost-efficient video generation model that turns text prompts directly into 720P video with native… |
+| `krea-wan-14b-video-to-video` | krea-wan-14b | Video | Superfast video model based on Wan 2.1 14b by Krea, excelling at real-time video-editing. |
+| `kling-o1` | kwaivgi | Image, Video | Kling O1 Edit modifies existing videos through natural-language commands, changing subjects, environments, and style while preserving… |
+| `kling-v1.6-pro` | kwaivgi | Image | Kling v1.6 Pro generates 5s and 10s videos in 1080p resolution. Use Kling v1.6 Pro for text-to-video and image-to-video with an API. |
+| `kling-v1.6-standard` | kwaivgi | Image | Kling v1.6 Standard generates 5s and 10s videos in 720p at 30fps. Use Kling v1.6 Standard for text-to-video and image-to-video with an API. |
+| `kling-v2.0` | kwaivgi | Image | Generate high-quality videos from text prompts using Kling 2.0. |
+| `kling-v2.1-master` | kwaivgi | Image | Kling v2.1 Master is a premium video generation model with superb dynamics and prompt adherence. |
+| `kling-v2.5-turbo-pro` | kwaivgi | Image | Kling 2.5 Turbo Pro generates cinematic video from text or images with smooth motion, prompt adherence, and fast inference. |
+| `kling-v2.6` | kwaivgi | Image | Kling V2.6 generates cinematic videos with synchronized audio from text or images, with lip-synced dialogue and ambient sound. |
+| `kling-v3-omni-video` | kwaivgi | Image, Video | Generate and edit cinematic video from text, images, and video references. |
+| `kling-v3-video` | kwaivgi | Image | Generate up to 15 seconds of cinematic video with native audio, lip sync, and multi-shot control. |
+| `motion-2.0` | leonardoai | Image | Leonardo AI Motion 2.0 creates 5-second videos from text prompts with style controls, multiple aspect ratios, and frame interpolation. |
+| `ltx-2-19b-audio-to-video` | lightricks | Image, Video, Audio | Generate video with audio from audio, text and images using LTX-2 |
+| `ltx-2-19b-distilled-audio-to-video` | lightricks | Image, Video, Audio | Generate video with audio from audio, text and images using LTX-2 Distilled |
+| `ltx-2-19b-distilled-text-to-video-lora` | lightricks | — | Generate video with audio from text using LTX-2 Distilled and custom LoRA |
+| `ltx-2-19b-text-to-video-lora` | lightricks | — | Generate video with audio from text using LTX-2 and custom LoRA |
+| `ltx-2.3-22b-audio-to-video` | lightricks | Image, Video, Audio | Generate video with audio from audio, text and images using LTX-2 |
+| `ltx-2.3-22b-distilled-audio-to-video` | lightricks | Image, Video, Audio | Generate video with audio from audio, text and images using LTX-2 Distilled |
+| `ltx-2.3-22b-distilled-text-to-video-lora` | lightricks | — | Generate video with audio from text using LTX-2.3 Distilled and custom LoRA |
+| `ltx-2.3-22b-text-to-video-lora` | lightricks | — | Generate video with audio from text using LTX-2.3 and custom LoRA |
+| `ltx-2.3-audio-to-video` | lightricks | Image, Audio | LTX-2.3 is a high-quality, fast AI video model available in Pro and Fast variants for text-to-video, image-to-video, and audio-to-video. |
+| `ltx-2.3-quality-audio-to-video` | lightricks | Image, Video, Audio | Generate high-quality video with audio from audio, text and images using LTX-2.3 |
+| `ltx-2.3-quality-text-to-video-lora` | lightricks | — | Generate high-quality video with audio from text using LTX-2.3 and custom LoRA |
+| `ltx-2.3-text-to-video-fast` | lightricks | — | LTX-2.3 is a high-quality, fast AI video model available in Pro and Fast variants for text-to-video, image-to-video, and audio-to-video. |
+| `ltx-2.5-text-to-video-fast` | lightricks | — | LTX-2.5 is Lightricks' open-source audio-video model. |
+| `ltx-2.5-text-to-video-pro` | lightricks | — | LTX-2.5 is Lightricks' open-source audio-video model. |
+| `ltx-video` | lightricks | Image | LTX-Video is a real-time video generation model that creates 24 FPS videos at 768x512 resolution from text or images. |
+| `ltx-video-13b-distilled` | lightricks | — | Generate videos from prompts using LTX Video-0.9.7 13B Distilled and custom LoRA |
+| `ltx-video-13b-distilled-multiconditioning` | lightricks | Image, Video | Generate videos from prompts, images, and videos using LTX Video-0.9.7 13B Distilled and custom LoRA |
+| `ltxv-13b-098-distilled` | lightricks | Image | Generate long videos from prompts using LTX Video-0.9.8 13B Distilled and custom LoRA |
+| `ltxv-13b-098-distilled-multiconditioning` | lightricks | Image, Video | Generate long videos from prompts, images, and videos using LTX Video-0.9.8 13B Distilled and custom LoRA |
+| `ray-2-540p` | luma | Image | Luma Ray 2 540p generates realistic videos with coherent motion and physics-based simulations from text or image prompts. |
+| `ray-2-720p` | luma | Image | Luma Ray 2 720p generates realistic videos with coherent motion and cinematic composition from text or image prompts. Use Ray 2 with an API. |
+| `ray-3.2` | luma | Image | Generate 5s or 10s cinematic video from text or images using Luma's reasoning video model. |
+| `ray-flash-2-540p` | luma | Image | Luma Ray Flash 2 540p generates 5- and 9-second videos at 540p, the fastest and most affordable option in the Ray 2 family. |
+| `ray-flash-2-720p` | luma | Image | Luma Ray Flash 2 720p generates 5- and 9-second videos faster and cheaper than Ray 2, with coherent motion and detailed visuals. |
+| `magi-distilled` | magi-distilled | Image, Video | MAGI-1 distilled is a faster video generation model with exceptional understanding of physical interactions and cinematic prompts |
+| `longcat-video-distilled-text-to-video-480p` | meituan | — | Generate long videos from text using LongCat Video Distilled |
+| `longcat-video-distilled-text-to-video-720p` | meituan | — | Generate long videos in 720p/30fps from text using LongCat Video Distilled |
+| `longcat-video-text-to-video-480p` | meituan | — | Generate long videos from text using LongCat Video |
+| `longcat-video-text-to-video-720p` | meituan | — | Generate long videos in 720p/30fps from text using LongCat Video |
+| `h3-reference-to-video-lora` | minimax | Audio, Image, Video | References into video with synchronized audio using MiniMax H3 |
+| `h3-text-to-video` | minimax | Image, Video, Audio | MiniMax H3 is a frontier video model. |
+| `h3-text-to-video-lora` | minimax | — | Generate video with synchronized audio from a text prompt using MiniMax H3; load a trained LoRA at adjustable strength to lock in style… |
+| `hailuo-02` | minimax | Image | MiniMax Hailuo 02 generates high-quality video at up to 1080p with realistic physics and strong prompt following. Use Hailuo 02 with an API. |
+| `hailuo-2.3` | minimax | Image | MiniMax Hailuo 2.3 generates high-fidelity video with realistic human motion, cinematic VFX, and strong style adherence at up to 1080p. |
+| `minimax-hailuo-02-pro-text-to-video` | minimax | Image | MiniMax Hailuo-02 Text To Video API (Pro, 1080p): Advanced video generation model with 1080p resolution |
+| `minimax-hailuo-02-standard-text-to-video` | minimax | Image | MiniMax Hailuo-02 Text To Video API (Standard, 768p): Advanced video generation model with 768p resolution |
+| `video-01` | minimax | Image | MiniMax Video 01 (Hailuo) generates 6-second videos from text or images at 720p with cinematic camera movement. Use Video 01 with an API. |
+| `video-01-director` | minimax | Image | MiniMax Video 01 Director generates 720p videos with precise camera movement control using bracketed commands. |
+| `avatar-x` | mirage-api | — | The Avatar X API offers access to Mirage's most advanced generation model yet, delivering industry-leading identity preservation and… |
+| `cosmos-predict-2.5-distilled-text-to-video` | nvidia | — | Generate video from text and videos using NVIDIA's 2B Cosmos Distilled Model |
+| `cosmos-predict-2.5-video-to-video` | nvidia | Image, Video | Generate video from text and videos using NVIDIA's 2B Cosmos Post-Trained Model |
+| `sora-2` | openai | — | Flagship video generation with synced audio |
+| `sora-2-pro` | openai | — | Most advanced synced-audio video generation |
+| `ovi` | ovi | Image, Audio | A unified paradigm for audio-video generation |
+| `pika-v2-turbo-text-to-video` | pika | Image | Pika v2 Turbo creates videos from a text prompt with high quality output. |
+| `pika-v2.1-text-to-video` | pika | Image | Start with a simple text input to create dynamic generations that defy expectations. |
+| `pika-v2.2-text-to-video` | pika | Image | Start with a simple text input to create dynamic generations that defy expectations in up to 1080p. |
+| `pixverse-c1-text-to-video` | pixverse | Image | Generate film-grade videos from text prompts with native audio, up to 1080p and 15 seconds, using PixVerse C1. |
+| `pixverse-v5.5-text-to-video` | pixverse | Image | Generate high quality video clips from text and image prompts using PixVerse v5.5 |
+| `pixverse-v5.6` | pixverse | Image | PixVerse V5.6 is PixVerse's latest video generation model with audio-visual synchronization and multi-shot camera control. |
+| `pixverse-v6` | pixverse | Image | PixVerse V6 is PixVerse's flagship video generation model with synchronized audio, multi-shot sequences, and precise camera control. |
+| `p-video` | prunaai | Audio, Image | P-Video is Pruna AI's fast video generation model with a built-in draft mode for 4x faster previews. |
+| `gen-4.5` | runwayml | Image | Runway Gen-4.5 is Runway's latest text-to-video model with high motion quality, prompt adherence, and visual fidelity. |
+| `kandinsky5-pro-text-to-video` | sber | Image | Kandinsky 5.0 Pro is a diffusion model for fast, high-quality text-to-video generation. |
+| `kandinsky5-text-to-video` | sber | — | Kandinsky 5.0 is a diffusion model for fast, high-quality text-to-video generation. |
+| `kandinsky5-text-to-video-distill` | sber | — | Kandinsky 5.0 Distilled is a lightweight diffusion model for fast, high-quality text-to-video generation. |
+| `t2v-turbo` | t2v-turbo | — | Generate short video clips from your prompts |
+| `hunyuan-video` | tencent | Image | HunyuanVideo by Tencent generates high-quality videos with realistic motion from text descriptions. Run HunyuanVideo with an API. |
+| `hunyuan-video-v1.5-text-to-video` | tencent | Image | Hunyuan Video 1.5 is Tencent's latest and best video model |
+| `avatars-audio-to-video` | veed | Audio | Generate high-quality videos with UGC-like avatars from audio |
+| `q3-pro` | vidu | Image | Generate cinematic video from text, images, or keyframes. Up to 16 seconds at 1080p with synchronized audio, dialogue, and sound effects. |
+| `vidu-q2-reference-to-video-pro` | vidu | Image, Video | Use the latest Vidu Q2 Pro models which much more better quality and control on your videos. |
+| `vidu-q2-text-to-video` | vidu | — | Use the latest Vidu Q2 models which much more better quality and control on your videos. |
+| `vidu-q3-text-to-video` | vidu | Image | Vidu's latest Q3 pro models |
+| `vidu-q3-text-to-video-turbo` | vidu | — | Vidu's Q3 Turbo Model. |
+| `wan-2.1-1.3b` | wan-video | — | Create stunning 5-second 480p videos with the Wan2.1 text-to-video model. |
+| `wan-2.2-t2v-fast` | wan-video | — | Fast Wan 2.2 text to video with 480p. Ultra-fast open source text to video model. Video model under 30 second output. |
+| `wan-2.5-t2v` | wan-video | Audio | Alibaba WAN 2.5 is an advanced text-to-video model. It can generate high-quality 480p/720p/1080p videos from text prompts. |
+| `wan-2.5-t2v-fast` | wan-video | Audio | Wan 2.5 Fast is a speed-optimized text-to-video model from Alibaba. Generate videos from text prompts with faster generation times. |
+| `wan-2.7-i2v` | wan-video | Audio, Video, Image | Wan 2.7 I2V generates videos from still images with text-guided motion. |
+| `wan-2.7-r2v` | wan-video | Image, Video | Generate videos from reference images or clips while preserving subject identity using Alibaba's Wan 2.7 reference-to-video model |
+| `wan-2.1-t2v-480p` | wavespeedai | — | Accelerated Wan 2.1 14B text-to-video at 480p resolution with fast inference by WaveSpeed. Generate videos from text prompts with an API. |
+| `wan-2.1-t2v-720p` | wavespeedai | — | Accelerated Wan 2.1 14B text-to-video at 720p resolution with fast inference by WaveSpeed. |
+| `grok-imagine-video` | xai | Image, Video | Grok Imagine Video is xAI&#x27;s image-to-video model that animates still images into short videos with synchronized audio. |
+| `grok-imagine-video-1.5` | xai | Image | xAI&#x27;s Grok Imagine Video 1.5 (preview) animates still images into short videos with synchronized audio. |
+| `grok-imagine-video-v1.5-text-to-video` | xai | Image | Generate videos from prompts with audio using xAI's Grok Imagine 1.5 Video model. |
+
+## Video → video (128)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `happy-horse-video-edit` | alibaba | — | HappyHorse video editing supports advanced video editing through natural language instructions. |
+| `v2.6-reference-to-video` | alibaba | — | Wan 2.6 reference-to-video model. |
+| `v2.6-reference-to-video-flash` | alibaba | — | Wan 2.6 reference-to-video flash model. |
+| `wan-22-vace-fun-a14b-depth` | alibaba | Image | VACE Fun for Wan 2.2 A14B from Alibaba-PAI |
+| `wan-22-vace-fun-a14b-inpainting` | alibaba | Image | VACE Fun for Wan 2.2 A14B from Alibaba-PAI |
+| `wan-22-vace-fun-a14b-outpainting` | alibaba | Image | VACE Fun for Wan 2.2 A14B from Alibaba-PAI |
+| `wan-22-vace-fun-a14b-reframe` | alibaba | — | VACE Fun for Wan 2.2 A14B from Alibaba-PAI |
+| `wan-v2.7-edit-video` | alibaba | — | Wan 2.7 is the latest generation AI video model, delivering enhanced motion smoothness, superior scene fidelity, and greater visual… |
+| `wan-vace-14b` | alibaba | Image | VACE is a video generation model that uses a source image, mask, and video to create prompted videos with controllable sources. |
+| `wan-vace-14b-depth` | alibaba | Image | VACE is a video generation model that uses a source image, mask, and video to create prompted videos with controllable sources. |
+| `wan-vace-14b-inpainting` | alibaba | Image | VACE is a video generation model that uses a source image, mask, and video to create prompted videos with controllable sources. |
+| `wan-vace-14b-outpainting` | alibaba | Image | VACE is a video generation model that uses a source image, mask, and video to create prompted videos with controllable sources. |
+| `wan-vace-14b-pose` | alibaba | Image | VACE is a video generation model that uses a source image, mask, and video to create prompted videos with controllable sources. |
+| `wan-vace-14b-reframe` | alibaba | — | VACE is a video generation model that uses a source image, mask, and video to create prompted videos with controllable sources. |
+| `wan-vace-apps-long-reframe` | alibaba | — | Reframe entire videos scene-by-scene using Wan VACE 2.1 |
+| `wan-vace-apps-video-edit` | alibaba | Image | Edit videos using plain language and Wan VACE |
+| `bernini-r-edit-video` | bernini-r | — | Edit any video with a natural-language instruction using Bernini-R, changing objects, weather, background, or camera angle while keeping… |
+| `birefnet-v2-video` | birefnet | — | Video background removal version of bilateral reference framework (BiRefNet) for high-resolution dichotomous image segmentation (DIS) |
+| `flux-3-draft-enhance` | blackforestlabs | — | FLUX.3 is Black Forest Labs' frontier audio/video model. |
+| `flux-3-extend-video-draft` | blackforestlabs | — | FLUX.3 is Black Forest Labs' frontier audio/video model. |
+| `bria_video_eraser-erase-keypoints` | bria | — | A high-fidelity capability for erasing unwanted objects, people, or visual elements from videos while maintaining aesthetic quality and… |
+| `bria_video_eraser-erase-mask` | bria | — | A high-fidelity capability for erasing unwanted objects, people, or visual elements from videos while maintaining aesthetic quality and… |
+| `bria_video_eraser-erase-prompt` | bria | — | A high-fidelity capability for erasing unwanted objects, people, or visual elements from videos while maintaining aesthetic quality and… |
+| `bria/video/background-removal` | bria | — | Automatically remove backgrounds from videos -perfect for creating clean, professional content without a green screen. |
+| `video-background-removal-realtime` | bria | Image | Remove video backgrounds in real time with Bria’s VRMBG 3.0 model. |
+| `video-background-removal-v3` | bria | — | Remove backgrounds from any video with Bria's VRMBG 3.0. |
+| `video-erase-keypoints` | bria | — | High-fidelity keypoint-driven video object removal - minimal input, strong temporal consistency. |
+| `video-erase-mask` | bria | — | High-fidelity mask-based video object removal with strong temporal consistency. |
+| `video-erase-prompt` | bria | — | Erase unwanted objects, people, or elements from video with a text prompt. |
+| `video-increase-resolution` | bria | — | Professional-grade video upscaler with strong temporal consistency, enhancing videos up to 8K resolution. |
+| `video-sound-effects-generator` | cassetteai | — | Add sound effects to your videos |
+| `lucy-2-5-realtime` | decart | — | Real-time, prompt-driven video editing over WebRTC. |
+| `lucy-edit-pro` | decart | — | Edit outfits, objects, faces, or restyle your video - all with maximum detail retention. |
+| `lucy-restyle` | decart | — | Restyle videos up to 30 min long - maintaining maximum detail quality. |
+| `lucy2-vton-realtime` | decart | Image | Realtime Try On experience with Decart Lucy 2.1 VTON |
+| `depth-anything-video` | depth-anything-video | — | Generates depth maps from video using Video Depth Anything (CVPR 2025). |
+| `dwpose-video` | dwpose | — | Predict poses from videos. |
+| `editto` | editto | — | Edit videos using instruction-based prompting using Editto model! |
+| `film-video` | film | — | Interpolate videos with FILM - Frame Interpolation for Large Motion |
+| `heygen-v2-translate-precision` | heygen | — | Heygen Translate Model with Extreme Precision |
+| `heygen-v2-translate-speed` | heygen | — | Heygen Translate Model with Extreme Speed |
+| `heygen-v3-filler-word-removal` | heygen | — | Use Heygen's Latest Model for Filler Word Removal. |
+| `heygen-v3-lipsync-precision` | heygen | Audio | Replace or dub audio on an existing video with high-accuracy avatar-inference lip-sync. |
+| `heygen-v3-lipsync-speed` | heygen | Audio | Replace or dub audio on an existing video with fast audio-only lip-sync. |
+| `ffmpeg-api-compose` | infery | — | Compose videos from multiple media sources using FFmpeg API. |
+| `ffmpeg-api-merge-audio-video` | infery | Audio | Merge videos with standalone audio files or audio from video files. |
+| `ffmpeg-api-merge-videos` | infery | — | Use ffmpeg capabilities to merge 2 or more videos. |
+| `workflow-utilities-auto-subtitle` | infery | — | Add automatic subtitles to videos |
+| `workflow-utilities-blend-video` | infery | — | FFMPEG Utility for Blending Videos |
+| `workflow-utilities-reverse-video` | infery | — | FFMPEG Utility to Reverse Videos |
+| `workflow-utilities-scale-video` | infery | — | FFMPEG Utilities to Scale Videos |
+| `workflow-utilities-trim-video` | infery | — | FFMPEG Utility for Trim Video |
+| `kling-video-o1-standard-video-to-video-reference` | kling | — | Kling O1 Omni generates new shots guided by an input reference video, preserving cinematic language such as motion, and camera style to… |
+| `kling-video-o1-video-to-video-reference` | kling | — | Kling O1 Omni generates new shots guided by an input reference video, preserving cinematic language such as motion, and camera style to… |
+| `kling-video-o3-pro-video-to-video-reference` | kling | — | Kling O3 Omni generates new shots guided by an input reference video, preserving cinematic language such as motion, and camera style to… |
+| `kling-video-o3-standard-video-to-video-reference` | kling | — | Kling O3 Omni generates new shots guided by an input reference video, preserving cinematic language such as motion, and camera style to… |
+| `latentsync` | latentsync | Audio | LatentSync is a video-to-video model that generates lip sync animations from audio using advanced algorithms for high-quality… |
+| `ltx-2-19b-distilled-extend-video` | lightricks | — | Extend videos with audio using LTX-2 Distilled |
+| `ltx-2-19b-distilled-extend-video-lora` | lightricks | — | Extend videos with audio using LTX-2 Distilled and custom LoRA |
+| `ltx-2-19b-distilled-video-to-video-lora` | lightricks | — | Generate video with audio from videos using LTX-2 Distilled and custom LoRA |
+| `ltx-2-19b-extend-video` | lightricks | — | Extend video with audio using LTX-2 |
+| `ltx-2-19b-extend-video-lora` | lightricks | — | Extend video with audio using LTX-2 and custom LoRA |
+| `ltx-2-19b-video-to-video-lora` | lightricks | — | Generate video with audio from videos using LTX-2 and custom LoRA |
+| `ltx-2.3-22b-distilled-reference-video-to-video` | lightricks | — | Generate video with audio from reference videos using LTX-2.3 Distilled |
+| `ltx-2.3-22b-distilled-reference-video-to-video-lora` | lightricks | — | Generate video with audio from reference videos using LTX-2.3 Distilled and custom LoRA |
+| `ltx-2.3-22b-distilled-video-to-video-lora` | lightricks | — | Generate video with audio from videos using LTX-2.3 Distilled and custom LoRA |
+| `ltx-2.3-22b-extend-video` | lightricks | — | Extend video with audio using LTX-2.3 |
+| `ltx-2.3-22b-extend-video-lora` | lightricks | — | Extend video with audio using LTX-2.3 and custom LoRA |
+| `ltx-2.3-22b-reference-video-to-video` | lightricks | — | Generate video with audio from reference video, text and images using LTX-2.3 |
+| `ltx-2.3-22b-reference-video-to-video-lora` | lightricks | — | Generate video with audio from reference video, text and images using LTX-2.3 and custom LoRA |
+| `ltx-2.3-22b-video-to-video-lora` | lightricks | — | Generate video with audio from videos using LTX-2.3 and custom LoRA |
+| `ltx-2.3-extend-video` | lightricks | — | LTX-2.3 is a high-quality, fast AI video model available in Pro and Fast variants for text-to-video, image-to-video, and audio-to-video. |
+| `ltx-2.3-quality-clean-plate` | lightricks | — | Remove character from your video using Ltx 2.3 |
+| `ltx-2.3-quality-colorization` | lightricks | — | Colorize high-quality video using LTX-2.3 |
+| `ltx-2.3-quality-cross-eyed` | lightricks | — | Cross-eyes for high-quality video using LTX-2.3 |
+| `ltx-2.3-quality-day-to-night` | lightricks | — | Day to Night for high-quality video using LTX-2.3 |
+| `ltx-2.3-quality-deblur` | lightricks | — | Deblur high-quality video using LTX-2.3 |
+| `ltx-2.3-quality-decompression` | lightricks | — | Decompression / Denoise high-quality video using LTX-2.3 |
+| `ltx-2.3-quality-extend-video` | lightricks | — | Extend high-quality video with audio from input video using LTX-2.3 |
+| `ltx-2.3-quality-extend-video-lora` | lightricks | — | Extend high-quality video with audio from input video using LTX-2.3 with Lora |
+| `ltx-2.3-quality-hdr` | lightricks | — | Generate HDR from reference video using LTX-2.3 |
+| `ltx-2.3-quality-hdr-lora` | lightricks | — | Generate HDR from reference video using LTX-2.3 with lora |
+| `ltx-2.3-quality-inpaint-lora` | lightricks | — | Inpaint high-quality video using LTX-2.3 with lora |
+| `ltx-2.3-quality-instant-shave` | lightricks | — | Instant shave high-quality video using LTX-2.3 |
+| `ltx-2.3-quality-outpaint-lora` | lightricks | — | Outpaint high-quality video using LTX-2.3 with Lora |
+| `ltx-2.3-quality-reference-video-to-video` | lightricks | — | Generate high-quality video with audio from reference video, text and images using LTX-2.3 |
+| `ltx-2.3-quality-reference-video-to-video-lora` | lightricks | — | Generate high-quality video with audio from reference video, text and images using LTX-2.3 and custom LoRA |
+| `ltx-2.3-quality-render-to-real` | lightricks | — | Transform your 3D video render into realistic using first frame with Ltx 2.3 |
+| `ltx-2.3-quality-water-simulation` | lightricks | — | Water Simulation transformation for high-quality video using LTX-2.3 |
+| `ltx-2.3-reframe` | lightricks | — | LTX-2.3 Reframe converts your videos to any aspect ratio without destructive cropping. |
+| `ltx-2.3-retake-video` | lightricks | — | LTX-2.3 is a high-quality, fast AI video model available in Pro and Fast variants for text-to-video, image-to-video, and audio-to-video. |
+| `ltx-video-13b-distilled-extend` | lightricks | — | Extend videos using LTX Video-0.9.7 13B Distilled and custom LoRA |
+| `ltxv-13b-098-distilled-extend` | lightricks | — | Extend videos using LTX Video-0.9.8 13B Distilled and custom LoRA |
+| `lightx-recamera` | lightx | — | Use the capabilities of lightx to relight and recamera your videos. |
+| `lightx-relight` | lightx | — | Use tlightx capabilities to relight and recamera your videos. |
+| `agent-ray-v3.2-reframe` | luma | — | Luma Ray 3.2 reframes an existing video into a new aspect ratio guided by a text prompt, preserving the original footage frame-for-frame… |
+| `agent-ray-v3.2-video-to-video` | luma | — | Luma Ray 3.2 re-renders an existing video into new cinematic motion guided by a text prompt, preserving the source's look and movement… |
+| `luma-dream-machine-ray-2-flash-modify` | luma | — | Ray2 Flash Modify is a video generative model capable of restyling or retexturing the entire shot, from turning live-action into CG or… |
+| `luma-dream-machine-ray-2-flash-reframe` | luma | — | Adjust and enhance videos with Ray-2 Reframe. |
+| `luma-dream-machine-ray-2-modify` | luma | — | Ray2 Modify is a video generative model capable of restyling or retexturing the entire shot, from turning live-action into CG or stylized… |
+| `luma-dream-machine-ray-2-reframe` | luma | — | Adjust and enhance videos with Ray-2 Reframe. |
+| `sfx-v1-video-to-video` | mirelo-ai | — | Generate synced sounds for any video, and return it with its new sound track (like MMAudio) |
+| `sfx-v1.5-video-to-video` | mirelo-ai | — | Generate synced sounds for any video, and return it with its new sound track (like MMAudio) |
+| `sfx1.6-video-to-video` | mirelo-ai | — | Generate synced sounds for any video, and return it with its new sound track (like MMAudio). Now up to 60 seconds! |
+| `mmaudio-v2` | mmaudio-v2 | — | MMAudio generates synchronized audio given video and/or text inputs. It can be combined with video models to get videos with audio. |
+| `marey-motion-transfer` | moonvalley | — | Pull motion from a reference video and apply it to new subjects or scenes. |
+| `marey-pose-transfer` | moonvalley | — | Ideal for matching human movement. |
+| `musetalk` | musetalk | Audio, Image | MuseTalk is a real-time high quality audio-driven lip-syncing model. Use MuseTalk to animate a face with your own audio. |
+| `pixelcut/video-background-removal` | pixelcut | — | Pixelcut's Video Background Remover is an AI segmentation model that erases backgrounds frame by frame, with seamless temporal consistency. |
+| `pixverse-lipsync` | pixverse | — | Generate realistic lipsync animations from audio using advanced algorithms for high-quality synchronization with PixVerse Lipsync model |
+| `pixverse-v6-extend` | pixverse | — | Pixverse's latest v6 Model. |
+| `rife-video` | rife | — | Interpolate videos with RIFE - Real-Time Intermediate Flow Estimation |
+| `v1.1-video-to-video-music` | sonilo | — | Generates perfectly synced music for any video. |
+| `v1.1-video-to-video-sound-effects` | sonilo | — | Adds synchronized, royalty-free, commercial-use-safe sound effects to a video. Returns the finished video with the generated audio mixed in. |
+| `sync-lipsync` | sync-lipsync | Audio | Generate realistic lipsync animations from audio using advanced algorithms for high-quality synchronization. |
+| `sync-lipsync-react-1` | sync-lipsync | Audio | Use React-1 from SyncLabs to refine human emotions and do realistic lip-sync without losing details! |
+| `sync-lipsync-v2` | sync-lipsync | Audio | Generate realistic lipsync animations from audio using advanced algorithms for high-quality synchronization with Sync Lipsync 2.0 model |
+| `sync-lipsync-v2-pro` | sync-lipsync | Audio | Generate high-quality realistic lipsync animations from audio while preserving unique details like natural teeth and unique facial features… |
+| `thinksound` | thinksound | — | Generate realistic audio for a video with an optional text prompt and combine |
+| `thinksound-audio` | thinksound | — | Generate realistic audio from a video with an optional text prompt |
+| `lipsync` | veed | Audio | Generate realistic lipsync from any audio using VEED's model. |
+| `lipsync-v2` | veed | Audio | Generate production-quality lipsync from any audio using VEED's most advanced model yet. |
+| `subtitles` | veed | — |  |
+| `video-background-removal` | veed | — | Remove background from any video with people and objects. No green screen needed. |
+| `video-background-removal-fast` | veed | — | Remove background from any video with people and objects. No green screen needed. |
+| `video-background-removal-green-screen` | veed | — | Remove background from videos filmed using chromakey, with automatic green spill suppression for clean, professional edges. |
+| `vidu-q2-video-extension-pro` | vidu | — | Use the latest Vidu Q2 models which much more better quality and control on your videos. |
+| `grok-imagine-video-edit-video` | xai | — | Edit videos using xAI's Grok Imagine |
+
+## Image → video (113)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `ai-avatar-multi` | ai-avatar | Audio | MultiTalk model generates a multi-person conversation video from an image and audio files. |
+| `ai-avatar-multi-text` | ai-avatar | — | MultiTalk model generates a multi-person conversation video from an image and text inputs. |
+| `ai-avatar-single-text` | ai-avatar | — | MultiTalk model generates a talking avatar video from an image and text. |
+| `happy-horse-reference-to-video` | alibaba | — | Generate 1080p video with synchronized native audio from a text prompt and references. Aspect ratios: 16:9, 9:16, 1:1, 4:3, 3:4. |
+| `happy-horse-v1.1-reference-to-video` | alibaba | — | Happy Horse 1.1 is Alibaba's #1-ranked video model. |
+| `v2.6-image-to-video` | alibaba | — | Wan 2.6 image-to-video model. |
+| `v2.6-image-to-video-flash` | alibaba | — | Wan 2.6 image-to-video flash model. |
+| `wan-effects` | alibaba | — | Wan Effects generates high-quality videos with popular effects from images |
+| `wan-flf2v` | alibaba | — | Wan-2.1 flf2v generates dynamic videos by intelligently bridging a given first frame to a desired end frame through smooth, coherent motion… |
+| `wan-i2v` | alibaba | — | Wan-2.1 is a image-to-video model that generates high-quality videos with high visual quality and motion diversity from images |
+| `wan-i2v-lora` | alibaba | — | Add custom LoRAs to Wan-2.1 is a image-to-video model that generates high-quality videos with high visual quality and motion diversity from… |
+| `wan-motion` | alibaba | Video | Wan Motion is a streamlined character animation model that transfers motion from a driving video onto a reference character image. |
+| `wan-pro-image-to-video` | alibaba | — | Wan-2.1 Pro is a premium image-to-video model that generates high-quality 1080p videos at 30fps with up to 6 seconds duration, delivering… |
+| `wan-v2.2-14b-animate-move` | alibaba | Video | Wan-Animate is a video model that generates high-fidelity character videos by replicating the expressions and movements of characters from… |
+| `wan-v2.2-14b-animate-replace` | alibaba | Video | Wan-Animate Replace is a model that can integrate animated characters into reference videos, replacing the original character while… |
+| `wan-v2.2-14b-speech-to-video` | alibaba | Audio | Wan-S2V is a video model that generates high-quality videos from static images and audio, with realistic facial expressions, body… |
+| `wan-v2.2-a14b-image-to-video-lora` | alibaba | — | Wan-2.2 image-to-video is a video model that generates high-quality videos with high visual quality and motion diversity from text prompts… |
+| `wan-v2.2-a14b-image-to-video-turbo` | alibaba | — | Wan-2.2 Turbo image-to-video is a video model that generates high-quality videos with high visual quality and motion diversity from text… |
+| `bernini-r-reference-edit-video` | bernini-r | Video | Edit a video guided by reference images with Bernini-R, bringing an object, material, background, style, or weather from a reference image… |
+| `bernini-r-reference-to-video` | bernini-r | — | Turn up to five reference images into one continuous, consistent video with Bernini-R, with smooth, stable camera motion and no scene cuts. |
+| `flux-3-first-last-frame-to-video` | blackforestlabs | — | FLUX.3 is Black Forest Labs' frontier video model. |
+| `flux-3-first-last-frame-to-video-draft` | blackforestlabs | — | FLUX.3 is Black Forest Labs' frontier audio/video model. |
+| `flux-3-image-to-video-draft` | blackforestlabs | — | FLUX.3 is Black Forest Labs' frontier audio/video model. |
+| `flux-3-keyframes-to-video` | blackforestlabs | — | FLUX.3 is Black Forest Labs' frontier video model. |
+| `flux-3-keyframes-to-video-draft` | blackforestlabs | — | FLUX.3 is Black Forest Labs' frontier audio/video model. |
+| `bytedance-dreamactor-v2` | bytedance | Video | Transfer motion from a video to characters in an image using Dreamactor v2. Great performance for non-human and multiple characters |
+| `bytedance-omnihuman` | bytedance | Audio | OmniHuman generates video using an image of a human figure paired with an audio file. |
+| `bytedance-omnihuman-v1.5` | bytedance | Audio | Omnihuman v1.5 is a new and improved version of Omnihuman. It generates video using an image of a human figure paired with an audio file. |
+| `lynx` | bytedance | — | Generate subject consistent videos using Lynx from ByteDance! |
+| `davinci-magihuman` | davinci-magihuman | — | Expressive facial performance, natural speech-expression coordination, realistic body motion, and accurate audio-video synchronization with… |
+| `echomimic-v3` | echomimic-v3 | Audio | EchoMimic V3 generates a talking avatar model from a picture, audio and text prompt. |
+| `flashhead` | flashhead | — | SoulX-FlashHead is a unified 1.3B-parameter framework designed for high-fidelity, infinite-length, and real-time streaming portrait video… |
+| `flashtalk` | flashtalk | Audio | Audio-driven talking avatar generation powered by the SoulX-FlashTalk 14B model. |
+| `framepack` | framepack | — | Framepack is an efficient Image-to-video model that autoregressively generates videos. |
+| `framepack-f1` | framepack | — | Framepack is an efficient Image-to-video model that autoregressively generates videos. |
+| `framepack-flf2v` | framepack | — | Framepack is an efficient Image-to-video model that autoregressively generates videos. |
+| `veo3.1-fast-first-last-frame-to-video` | google | — | Generate videos from a first/last frame using Google's Veo 3.1 Fast |
+| `veo3.1-fast-reference-to-video` | google | — | Generate videos from reference images using Google's Veo 3.1 Fast |
+| `veo3.1-first-last-frame-to-video` | google | — | Generate videos from a first and last framed using Google's Veo 3.1 |
+| `veo3.1-lite-first-last-frame-to-video` | google | — | Veo 3.1 Lite balances practical utility with professional capabilities, supporting Text-to-Video and Image-to-Video |
+| `veo3.1-reference-to-video` | google | — | Generate Videos from images using Google's Veo 3.1 |
+| `heygen-avatar4-image-to-video` | heygen | — | Heygen Photo Avatar 4 Model |
+| `ffmpeg-api-images-to-video` | infery | — |  |
+| `infinitalk-single-text` | infinitalk | — | Infinitalk model generates a talking avatar video from a text and audio file. |
+| `kling-video-ai-avatar-v2-pro` | kling | Audio | Kling AI Avatar v2 Pro: The premium endpoint for creating avatar videos with realistic humans, animals, cartoons, or stylized characters |
+| `kling-video-ai-avatar-v2-standard` | kling | Audio | Kling AI Avatar v2 Standard: Endpoint for creating avatar videos with realistic humans, animals, cartoons, or stylized characters |
+| `kling-video-o1-image-to-video` | kling | Video | Generate a video by taking a start frame and an end frame, animating the transition between them while following text-driven style and… |
+| `kling-video-o1-reference-to-video` | kling | — | Transform images, elements, and text into consistent, high-quality video scenes, ensuring stable character identity, object details, and… |
+| `kling-video-o1-standard-image-to-video` | kling | Video | Generate a video by taking a start frame and an end frame, animating the transition between them while following text-driven style and… |
+| `kling-video-o1-standard-reference-to-video` | kling | — | Transform images, elements, and text into consistent, high-quality video scenes, ensuring stable character identity, object details, and… |
+| `kling-video-v1-pro-ai-avatar` | kling | Audio | Kling AI Avatar Pro: The premium endpoint for creating avatar videos with realistic humans, animals, cartoons, or stylized characters |
+| `kling-video-v1-standard-ai-avatar` | kling | Audio | Kling AI Avatar Standard: Endpoint for creating avatar videos with realistic humans, animals, cartoons, or stylized characters |
+| `kling-video-v1.6-pro-elements` | kling | — | Generate video clips from your multiple image references using Kling 1.6 (pro) |
+| `kling-video-v1.6-standard-elements` | kling | — | Generate video clips from your multiple image references using Kling 1.6 (standard) |
+| `kling-video-v2.1-pro-image-to-video` | kling | — | Kling 2.1 Pro is an advanced endpoint for the Kling 2.1 model, offering professional-grade videos with enhanced visual fidelity, precise… |
+| `kling-video-v2.1-standard-image-to-video` | kling | — | Kling 2.1 Standard is a cost-efficient endpoint for the Kling 2.1 model, delivering high-quality image-to-video generation |
+| `kling-video-v2.5-turbo-standard-image-to-video` | kling | — | Kling 2.5 Turbo Standard: Top-tier image-to-video generation with unparalleled motion fluidity, cinematic visuals, and exceptional prompt… |
+| `kling-video-v2.6-pro-motion-control` | kling | Video | Transfer movements from a reference video to any character image. |
+| `kling-video-v2.6-standard-motion-control` | kling | Video | Transfer movements from a reference video to any character image. |
+| `kling-video-v3-pro-motion-control` | kling | Video | Transfer movements from a reference video to any character image. |
+| `kling-video-v3-standard-motion-control` | kling | Video | Transfer movements from a reference video to any character image. |
+| `kling-v2.1` | kwaivgi | — | Kling v2.1 generates 5s and 10s videos in 720p and 1080p from a starting image. Use Kling v2.1 image-to-video with an API. |
+| `ltx-2-19b-distilled-image-to-video-lora` | lightricks | — | Generate video with audio from images using LTX-2 Distilled and custom LoRA |
+| `ltx-2-19b-image-to-video-lora` | lightricks | — | Generate video with audio from images using LTX-2 and custom LoRA |
+| `ltx-2.3-22b-distilled-image-to-video-lora` | lightricks | — | Generate video with audio from images using LTX-2.3 Distilled and custom LoRA |
+| `ltx-2.3-22b-image-to-video-lora` | lightricks | — | Generate video with audio from images using LTX-2.3 and custom LoRA |
+| `ltx-2.3-image-to-video-fast` | lightricks | — | LTX-2.3 is a high-quality, fast AI video model available in Pro and Fast variants for text-to-video, image-to-video, and audio-to-video. |
+| `ltx-2.3-quality-image-to-video-lora` | lightricks | — | Generate high-quality video with audio from images using LTX-2.3 and custom LoRA |
+| `ltx-2.3-quality-ingredient` | lightricks | — | Generate high-quality video with audio from reference, character sheet, storyboard using LTX-2.3 |
+| `ltx-2.5-image-to-video-fast` | lightricks | — | LTX-2.5 is Lightricks' open-source audio-video model. |
+| `ltx-2.5-image-to-video-pro` | lightricks | — | LTX-2.5 is Lightricks' open-source audio-video model. |
+| `longcat-video-distilled-image-to-video-480p` | meituan | — | Generate long videos from images using LongCat Video Distilled |
+| `longcat-video-distilled-image-to-video-720p` | meituan | — | Generate long videos in 720p/30fps from images using LongCat Video Distilled |
+| `longcat-video-image-to-video-480p` | meituan | — | Generate long videos from images using LongCat Video |
+| `longcat-video-image-to-video-720p` | meituan | — | Generate long videos in 720p/30fps from images using LongCat Video |
+| `h3-image-to-video-lora` | minimax | — | Images into video with synchronized audio using MiniMax H3; your image becomes the first frame, prompt optional, with trained LoRA support… |
+| `hailuo-2.3-fast` | minimax | — | MiniMax Hailuo 2.3 Fast is a lower-latency image-to-video model with core motion quality and visual consistency at up to 1080p. |
+| `minimax-hailuo-02-fast-image-to-video` | minimax | — | Create blazing fast and economical videos with MiniMax Hailuo-02 Image To Video API at 512p resolution |
+| `minimax-hailuo-2.3-fast-pro-image-to-video` | minimax | — | MiniMax Hailuo-2.3-Fast Image To Video API (Pro, 1080p): Advanced fast image-to-video generation model with 1080p resolution |
+| `minimax-video-01-image-to-video` | minimax | — | Generate video clips from your images using MiniMax Video model |
+| `minimax-video-01-live-image-to-video` | minimax | — | Generate video clips from your images using MiniMax Video model |
+| `video-01-live` | minimax | — | MiniMax Hailuo Live is an image-to-video model trained for Live2D and animation, with smooth motion and facial expression control. |
+| `cosmos-3-super-image-to-video` | nvidia | — | Cosmos3 is a collection of Omnimodal world models capable of generating dynamic, high-quality video, image, audio, and action commands from… |
+| `one-to-all-animation-1.3b` | one-to-all-animation | Video | One-to-All Animation is a pose driven video model that animates characters from a single reference image, enabling flexible, alignment-free… |
+| `one-to-all-animation-14b` | one-to-all-animation | Video | One-to-All Animation is a pose driven video model that animates characters from a single reference image, enabling flexible, alignment-free… |
+| `pika-v2.2-pikaframes` | pika | — | Discover ultimate control with Pikaframes key frame interpolation, a stunning image-to-video feature that allows you to upload up to 5… |
+| `pika-v2.2-pikascenes` | pika | — | Pika Scenes v2.2 creates videos from a images with high quality output. |
+| `pixverse-c1-reference-to-video` | pixverse | — | Generate character-consistent videos from reference images using PixVerse C1, with subject and background references. |
+| `pixverse-c1-transition` | pixverse | — | Create seamless cinematic transitions between two images with PixVerse C1, with native audio and up to 1080p. |
+| `pixverse-swap` | pixverse | Video | Generate high quality video clips by swapping person, objects and background using Pixverse Swap. |
+| `pixverse-v5.5-effects` | pixverse | — | Pixverse Effects |
+| `pixverse-v5.5-transition` | pixverse | — | Pixverse Transition |
+| `pixverse-v5.6-transition` | pixverse | — | Use the latest pixverse v5.6 model to turn your texts and images into amazing videos. |
+| `pixverse-v6-transition` | pixverse | — | Pixverse's latest v6 Model. |
+| `p-video-animate` | prunaai | Video | Animate a reference image with the motion and audio of a source video. |
+| `p-video-avatar` | prunaai | Audio, Video | p-video-avatar generates talking-head videos from one portrait image plus a script or audio. 30 voices, 10 languages, 720p/1080p output. |
+| `scail-2` | scail-2 | Video | SCAIL-2 is an end-to-end character animation model that drives a reference character from a source video without relying on intermediate… |
+| `stable-video` | stability-ai | — | Generate short video clips from your images using SVD v1.1 |
+| `fabric-1.0` | veed | Audio | VEED Fabric 1.0 is an image-to-video API that turns any image into a talking video |
+| `fabric-1.0-fast` | veed | Audio | VEED Fabric 1.0 is an image-to-video API that turns any image into a talking video |
+| `fabric-1.0-text` | veed | — | VEED Fabric 1.0 text-to-video API |
+| `vidu-q2-image-to-video-pro` | vidu | — | Use the latest Vidu Q2 models which much more better quality and control on your videos. |
+| `vidu-q2-image-to-video-turbo` | vidu | — | Use the latest Vidu Q2 models which much more better quality and control on your videos. |
+| `vidu-q3-image-to-video-turbo` | vidu | — | Vidu's Q3 Turbo Model |
+| `vidu-q3-reference-to-video-mix` | vidu | — | Vidu's latest Q3 Reference to Video Mix model |
+| `wan-2.2-i2v-a14b` | wan-video | — | Animate images in &lt;30s with Wan 2.2 i2v 14b. Fast video inference, fast AI image to video model. |
+| `wan-2.2-i2v-fast` | wan-video | — | Fast Wan 2.2 image to video model. 480p and 720p video outputs. |
+| `wan-2.5-i2v` | wan-video | Audio | Alibaba WAN 2.5 is an advanced image-to-video model. It can generate high-quality 480p/720p/1080p videos from image inputs |
+| `wan-2.5-i2v-fast` | wan-video | Audio | Wan 2.5 Fast Image to Video, fast open-source image to video model from Wan |
+| `wan-2.1-i2v-480p` | wavespeedai | — | Accelerated Wan 2.1 14B image-to-video at 480p resolution with fast inference by WaveSpeed. Animate images into videos with an API. |
+| `wan-2.1-i2v-720p` | wavespeedai | — | Accelerated Wan 2.1 14B image-to-video at 720p resolution with fast inference by WaveSpeed. Animate images into videos with an API. |
+| `grok-imagine-video-reference-to-video` | xai | — | Generate videos using multiple reference images with xAI's Grok Imagine video model |
+| `grok-imagine-video-v1.5-reference-to-video` | xai | — | Generate videos from images and audio references using xAI's Grok Imagine 1.5 Video model. |
+
+## Audio → video (11)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `elevenlabs-dubbing` | elevenlabs | — | Generate dubbed videos or audios using ElevenLabs Dubbing feature! |
+| `infinitalk` | infinitalk | Image, Video | Infinitalk model generates a talking avatar video from an image and audio file. |
+| `ltx-2-19b-audio-to-video-lora` | lightricks | — | Generate video with audio from audio, text and images using LTX-2 and custom LoRA |
+| `ltx-2-19b-distilled-audio-to-video-lora` | lightricks | — | Generate video with audio from audio, text and images using LTX-2 Distilled and custom LoRA |
+| `ltx-2.3-22b-audio-to-video-lora` | lightricks | — | Generate video with audio from audio, text and images using LTX-2.3 and custom LoRA |
+| `ltx-2.3-22b-distilled-audio-to-video-lora` | lightricks | — | Generate video with audio from audio, text and images using LTX-2.3 Distilled and custom LoRA |
+| `ltx-2.3-quality-audio-to-video-lora` | lightricks | — | Generate high-quality video with audio from audio, text and images using LTX-2.3 and custom LoRA |
+| `ltx-2.5-audio-to-video-fast` | lightricks | — | LTX-2.5 is Lightricks' open-source audio-video model. |
+| `ltx-2.5-audio-to-video-pro` | lightricks | — | LTX-2.5 is Lightricks' open-source audio-video model. |
+| `avatar-x-reference-to-video` | mirage-api | Image | The Avatar X API offers access to Mirage's most advanced generation model yet, delivering industry-leading identity preservation and… |
+| `sync-lipsync-v3` | sync-lipsync | Image, Video | sync-3 most powerful lipsync model yet, featuring native visual intelligence for professional-quality video. |
+

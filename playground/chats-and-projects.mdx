@@ -1,0 +1,59 @@
+---
+title: "Chats and projects"
+description: "How conversations are organised in the Studio."
+---
+
+## Chats
+
+<Frame caption="A chat: the thread in the middle, your chats and projects on the left, and the model, mode and running cost along the composer">
+  <img src="/samples/chat-conversation.png" alt="The Studio showing a chat titled Rate limiting strategies. The sidebar lists tabs Mine, Shared and Bookmarks, a Projects section and three chats. The composer at the bottom carries an Agent and Manual switch, a model selector reading Agent Gemini, attachment and web-search buttons, and an estimated cost." />
+</Frame>
+
+A **chat** is a threaded conversation with a model. Every message you send creates or extends one. Each chat has:
+
+- An auto-generated title (from the first user message)
+- A model (can change mid-conversation)
+- Optional system prompt
+- A sharing scope (private · workspace · users)
+- A creator (you, unless forked from someone else's chat)
+
+Chats live in the sidebar under the **Mine** tab by default. Switch to **Shared** to see chats others have shared with you, or **Bookmarks** for pinned messages.
+
+### Actions on a chat
+
+- **Fork** — copy a chat at a specific message. Useful for branching off "what-if" directions without losing the original.
+- **Move to project** — drag into a project for better organisation
+- **Rename / delete** — on the chat menu (owner only)
+- **Make temporary** — won't appear in history (useful for throwaway experiments)
+
+## Projects
+
+A **project** is a folder for related chats. Projects carry default settings:
+
+- **Default model** — used for new chats inside
+- **Default system prompt** — applied to every new chat (chat can override)
+- **Sharing scope** — chats inherit unless they set their own
+
+Create a project via the **New project** button at the bottom of the sidebar. Give it a name like "Marketing Copy", "Research Q4", "Production bug triage".
+
+### Cascading sharing
+
+Sharing is set per-project, and chats inherit:
+
+- Project scope = `workspace` → every chat inside is visible to the workspace (unless the chat overrides to `private`)
+- Project scope = `users [A, B]` → only members A, B see the project and its chats
+- Chat overrides parent scope if set
+
+See [Sharing](/playground/sharing) for the full matrix.
+
+## Search
+
+Type in the **Search chats** box at the top of the sidebar. Search matches both the words you type and what your chats are *about*, so "rate limiting" also finds a chat that only ever said "throttling". Results respect sharing — you only see chats you have access to.
+
+## Memory scope
+
+Each project carries a **memory scope** deciding whether it draws on the rest of your chats, and whether they can draw on it. Set it from the project menu. See [Memory and context](/playground/memory-and-context) for what each option means in both directions.
+
+## Temporary chats
+
+Toggle **Temporary** on a chat to keep it out of history. Messages still count toward credits, but the chat disappears from the sidebar the moment you leave it. Good for experiments you don't want cluttering the list.

@@ -1,0 +1,65 @@
+---
+title: "Notifications"
+description: "Subscribe members to the events that matter over Slack, email and webhooks."
+---
+
+Infery sends operational notifications to **channels** you configure per workspace.
+
+## Channels
+
+| Type | Setup | Typical payload |
+| --- | --- | --- |
+| **Email** | Any member can subscribe themselves; admins can subscribe the whole workspace | Formatted HTML with event details |
+| **Slack** | Incoming webhook URL from Slack → paste into Settings → Notifications | Blocks-style message, colour-coded by severity |
+| **Webhook** | HTTPS endpoint of your choice | Raw JSON, signed with HMAC for verification |
+
+## Events you can subscribe to
+
+- **Budget thresholds** — 50 / 75 / 90 / 100 % of monthly allowance consumed
+- **Topup completed** — successful payment
+- **Payment failed** — card declined, need to update billing
+- **Quota exceeded** — specific API key hit RPM/TPD/budget limit
+- **Model deprecated** — one of your referenced model slugs is scheduled for removal
+- **Fallback triggered (rate)** — fallback events above a threshold per hour (prod-alerting signal)
+- **File quota reached** — storage is full
+- **Subscription changes** — upgrade/downgrade, cancellation, renewal
+- **Member invites** — accepted / declined
+- **Security** — new API key created, key revoked, suspicious login
+
+
+<Frame caption="Two channels, neither of them subscribed to anything yet">
+  <img src="/samples/settings-notifications.png" alt="The Notifications tab showing Notification channels and an Add channel button. Two channels are listed: hash ops-alerts, a Slack channel, and Ops mailbox, an email channel. Each carries an amber warning reading that it is not subscribed to anything and will never be used, that billing and storage warnings still email the workspace owner, and that everything else is silent until a subscription is added. Each has an Add subscription action." />
+</Frame>
+
+**A channel does nothing until something is subscribed to it.** Adding the Slack
+webhook is half the job; the other half is saying which events go down it.
+
+The warning names the one exception: budget and storage warnings still reach the
+workspace owner by email even with nothing configured, because silence about
+money owed is the worse failure. Everything else is silent.
+
+## Per-member subscriptions
+
+Each member picks their own subset of events on Settings → **Notifications**. You don't spam billing-role people with dev events, and you don't send Slack-only people their daily usage summary by email.
+
+## Webhook format
+
+```json
+{
+  "id": "evt_01J...",
+  "type": "budget.threshold_reached",
+  "workspace_id": "ws_...",
+  "created_at": "2026-04-15T21:14:00Z",
+  "data": {
+    "threshold_pct": 75,
+    "credits_used": 7500,
+    "monthly_allowance": 10000
+  }
+}
+```
+
+Verify the `X-Infery-Signature` header against your webhook secret (HMAC-SHA256 of the raw body).
+
+## Suppressing notifications
+
+Pause a channel from Settings → Notifications → channel row → **Pause**. Events stop delivering to that channel while it's paused; history remains.

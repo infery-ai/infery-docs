@@ -1,0 +1,42 @@
+---
+title: "Modalities"
+description: "Chat, Image, TTS, STT, Video and Music — one Studio, six creative workflows."
+---
+
+The Studio switches between six modalities via tabs at the top. Your project, chat history and credit balance stay the same — only the input controls and output renderer change.
+
+## Chat
+
+Text-in, text-out (or text with images/audio attachments). Supports streaming, tool calls, JSON mode and vision on capable models.
+
+Model picker shows every chat-capable model. For vision, attach an image. For PDFs, models that support them read directly; others get auto-converted text + page images.
+
+## Generate Image
+
+Text prompt → image. Controls: aspect ratio, number of images, style (model-dependent). Models like Nano Banana (Gemini Image) additionally support **image edits** — attach a source image and describe what to change.
+
+Output is stored in GCS, shown inline, and re-attachable to chat messages with one click.
+
+## Text-to-Speech
+
+Text prompt → MP3/WAV. Controls: voice, speed, format. The audio is streamed back as a binary response (or HTML5 player in the UI).
+
+## Speech-to-Text
+
+Drop an audio file or record directly in the browser. Output: transcript (with optional segments and word-level timestamps on `verbose_json` format).
+
+Accepts up to 25 MB audio. Transcript appears inline and is searchable in the chat history.
+
+## Generate Video
+
+Text prompt (and optional reference image) → MP4 up to 16 s. Controls: duration, resolution, aspect ratio, people allowed (for Google Veo).
+
+Video generation is async — the UI polls the job and shows progress 0 → 100 %. Completed videos are mirrored to our storage so they survive past the provider's ephemeral URLs. See [Create video generation](/api-reference/videos/generations) for API details. (Mirroring is a Studio behaviour — a video generated through the API is not mirrored and its URL expires with the provider's.)
+
+## Generate Music
+
+Text prompt → full song (vocals, lyrics, instruments). Controls: style, vocal gender, duration. Takes 30–90 seconds typically; streams progress updates.
+
+## Picking a modality
+
+Switch mid-chat — the tab doesn't reset your chat thread. You can generate an image, then switch to Chat and ask the model to describe it, then switch back to Video and animate it. All with the same credit balance.

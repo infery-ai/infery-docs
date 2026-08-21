@@ -1,0 +1,120 @@
+---
+title: "Audio models"
+description: "Every audio model on Infery, grouped by what it takes as input."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+Speech synthesis and audio transformation, through `POST /v1/audio/speech` and `/v1/audio/transformations`.
+
+**88 models.** Grouped by input, because that is the choice you make first — a model that
+turns an image into a video is not interchangeable with one that starts from a prompt.
+
+Prices are not listed here: they change, and a stale price is worse than none. See the
+[live catalogue](https://infery.ai/models) for current rates, and each model's own page there for its full
+parameter schema.
+
+## Text → audio (45)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `cosyvoice-v2` | alibaba | — |  |
+| `cosyvoice-v3-flash` | alibaba | — |  |
+| `cosyvoice-v3-plus` | alibaba | — |  |
+| `qwen-3-tts-text-to-speech-0.6b` | alibaba | — | Bring speech to your texts using Qwen3-TTS Custom-Voice model with pre-trained voices or use your custom voice with Qwen3-TTS Clone Voice… |
+| `qwen-3-tts-text-to-speech-1.7b` | alibaba | — | Bring speech to your texts using Qwen3-TTS Custom-Voice model with pre-trained voices or use your custom voice with Qwen3-TTS Clone Voice… |
+| `qwen-3-tts-voice-design-1.7b` | alibaba | — | Create custom voices using Qwen3-TTS Voice Design model and later use Clone Voice model to create your own voices! |
+| `qwen-audio-3-tts` | alibaba | — | Generate natural multilingual speech from text with fast voice and language control using Qwen Audio 3.0 TTS Flash. |
+| `tts-pro-v1.0` | async | — | Generate professional-quality voiceovers in seconds with Async TTS Pro model text-based control over pauses, emphasis, and timing. |
+| `bytedance-seed-speech-tts-v2` | bytedance | — | Seed Speech developed by ByteDance, is a family of large-scale text-to-speech models capable of synthesizing speech that is virtually… |
+| `orpheus-tts` | canopy-labs | — | Orpheus TTS is a state-of-the-art, Llama-based Speech-LLM designed for high-quality, empathetic text-to-speech generation. |
+| `elevenlabs-tts-turbo-v2.5` | elevenlabs | — | Generate high-speed text-to-speech audio using ElevenLabs TTS Turbo v2.5. |
+| `flash-v2.5` | elevenlabs | — | Ultra-fast text to speech with ~75ms latency in 32 languages. |
+| `turbo-v2.5` | elevenlabs | — | High quality, low latency text to speech in 32 languages. |
+| `v2-multilingual` | elevenlabs | — | Lifelike, emotionally expressive text to speech in 29 languages. |
+| `v3` | elevenlabs | — | Elevenlabs v3 text to speech model. |
+| `gemini-2.5-flash-tts` | google | — | 8k ctx, 16k out |
+| `gemini-2.5-pro-tts` | google | — | 8k ctx, 16k out |
+| `gemini-3.1-flash-tts` | google | — | 8k ctx, 16k out |
+| `google-cloud-tts` | google | — |  |
+| `inworld-tts` | inworld-tts | — | Text to Speech Endpoint for Inworld's TTS-1.5 Max. |
+| `kling-video-v1-tts` | kling | — | Generate speech from text prompts and different voices using the Kling TTS model, which leverages advanced AI techniques to create… |
+| `maya` | maya | — | Maya1 is a state-of-the-art speech model by Maya Research for expressive voice generation, built to capture real human emotion and precise… |
+| `maya-batch` | maya | — | Maya1 is a state-of-the-art speech model by Maya Research for expressive voice generation, built to capture real human emotion and precise… |
+| `maya-stream` | maya | — | Maya1 is a state-of-the-art speech model by Maya Research for expressive voice generation, built to capture real human emotion and precise… |
+| `minimax-preview-speech-2.5-hd` | minimax | — | Generate speech from text prompts and different voices using the MiniMax Speech-02 HD model, which leverages advanced AI techniques to… |
+| `minimax-preview-speech-2.5-turbo` | minimax | — | Generate fast speech from text prompts and different voices using the MiniMax Speech-02 Turbo model, which leverages advanced AI techniques… |
+| `minimax-speech-02-hd` | minimax | — | Generate speech from text prompts and different voices using the MiniMax Speech-02 HD model, which leverages advanced AI techniques to… |
+| `minimax-speech-02-turbo` | minimax | — | Generate fast speech from text prompts and different voices using the MiniMax Speech-02 Turbo model, which leverages advanced AI techniques… |
+| `minimax-speech-2.6-hd` | minimax | — | Generate speech from text prompts and different voices using the MiniMax Speech-2.6 HD model, which leverages advanced AI techniques to… |
+| `minimax-speech-2.6-turbo` | minimax | — | Generate speech from text prompts and different voices using the MiniMax Speech-2.6 HD model, which leverages advanced AI techniques to… |
+| `minimax-speech-2.8-hd` | minimax | — | Generate speech from text prompts and different voices using the MiniMax Speech-2.8 HD model, which leverages advanced AI techniques to… |
+| `minimax-speech-2.8-turbo` | minimax | — | Generate speech from text prompts and different voices using the MiniMax Speech-2.8 Turbo model, which leverages advanced AI techniques to… |
+| `dia-tts` | nari-labs | — | Dia directly generates realistic dialogue from transcripts. Audio conditioning enables emotion control. |
+| `gpt-4o-mini-tts` | openai | — |  |
+| `tts-1` | openai | — |  |
+| `tts-1-hd` | openai | — |  |
+| `chatterbox-pro` | resemble-ai | — | Chatterbox (pro version), Resemble AI's first production-grade open source TTS model. |
+| `chatterbox-text-to-speech` | resemble-ai | Audio | Whether you're working on memes, videos, games, or AI agents, Chatterbox brings your content to life. Use the first tts from resemble ai. |
+| `chatterbox-text-to-speech-multilingual` | resemble-ai | — | Whether you're working on memes, videos, games, or AI agents, Chatterbox brings your content to life. Use the first tts from resemble ai. |
+| `chatterboxhd-text-to-speech` | resemble-ai | Audio | Generate expressive, natural speech with Resemble AI's Chatterbox. |
+| `vibevoice` | vibevoice | — | Generate long, expressive multi-voice speech using Microsoft's powerful TTS |
+| `vibevoice-0.5b` | vibevoice | — | Generate long speech snippets fast using Microsoft's powerful TTS. |
+| `vibevoice-7b` | vibevoice | — | Generate long, expressive multi-voice speech using Microsoft's powerful TTS |
+| `grok-tts` | xai | — |  |
+| `tts-v1` | xai | — | Generate speech with expressive and realistic voices from xAI |
+
+## Audio → audio (38)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `ace-step-audio-inpaint` | ace-step | — | Modify a portion of provided audio with lyrics and/or style using ACE-Step |
+| `ace-step-audio-outpaint` | ace-step | — | Extend the beginning or end of provided audio with lyrics and/or style using ACE-Step |
+| `ace-step-audio-to-audio` | ace-step | — | Generate music from a lyrics and example audio using ACE-Step |
+| `qwen-3-tts-clone-voice-0.6b` | alibaba | — | Clone your voices using Qwen3-TTS Clone-Voice model with zero shot cloning capabilities and use it on text-to-speech models to create… |
+| `qwen-3-tts-clone-voice-1.7b` | alibaba | — | Clone your voices using Qwen3-TTS Clone-Voice model with zero shot cloning capabilities and use it on text-to-speech models to create… |
+| `deepfilternet3` | deepfilternet3 | — | Enhance speech audio by removing background noise and upsampling to 48KHz |
+| `demucs` | demucs | — | SOTA stemming model for voice, drums, bass, guitar and more. |
+| `elevenlabs-voice-changer` | elevenlabs | — | Change the voices in your audios with voices in ElevenLabs! |
+| `index-tts-2-text-to-speech` | index-tts-2 | — | Generate natural, clear speeches using Index TTS 2.0 from IndexTeam |
+| `ffmpeg-api-merge-audios` | infery | — | Merge audios into a single audio using FFmpeg API! |
+| `workflow-utilities-audio-compressor` | infery | — | FFMPEG Utility for Audio Compression |
+| `workflow-utilities-impulse-response` | infery | — | FFMPEG Utility for Impulse Response |
+| `kling-video-create-voice` | kling | — | Create Voices to be used with Kling Models Voice Control |
+| `sfx1.6-extend-audio` | mirelo-ai | — | Extend any sound effect with seamless, natural tails. |
+| `sfx1.6-inpaint-audio` | mirelo-ai | — | Erase and replace any moment in your audio with AI-driven precision. |
+| `dia-tts-voice-clone` | nari-labs | — | Clone dialog voices from a sample audio and generate dialogs from text prompts using the Dia TTS which leverages advanced AI techniques to… |
+| `stable-audio-25-audio-to-audio` | stability-ai | — | Generate high quality music and sound effects using Stable Audio 2.5 from StabilityAI |
+| `stable-audio-3-medium-audio-inpainting` | stability-ai | — | Stable Audio 3 Medium audio inpainting is a 1.4 billion parameter latent diffusion model that fills in or reworks selected segments of a… |
+| `stable-audio-3-medium-audio-outpainting` | stability-ai | — | Stable Audio 3 Medium audio outpainting is a 1.4 billion parameter latent diffusion model that extends existing stereo audio beyond its… |
+| `stable-audio-3-medium-audio-to-audio` | stability-ai | — | Stable Audio 3 Medium audio-to-audio is a 1.4 billion parameter latent diffusion model that transforms an input audio clip into new stereo… |
+| `stable-audio-3-medium-base-audio-inpainting` | stability-ai | — | Stable Audio 3 Medium Base audio inpainting is the foundational 1.4 billion parameter checkpoint for editing or filling selected stereo… |
+| `stable-audio-3-medium-base-audio-outpainting` | stability-ai | — | Stable Audio 3 Medium Base audio outpainting is the foundational 1.4 billion parameter checkpoint that extends existing stereo audio with… |
+| `stable-audio-3-medium-base-audio-to-audio` | stability-ai | — | Stable Audio 3 Medium Base audio-to-audio is the foundational 1.4 billion parameter checkpoint that transforms input audio into new stereo… |
+| `stable-audio-3-small-music-audio-inpainting` | stability-ai | — | Stable Audio 3 Small Music audio inpainting is a 459 million parameter latent diffusion model that fills in or reworks selected segments of… |
+| `stable-audio-3-small-music-audio-outpainting` | stability-ai | — | Stable Audio 3 Small Music audio outpainting is a 459 million parameter latent diffusion model that extends music compositions beyond their… |
+| `stable-audio-3-small-music-audio-to-audio` | stability-ai | — | Stable Audio 3 Small Music audio-to-audio is a 459 million parameter latent diffusion model that transforms input music into new variations… |
+| `stable-audio-3-small-music-base-audio-inpainting` | stability-ai | — | Stable Audio 3 Small Music Base audio inpainting is the foundational 459 million parameter checkpoint for editing or filling selected music… |
+| `stable-audio-3-small-music-base-audio-outpainting` | stability-ai | — | Stable Audio 3 Small Music Base audio outpainting is the foundational 459 million parameter checkpoint that extends music tracks via causal… |
+| `stable-audio-3-small-music-base-audio-to-audio` | stability-ai | — | Stable Audio 3 Small Music Base audio-to-audio is the foundational 459 million parameter checkpoint that transforms input music into new… |
+| `stable-audio-3-small-sfx-audio-inpainting` | stability-ai | — | Stable Audio 3 Small SFX audio inpainting is a 459 million parameter latent diffusion model that fills in or reworks selected segments of a… |
+| `stable-audio-3-small-sfx-audio-outpainting` | stability-ai | — | Stable Audio 3 Small SFX audio outpainting is a 459 million parameter latent diffusion model that extends sound-effect tracks beyond their… |
+| `stable-audio-3-small-sfx-audio-to-audio` | stability-ai | — | Stable Audio 3 Small SFX audio-to-audio is a 459 million parameter latent diffusion model that transforms input audio into new sound-effect… |
+| `stable-audio-3-small-sfx-base-audio-inpainting` | stability-ai | — | Stable Audio 3 Small SFX Base audio inpainting is the foundational 459 million parameter checkpoint for editing or filling selected… |
+| `stable-audio-3-small-sfx-base-audio-outpainting` | stability-ai | — | Stable Audio 3 Small SFX Base audio outpainting is the foundational 459 million parameter checkpoint that extends sound-effect tracks via… |
+| `stable-audio-3-small-sfx-base-audio-to-audio` | stability-ai | — | Stable Audio 3 Small SFX Base audio-to-audio is the foundational 459 million parameter checkpoint that transforms input audio into new… |
+| `tada-1b-text-to-speech` | tada | — | A unified speech-language model that synchronizes speech and text into a single, cohesive stream via 1:1 alignment. Lighter 1B variant |
+| `tada-3b-text-to-speech` | tada | — | A unified speech-language model that synchronizes speech and text into a single, cohesive stream via 1:1 alignment. |
+| `zonos2` | zonos2 | — | Zonos2 is a text-to-speech model that clones a voice from a short sample and speaks naturally across many languages. |
+
+## Video → audio (5)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `kling-video-video-to-audio` | kling | — | Generate audio from input videos using Kling |
+| `sfx-v1-video-to-audio` | mirelo-ai | — | Generate synced sounds for any video, and return the new sound track (like MMAudio) |
+| `sfx-v1.5-video-to-audio` | mirelo-ai | — | Generate synced sounds for any video, and return the new sound track (like MMAudio) |
+| `v1.1-video-to-music` | sonilo | — | Analyzes your video’s pacing, mood, and timing to generate a frame-synced, licensed, commercial-use-safe soundtrack in seconds. |
+| `v1.1-video-to-sound-effects` | sonilo | — | Analyzes a video and generates synchronized, royalty-free sound effects timed to visible actions. |
+

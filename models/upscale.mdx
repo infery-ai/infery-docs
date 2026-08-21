@@ -1,0 +1,42 @@
+---
+title: "Upscale models"
+description: "Every upscale model on Infery, grouped by what it takes as input."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+Called through `POST /v1/images/upscale` and `POST /v1/video/upscale`.
+
+**15 models.** Grouped by input, because that is the choice you make first — a model that
+turns an image into a video is not interchangeable with one that starts from a prompt.
+
+Prices are not listed here: they change, and a stale price is worse than none. See the
+[live catalogue](https://infery.ai/models) for current rates, and each model's own page there for its full
+parameter schema.
+
+## Image → upscaled media (12)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `flux-vision-upscaler` | black-forest-labs | — | Flux Vision Upscaler for magnify/upscaling images with high fidelity and creativity. |
+| `upscale-creative` | bria | — | Professional-grade creative upscaler that doubles resolution up to 10MP, regenerating sharper textures, refined details, and cleaner faces. |
+| `seedvr-upscale-image` | bytedance | — | Use SeedVR2 to upscale your images |
+| `seedvr-upscale-image-seamless` | bytedance | — | Use SeedVR2 to upscale images, retaining seamless tiling |
+| `chrono-edit-lora-gallery-upscaler` | chrono-edit-lora-gallery | — | Upscales and cleans up the image. |
+| `fal-ai/clarity-upscaler` | clarity-upscaler | — | Clarity upscaler for upscaling images with high very fidelity. |
+| `crystal-upscaler` | clarityai | — | An advanced image enhancement tool designed specifically for facial details and portrait photography, utilizing Clarity AI's upscaling… |
+| `esrgan` | esrgan | — | Upscale images by a given factor. |
+| `aura-sr` | infery | — | Upscale your images with AuraSR. |
+| `creative-upscaler` | infery | — | Create creative upscaled images. |
+| `recraft-upscale-creative` | recraft | — | Enhances a given raster image using the 'creative upscale' tool, increasing image resolution, making the image sharper and cleaner. |
+| `recraft-upscale-crisp` | recraft | — | Enhances a given raster image using 'crisp upscale' tool, boosting resolution with a focus on refining small details and faces. |
+
+## Video → upscaled media (3)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `seedvr-upscale-video` | bytedance | — | Upscale your videos using SeedVR2 with temporal consistency! |
+| `bytedance-upscaler-upscale-video` | bytedance-upscaler | — | Upscale videos with Bytedance's video upscaler. |
+| `flashvsr-upscale-video` | flashvsr | — | Upscale your videos using FlashVSR with the fastest speeds! |
+

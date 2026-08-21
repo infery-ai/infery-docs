@@ -1,0 +1,12 @@
+---
+title: "List files"
+description: "GET /v1/files — list uploaded files in the current workspace."
+openapi: "openapi.json GET /v1/files"
+---
+
+```bash
+curl https://api.infery.ai/v1/files \
+  -H "Authorization: Bearer $INFERY_API_KEY"
+```
+
+Returns files uploaded to the current workspace only. Pagination and filtering via query parameters are OpenAI-compatible.

@@ -1,0 +1,44 @@
+---
+title: "Topups"
+description: "One-off credit purchases that never expire."
+---
+
+Need more credits than your plan covers? Buy **topups** — one-off packs that sit on top of your monthly allowance and **never expire**.
+
+## Buying
+
+Settings → **Billing** → **Top up** → enter amount (currency auto-detected).
+
+Common sizes:
+
+| Topup | Credits |
+| --- | --- |
+| $10 | 1 000 |
+| $50 | 5 000 |
+| $250 | 25 000 |
+| $1 000 | 100 000 |
+
+You can type any custom amount between $5 and $10 000.
+
+## Payment
+
+Stripe-powered — any major card (Visa, Mastercard, Amex), SEPA on EU accounts, Apple/Google Pay on mobile. Instant credit delivery on successful payment.
+
+Invoice is emailed to the billing contact immediately.
+
+## Burn order
+
+When you call the API, we deduct:
+
+1. **Monthly credits first** (don't waste what will expire on non-rollover plans)
+2. **Topup credits second** (they never expire — use them last)
+
+You see the split in Settings → Billing → **Balance**.
+
+## Refunds
+
+Topups are refundable within 14 days **if unused** (EU/UK consumer right of withdrawal). Once you start consuming them, credits used can't be refunded. Contact billing@infery.ai for refund requests.
+
+## Auto-topup
+
+Enable in Settings → Billing to auto-charge when balance drops below a threshold you set. Useful for production workloads that must never pause.

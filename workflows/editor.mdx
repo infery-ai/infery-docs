@@ -1,0 +1,100 @@
+---
+title: "The workflow editor"
+description: "Build a workflow on a canvas: steps, wires, bindings, and the JSON underneath."
+---
+
+Everything in this section so far describes a workflow as JSON, because that is
+what the API takes. The workflow editor is the same thing on a canvas — you drag steps,
+wire them together, and it writes the JSON for you.
+
+Open a workflow from the sidebar and it loads straight into the editor.
+
+## The canvas
+
+<Frame caption="A two-step workflow: a search, a model call, and the output">
+  <img src="/samples/studio-canvas.png" alt="Four connected cards on a dotted canvas. Search query, a required text input. web.search, showing QUERY set to a binding on the input and MAX RESULTS 10. gpt-4o-mini, marked INFERRED, showing a system line and a prompt. Output. Curved wires join each card to the next." />
+</Frame>
+
+Three kinds of card, and the difference matters:
+
+| Card | What it is |
+| --- | --- |
+| **Inputs** | The values a run supplies — `${input.…}`. The `*` marks a required one. |
+| **Steps** | The work: a model call, a capability like `web.search`, a container. |
+| **Output** | What the run returns. A workflow with nothing wired here returns its last step. |
+
+The little circles on the sides are **ports**. Drag from one to another to wire a
+step's result into the next step. A wire is not decoration — it is what makes the
+downstream step wait for the upstream one, and what puts `${steps.…}` in reach.
+
+The toolbar down the left adds a node, switches between panning and box-select,
+undoes and redoes, zooms, fits the graph to the screen, and lays it out
+automatically.
+
+## Configuring a step
+
+Click a card to open the inspector.
+
+<Frame caption="The inspector for a model step, with the prompt that reads the previous step">
+  <img src="/samples/studio-inspector.png" alt="A right-hand panel headed gpt-4o-mini, MODEL, summarize. A Run this step button with a note that the step reads search, which has not produced a result yet. A model picker reading GPT-4o Mini, a SYSTEM box, a PROMPT box containing a binding with a fallback, and parameter controls for temperature, max_tokens, top_p and top_k, each marked unset." />
+</Frame>
+
+What is worth knowing here:
+
+- **Parameters left `unset` are not sent.** They are not silently defaulted to
+  something on our side — the provider's own default applies, which is usually
+  what you want.
+- **`Run this step`** runs one step using the results the others already
+  produced. If an upstream step has not run yet, the panel says so rather than
+  running the whole workflow behind your back.
+- **`INFERRED`** on a card means the step's type was worked out from what it
+  contains rather than stated outright. It runs the same; the badge is there so
+  you can tell the difference when reading someone else's workflow.
+
+## Bindings, on the canvas
+
+`${input.query}` and `${steps.search.output.answer}` are the same
+[bindings](/workflows/bindings) the JSON uses, and the workflow editor shows them as text
+because that is what they are — there is no hidden second representation.
+
+The prompt in that screenshot is worth reading closely:
+
+```
+${steps.search.output.answer | steps.search.output.results}
+```
+
+The `|` is a **fallback**: use `answer` if the search produced one, otherwise
+`results`. Handy, and worth using carefully — a fallback means a broken primary
+reference still resolves, so the workflow keeps running and nothing tells you the
+first half stopped matching anything.
+
+## The JSON underneath
+
+<Frame caption="The same workflow as the API sees it">
+  <img src="/samples/studio-json.png" alt="A dialog headed Workflow JSON showing the definition: a steps array with a web.search step carrying query and max_results params, and a model step carrying system and user messages and the model gpt-4o-mini." />
+</Frame>
+
+**JSON** in the header shows exactly what
+[`POST /v1/workflows`](/api-reference/workflows/create) would store. Use it to
+learn the format, to copy a workflow into code, or to check what the canvas
+actually built.
+
+## Saving, versions and runs
+
+**Save** publishes a new version. The version dropdown beside the workflow name
+switches between them, and a run always records the version it executed — so
+opening an old run shows the definition that produced it, not whatever is
+published now.
+
+Your unsaved edits are kept as a **draft**, and a draft is yours alone: a
+colleague opening the same workflow sees the published version, not your
+half-finished change.
+
+**Run** executes the whole workflow with the values in the input cards. Results
+appear in the run panel at the bottom, and every run is listed under the workflow
+in the sidebar.
+
+<Card title="Scheduling it" icon="clock" href="/workflows/schedules">
+  Once a workflow works, it can run on a timer — every weekday at 09:00, or once
+  at a time you pick.
+</Card>

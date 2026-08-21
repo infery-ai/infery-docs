@@ -1,0 +1,170 @@
+---
+title: "Chat completions"
+description: "POST /v1/chat/completions — OpenAI-compatible text and multimodal chat."
+openapi: "openapi.json POST /v1/chat/completions"
+---
+
+Drop-in OpenAI-compatible chat endpoint. Supports streaming, tool calls, JSON mode, vision, PDF, audio input and **Files API `file_id` references**.
+
+## Minimal example
+
+<CodeGroup>
+```bash curl
+curl https://api.infery.ai/v1/chat/completions \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [
+      {"role": "user", "content": "Summarise Node.js streams in 2 sentences"}
+    ]
+  }'
+```
+
+```python python
+from openai import OpenAI
+client = OpenAI(api_key=API_KEY, base_url="https://api.infery.ai/v1")
+resp = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Hi"}],
+)
+```
+
+```typescript node
+import OpenAI from 'openai';
+const client = new OpenAI({ apiKey: process.env.INFERY_API_KEY, baseURL: 'https://api.infery.ai/v1' });
+const resp = await client.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Hi' }],
+});
+```
+</CodeGroup>
+
+## Streaming
+
+Add `"stream": true`. Response is Server-Sent Events (`text/event-stream`). Each chunk is `data: {...}\n\n`; the stream ends with `data: [DONE]\n\n`.
+
+The **final chunk before `[DONE]`** carries usage info and Infery-specific `credits_used`:
+
+```
+data: {"choices":[{"delta":{"content":"..."}}]}
+data: {"choices":[],"usage":{"prompt_tokens":42,"completion_tokens":128}}
+data: {"choices":[],"usage":{...},"credits_used":2}
+data: [DONE]
+```
+
+OpenAI SDKs ignore chunks with empty `choices`, so `credits_used` is a non-breaking extension.
+
+## Multimodal content
+
+Pass arrays in `content`:
+
+```json
+{
+  "model": "gpt-4o",
+  "messages": [{
+    "role": "user",
+    "content": [
+      {"type": "text", "text": "What's in this image?"},
+      {"type": "image_url", "image_url": {"url": "https://example.com/photo.jpg"}}
+    ]
+  }]
+}
+```
+
+Supported block types:
+- `text`
+- `image_url` — HTTP URL or base64 `data:` URI
+- `input_audio` — inline base64 audio with `format` (wav/mp3/pcm16/webm)
+- `file` — inline `data` + `mime_type` **or** `file_id` reference ([Files API](/api-reference/files))
+
+### Using a Files API reference
+
+```json
+{
+  "content": [
+    {"type": "text", "text": "Review this PDF"},
+    {"type": "file", "file_id": "file_abc123..."}
+  ]
+}
+```
+
+The gateway resolves `file_id` to bytes on the server, injects them into the provider call, and returns a clear 400 if the id doesn't exist or is out of your workspace.
+
+{/*
+  SOURCE OF TRUTH for the 64 MB figure below:
+  `MAX_CHAT_ATTACHMENT_BYTES` in
+  apps/gateway/src/modules/workflows/storage/artifact-size-limits.ts,
+  enforced in `ChatController.resolveFileIdReferences` (#516). The comment at
+  that constant carries the reasoning. apps/docs is outside the enforced
+  citation checks that cover docs/guides, so if you change the constant, change
+  this page in the same commit — nothing will catch it for you.
+*/}
+
+### Total attachment size per request
+
+**All `file_id` references in one request must total 64 MB or less, decoded.**
+
+This is a limit on the **sum**, and it is separate from your plan's per-file
+`max_file_size_bytes`. Both apply. Every file can be individually within your
+plan's per-file cap and the request can still be refused for their total —
+that is the intended behaviour, because the server resolves all of them at once.
+
+```json
+{
+  "error": {
+    "message": "Attachments total at least 78643200 bytes, above the 67108864-byte limit for one request. This is a limit on the SUM of all attached files, not on any single one — reference fewer files, or smaller ones.",
+    "type": "invalid_request_error",
+    "code": "attachments_too_large",
+    "param": "messages[].content[].file_id"
+  }
+}
+```
+
+<Tip>
+`attachments_too_large` always means the total, never one file. A single file
+that is too big for your plan is refused at upload time by `/v1/files` instead.
+Split the work across turns, or reference smaller files.
+</Tip>
+
+The cap is on decoded bytes, so it is the sum of the file sizes you see in
+`/v1/files` — not the size of the JSON request, which only carries the ids.
+Inline `data` blocks are not counted against it; they are bounded by the
+request body limit and by each model's own per-file limits.
+
+## Tool calls
+
+Works exactly like OpenAI's spec — `tools`, `tool_choice`, `function` schema and `tool` role messages. Every chat-capable model on Infery that supports tools honours the same format.
+
+## JSON mode
+
+```json
+{"response_format": {"type": "json_object"}}
+```
+
+Or with a schema (Structured Outputs):
+
+```json
+{
+  "response_format": {
+    "type": "json_schema",
+    "json_schema": { "schema": { ... }, "strict": true }
+  }
+}
+```
+
+## Vision and PDFs
+
+Models with `supportsVision: true` accept images directly. For PDFs, models with `supportsPdf: true` read them natively. Others get an **automatic PDF-to-image conversion** on the gateway (plus text extraction) — you pay a small extra fee per page (see billing), no code changes required.
+
+## Parameters
+
+Full OpenAI parameter set: `temperature`, `top_p`, `presence_penalty`, `frequency_penalty`, `max_tokens`, `stop`, `seed`, `stream`, `tools`, `tool_choice`, `response_format`. Plus model-specific:
+- `top_k` — Gemini and some OSS models
+
+## Response headers
+
+- `x-request-id`
+- `x-credits-used`
+- `x-model-used` (when fallback fires)
+- `x-fallback-from`, `x-fallback-depth`

@@ -1,0 +1,80 @@
+---
+title: "Quotas and presets"
+description: "Cap spend and traffic per user, per API key — with reusable presets."
+---
+
+Quotas prevent one runaway script or misbehaving key from draining your plan. They **cascade** from broad to narrow:
+
+```
+Platform defaults → Subscription plan → Member preset → API key preset
+```
+
+The tightest value wins. If your plan allows 120 req/min but a key preset says 30 — that key is capped at 30.
+
+## What you can limit
+
+| Limit | Meaning |
+| --- | --- |
+| `allowedModels` | Whitelist of model slugs. `['*']` = all |
+| `maxRequestsPerMinute` | Sliding-window rate limit |
+| `maxTokensDaily` | Hard cap on total tokens/day |
+| `maxBudgetMonthlyCredits` | Credit budget per month |
+| `maxFileSizeBytes` | Largest single file upload |
+| `maxFilesPerWorkspace` | Total number of stored files |
+| `maxStorageBytesPerWorkspace` | Total bytes across all files |
+
+## Presets
+
+<Frame caption="A preset, and what it caps">
+  <img src="/samples/settings-quotas.png" alt="The Quotas tab showing Quota Presets, described as presets to apply rate limits and budget caps to members or API keys, with an Add preset button. One preset card reads Contractors, external collaborators with capped spend and no scheduled workflows, carrying two chips: 500 credits per monthly, and Rate limit 60. Link, edit and delete icons sit on the right." />
+</Frame>
+
+The chips on a preset card are the limits it actually sets — anything not shown
+is not capped by it and falls through to the plan.
+
+
+A **preset** is a named bundle of limits. Define once in Settings → Quotas and assign to members or API keys.
+
+Common presets to start with:
+
+- **Production** — no rate limit, allowed models = whitelist of blessed slugs, high storage
+- **Development** — 30 rpm, 1M tokens/day, all models allowed
+- **Read-only** — 10 rpm, no image/video generation, minimal storage
+
+## Assigning a preset
+
+**To a member:** Settings → Members → member row → **Quota preset**. Their API keys inherit automatically unless the key has its own preset.
+
+**To an API key:** Settings → API Keys → key row → **Preset**. Overrides the member's preset for that specific key.
+
+## Seeing effective quota
+
+Each key row in Settings → API Keys shows the **resolved quota** — the final values after cascade — with a source column (`platform` / `plan` / `member` / `key`) so you know where each limit comes from.
+
+## API visibility
+
+Clients see quotas in error responses:
+
+```json
+{
+  "error": {
+    "message": "Rate limit exceeded: 31/30 requests per minute",
+    "type": "quota_exceeded",
+    "code": "rate_limit_exceeded"
+  }
+}
+```
+
+That arrives as a `403`, not a `429`, and carries no `Retry-After` — see [Rate limits](/api-reference/rate-limits).
+
+And storage-related 413 responses from `/v1/files`:
+
+```json
+{
+  "error": {
+    "message": "Storage quota exceeded (5.4GB / 5.0GB used)",
+    "type": "invalid_request_error",
+    "code": "storage_quota_exceeded"
+  }
+}
+```

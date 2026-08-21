@@ -1,0 +1,97 @@
+---
+title: "Security"
+description: "How we protect your data, your keys, and your inferences."
+---
+
+We treat security as a product feature, not a checklist. Here's the concrete picture — what's enforced today, what's coming, and what's your responsibility.
+
+## Data in transit
+
+- **TLS 1.2+** required on every endpoint (`api.infery.ai`, `core.infery.ai`, `app.infery.ai`, `infery.ai`)
+- **HSTS** with `preload` on the marketing and app domains
+- **Certificate pinning** on internal service-to-service hops
+- **No plaintext fallback** — HTTP requests are 308-redirected to HTTPS, then refused
+
+## Data at rest
+
+- **PostgreSQL** (Cloud SQL): AES-256 disk encryption, automated daily backups (35-day retention), point-in-time recovery
+- **Object storage** (GCS): AES-256, customer-managed keys (CMEK) on Enterprise
+- **Redis** (Memorystore): AUTH + in-transit TLS; never stores raw inputs/outputs — caching layer only
+- **Secrets**: GCP Secret Manager, never in env files in CI
+
+## Inputs and outputs
+
+- **Not stored by default** for API requests — payloads transit through the gateway and are not persisted
+- **Studio** chats are stored in your workspace per [retention rules](/playground/chats-and-projects)
+- **Request metadata** (timestamps, model, tokens, status, latency, IP, user-agent, request id) is kept for 30 days for diagnostics, then deleted
+- **Billing-grade usage events** are kept for 6 years (HMRC requirement)
+- **Audit logs** for security events: 12 months
+- **No model training** on your data, ever — see [the legal page](https://infery.ai/privacy#ai-data)
+
+## API keys
+
+- Stored as **bcrypt hashes**; the plaintext is shown **once**, at creation, then unrecoverable
+- Format: `inf_<32 base62 chars>` — high-entropy, prefix lets us scan for leaked keys publicly
+- **Per-key scope**: the only state attached to a key is workspace + permissions + rate-limit profile. Keys never carry user identity
+- **Rotation**: any number of keys per workspace; rotate freely with zero downtime
+- **Revoke** in one click — propagates to every region within ~5 seconds
+
+## Authentication
+
+- Web app: email + password (bcrypt, work factor 12), Google OAuth, GitHub OAuth
+- **Email verification** required before first paid action
+- **2FA** (TOTP / passkey) optional per user; mandatory on Workspace Admin role for Team and Enterprise plans
+- **Session cookies**: `HttpOnly`, `Secure`, `SameSite=Lax`, signed; rolling 30-day TTL with rotation on every login
+- **Brute-force**: per-IP and per-account rate limiting on `/login`, `/register`, `/password-reset`
+
+## Authorisation
+
+- Workspace-scoped by default — no cross-workspace data access at the database layer (RLS-style)
+- Roles: **Owner**, **Admin**, **Developer**, **Billing**, **Viewer** — see [Members and roles](/workspaces/members-and-roles)
+- API keys cannot escalate privileges or read/write workspace settings — they only call the inference API
+
+## Network and infrastructure
+
+- All services run in **GCP europe-west1** (London) by default; Enterprise can pin a different region
+- **Workload Identity Federation** for CI → no service-account keys in GitHub
+- **Private VPC** for service-to-service traffic; only the public gateway and web app are exposed
+- **Cloud Armor** + per-IP rate limits at the edge
+- **DDoS protection** via Google Front End
+
+## Compliance and certifications
+
+- **UK GDPR** + **EU GDPR** compliant — see [Privacy Policy](https://infery.ai/privacy)
+- **CCPA / CPRA** compliant for California residents
+- **SOC 2 Type II** — audit in progress (target: Q4 2026)
+- **ISO 27001** — gap analysis underway
+- **HIPAA / PCI-DSS** — not in scope today
+
+We are registered with the UK ICO as a data controller.
+
+## Incident response
+
+- 24/7 on-call rotation
+- **Personal data breach** → notification to ICO within 72 hours, affected users notified without undue delay
+- Public **post-mortems** for incidents affecting >5% of monthly traffic, published within 14 days
+- Status page: `status.infery.ai` (component-level uptime, planned maintenance)
+
+## Vulnerability disclosure
+
+We run a **good-faith** policy. Email **security@infery.ai** with details — don't disclose publicly until we've had a reasonable window to fix. We acknowledge within 24 hours, target a fix within 30 days, and credit reporters in our changelog (with your permission).
+
+We don't currently run a paid bounty programme; that's planned for late 2026.
+
+## What's your responsibility
+
+- Keep API keys **out of client-side code** — frontend should call your backend, your backend calls Infery
+- **Rotate keys** on staff departure
+- Use **separate keys per environment** (dev, staging, prod) so you can revoke surgically
+- Enable **2FA** on every Owner/Admin account
+- Set **budget alerts** so a leaked key can't drain you overnight
+- Review **audit logs** in Settings → Audit periodically
+
+## Reporting suspected misuse
+
+If you see Infery being used for abuse — phishing, scams, malware — email **abuse@infery.ai**. Include the request id from response headers if you have one.
+
+For lawful disclosure requests (subpoena, court order), email **legal@infery.ai**.

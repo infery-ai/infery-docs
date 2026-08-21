@@ -1,0 +1,113 @@
+---
+title: "Quickstart"
+description: "Five minutes from sign-up to your first chat response and first API call."
+---
+
+## 1. Create an account
+
+Sign up at **[app.infery.ai/register](https://app.infery.ai/register)**.
+Free accounts get **50 trial credits** immediately — enough to try chat, a few
+images and some voice.
+
+## 2. Open the Studio
+
+Once you're in, the **Studio** is the first screen you see.
+
+- Type a prompt in the input at the bottom, pick a model (default: auto-routed) and press Enter.
+- Switch between **Chat · Generate Image · Text to Speech · Speech to Text · Generate Video · Generate Music** at the top.
+- Drop a PDF, image or audio file on the message box to attach it.
+
+<Tip>
+Your first chat becomes a `Chat`. Create a `Project` to group related chats and share settings. See [Chats and Projects](/playground/chats-and-projects).
+</Tip>
+
+## 3. Create an API key
+
+Go to **Settings → API Keys** and click **Create key**. Give it a name
+("Production", "Local dev"), copy the plaintext key — it's only shown once.
+
+API keys look like:
+
+```
+inf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+<Warning>
+Treat API keys as secrets. Never commit them to git. Revoke a key immediately if exposed — it takes ~5 seconds in the dashboard.
+</Warning>
+
+## 4. Make your first API call
+
+Our gateway is OpenAI-compatible. Point the OpenAI SDK at `https://api.infery.ai`:
+
+<CodeGroup>
+```bash curl
+curl https://api.infery.ai/v1/chat/completions \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [{"role": "user", "content": "Say hello in Russian"}]
+  }'
+```
+
+```python python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key=os.environ["INFERY_API_KEY"],
+    base_url="https://api.infery.ai/v1",
+)
+
+resp = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Say hello in Russian"}],
+)
+print(resp.choices[0].message.content)
+```
+
+```typescript node
+import OpenAI from 'openai';
+
+const client = new OpenAI({
+  apiKey: process.env.INFERY_API_KEY,
+  baseURL: 'https://api.infery.ai/v1',
+});
+
+const resp = await client.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Say hello in Russian' }],
+});
+console.log(resp.choices[0].message.content);
+```
+</CodeGroup>
+
+You'll get back a standard OpenAI-format response. The cost in credits is
+returned as an extra header (`x-credits-used`) and inside the final SSE chunk
+when streaming.
+
+
+
+<Frame caption="The dashboard: balance, recent volume, and what ran last">
+  <img src="/samples/dashboard.png" alt="A Dashboard page reading Welcome to Family, with three cards: credits remaining 994, requests over 30 days 15,526, and active API keys 2. Below them a 30-day usage chart with a large spike in early August, and a Recent activity list naming Gemini Embedding 2 and Gemini 3.5 Flash calls, each marked succeeded with its credit cost and how long ago it ran." />
+</Frame>
+
+**Recent activity** is the fastest way to confirm a call landed: it names the
+model, whether it succeeded, and what it cost, within seconds of the request.
+
+## 5. Explore
+
+<CardGroup cols={2}>
+  <Card title="Add teammates" href="/workspaces/members-and-roles">
+    Invite, assign roles, keep billing people out of your Studio.
+  </Card>
+  <Card title="Set a budget" href="/workspaces/budget-alerts">
+    Get notified at 50/75/90% of your monthly plan.
+  </Card>
+  <Card title="Upload reusable files" href="/api-reference/files">
+    `POST /v1/files` once, reference them by `file_id` forever.
+  </Card>
+  <Card title="Set up fallbacks" href="/workspaces/fallback-chains">
+    Route to a backup model automatically when the primary rate-limits.
+  </Card>
+</CardGroup>

@@ -1,0 +1,64 @@
+---
+title: "SDKs"
+description: "Official clients for the Infery API — what exists today, and what each one is for."
+---
+
+The API is HTTP and needs no client: every example in these docs has a `curl`
+form, and the [API reference](/api-reference/introduction) is complete on its
+own. An SDK buys you three things that are tedious to get right by hand.
+
+**Types that match the wire.** Every model, every parameter, every response
+shape, checked by your editor before you run anything.
+
+**Deferred results, collected.** A slow media generation answers `504` with a
+`job_id` and keeps working — and keeps billing. Every official client collects
+the finished result for you instead of failing.
+
+**Retries that cannot double-charge.** A `500` on a billed `POST` is not
+retried, because it may arrive after your balance was already debited. Rate
+limiting answers `403` here rather than `429`, so a generic HTTP client's
+backoff never fires anyway.
+
+## Available now
+
+<CardGroup cols={2}>
+  <Card title="TypeScript" href="/sdks/typescript" icon="js">
+    `@infery/sdk` — every endpoint, Node 20+, ESM and CJS, zero dependencies.
+  </Card>
+</CardGroup>
+
+- [Getting started](/sdks/typescript) — install, the first call, streaming,
+  media, workflows, errors
+- [Method reference](/sdks/typescript-reference) — every call and the route it
+  makes
+- [OpenAI SDK compatibility](/sdks/openai-compatibility) — endpoint by endpoint,
+  whether your existing OpenAI client reaches it
+
+## Planned
+
+Python, Java and C#, in that order. They share the shape of the TypeScript
+client — the same namespaces, the same deferred-job handling, the same retry
+rule — and the same generated sources: the error-code catalogue in
+`sdks/spec/error-codes.json` is language-neutral and already generated for all
+of them.
+
+Until they land, those languages talk to the API directly. The
+[API reference](/api-reference/introduction) and the OpenAPI document are the
+contract, and nothing in the SDKs is privileged access.
+
+## Parameters belong to the model, not to the SDK
+
+Worth knowing before you look for a parameter list in an SDK page: beyond the
+handful of fields every request shares, **what a call accepts depends on the
+model you name**. An image model declares its own sizes, a TTS model its voices,
+a video model its durations and resolutions.
+
+The authoritative list is per model, in `_infery.allowed_params` on
+[`GET /v1/models`](/api-reference/models). The SDKs pass unknown keys through
+rather than filtering them, so a parameter a model gained yesterday works today
+without an SDK release — see the [model catalog](/models/catalog).
+
+The same reasoning is why the TypeScript SDK has a single
+[`media.generate({ modality, model, ... })`](/sdks/typescript#one-call-for-every-media-modality)
+alongside the per-modality methods: when the modality is a runtime value, it
+belongs in the request rather than in the choice of method.

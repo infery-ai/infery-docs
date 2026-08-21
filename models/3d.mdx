@@ -1,0 +1,62 @@
+---
+title: "3D models"
+description: "Every object 3d model on Infery, grouped by what it takes as input."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+Mesh generation and transformation, through `POST /v1/3d/generations`.
+
+**30 models.** Grouped by input, because that is the choice you make first — a model that
+turns an image into a video is not interchangeable with one that starts from a prompt.
+
+Prices are not listed here: they change, and a stale price is worse than none. See the
+[live catalogue](https://infery.ai/models) for current rates, and each model's own page there for its full
+parameter schema.
+
+## Image → 3D mesh (14)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `hi3d` | hitem3d | — | Generate 3D models from a single image with Hi3D. |
+| `hi3d-multi-view-to-3d` | hitem3d | — | Generate 3D models from multiple view images using Hi3D. |
+| `hi3d-texture` | hitem3d | 3D mesh | Texture an existing geometry mesh using a reference image with Hi3D. |
+| `hi3d-v3.0` | hitem3d | — | Generate 3D models from a single image with Hi3D V3.0. |
+| `hi3d-v3.0-multi-view-to-3d` | hitem3d | — | Generate 3D models from multiple view images using Hi3D V3.0. |
+| `meshy-v5-multi-image-to-3d` | meshy | — | Meshy-5 multi image generates realistic and production ready 3D models from multiple images. |
+| `meshy-v6-multi-image-to-3d` | meshy | — | Meshy-6 is the latest model from Meshy. It generates realistic and production ready 3D models. |
+| `v7` | meshy | — | Turns a single image into a fully textured, PBR-ready 3D mesh with complete geometry, in game-ready Smart Topology at a target polygon count |
+| `v7-multi-image-to-3d` | meshy | — | econstructs a high-fidelity textured 3D model from multiple angle views of one object, with game-ready topology and polygon control |
+| `trellis` | microsoft | — | Generate 3D models from your images using Trellis. A native 3D generative model enabling versatile and high-quality 3D asset creation. |
+| `hunyuan_world-image-to-world` | tencent | — | Hunyuan World 1.0 turns a single image into a panorama or a 3D world. |
+| `tripo-v2.5-image-to-3d` | tripo3d | — | State of the art Image to 3D Object generation. Generate 3D model from a single image! |
+| `tripo-v2.5-multiview-to-3d` | tripo3d | — | State of the art Multiview to 3D Object generation. Generate 3D models from multiple images! |
+| `triposplat` | tripo3d | — | TripoSplat is an open-source model from TripoAI / VAST AI Research that converts a single 2D image into high-quality 3D Gaussians using a… |
+
+## 3D mesh → 3D mesh (8)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `hi3d-multicolor` | hitem3d | — | Convert a textured 3D model into a multicolor model suited for multicolor 3D printing with Hi3D. |
+| `hi3d-split` | hitem3d | — | Split a 3D model into parts with Hi3D. |
+| `meshy-rigging` | meshy | — | Rig humanoid 3D models from GLB URLs with Meshy, returning rigged GLB/FBX files plus basic animations. |
+| `meshy-rigging-multi-animation` | meshy | — | Meshy auto-rigs a humanoid 3D model fitting a skeleton and binding the mesh, then applies several motion presets from its animation library |
+| `meshy-v5-remesh` | meshy | — | Meshy-5 remesh allows you to remesh and export existing 3D models into various formats |
+| `meshy-v5-retexture` | meshy | — | Meshy-5 retexture applies new, high-quality textures to existing 3D models using either text prompts or reference images. |
+| `tripo-remesh` | tripo3d | — | Converts triangle meshes into clean quad topology at a target polygon count, animation-ready with no manual retopology. |
+| `tripo-segment` | tripo3d | — | Automatically splits a 3D model into semantic parts for editing, texturing, and rigging. |
+
+## Text → 3D mesh (8)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `hyper3d-rodin-v2` | hyper3d | Image | Rodin by Hyper3D generates realistic and production ready 3D models from text or images. |
+| `hyper3d-rodin-v2.5` | hyper3d | Image | Rodin V2.5 by Hyper3D generates realistic and production ready 3D models from text or images. |
+| `hyper3d-rodin-v2.5-fast` | hyper3d | Image | Rodin V2.5 by Hyper3D generates realistic and production ready 3D models from text or images. Do fast prototyping using the fast model. |
+| `hyper3d-rodin-v2.5-text-to-3d-fast` | hyper3d | — | Rodin V2.5 by Hyper3D generates realistic and production ready 3D models from text or images. Do fast prototyping using the fast model. |
+| `meshy-v6-text-to-3d` | meshy | Image | Meshy-6 is the latest model from Meshy. It generates realistic and production ready 3D models. |
+| `hunyuan-3d-v3.1-pro-text-to-3d` | tencent | — | Generate 3D models from text prompts with Hunyuan 3D Pro |
+| `hunyuan-motion` | tencent | — | Generate 3D human motions via text-to-generation interface of Hunyuan Motion! |
+| `hunyuan-motion-fast` | tencent | — | Generate 3D human motions via text-to-generation interface of Hunyuan Motion! |
+
