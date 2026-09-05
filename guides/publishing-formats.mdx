@@ -1,0 +1,137 @@
+{/*
+  GENERATED FILE — do not hand-edit the table below.
+  Source: packages/format-presets/src/defaults.ts
+  Generator: scripts/generate-format-preset-docs.js
+  Refresh: node scripts/generate-format-preset-docs.js
+  Check (CI): node scripts/generate-format-preset-docs.js --check
+*/}
+---
+title: "Publishing formats"
+description: "Named formats for the platforms you publish to — pick one instead of typing an aspect ratio by hand."
+---
+
+A **format preset** is a stored publishing format — "Instagram Reels is 9:16,
+capped at 900 seconds" — that you reach by naming the platform and placement
+instead of typing `aspect_ratio` and `duration` yourself. There are
+**21 presets** across 7 platforms,
+covering post content (feed, story, reels, video placements) as well as
+profile and page identity assets (logos, banners, channel art).
+
+You can name a preset in the Playground or Workflow Studio's format control,
+or ask the agent for a platform by name (`"make this for Instagram Reels"`)
+and it sets the preset for you. The control groups every preset by platform:
+
+<img src="/samples/format-preset-select-dark.webp" alt="An open Format dropdown listing presets grouped by platform header: Instagram (Feed square 1:1, Feed portrait 4:5, Story 9:16), YouTube (Thumbnail 16:9, Channel art 16:9), X (Post image 16:9, Profile header 3:1), LinkedIn (Post image 1:1, Profile cover 4:1, Company page cover 189:32, Company logo 1:1), Facebook (Feed 4:5, Story 9:16, Page cover 851:315), and Pinterest (Pin 2:3), with a None option above the groups to clear the selection." />
+
+## What picking a format actually does
+
+A preset sets an **intent**, not a fixed request. Two things follow from that:
+
+- **An explicit value you set still wins.** If you set `aspect_ratio`
+  yourself alongside a format preset, your explicit value is used — the
+  preset only fills in what you didn't specify.
+- **When the model you picked can't produce the preset's exact ratio, the
+  closest one it can produce is used instead**, and the substitution is
+  reported back to you (as the `x-infery-param-adjustments` response header
+  over the API, or as a caption beneath the media in the Playground) so you
+  always know what you actually got.
+
+## Cover and banner formats need an extra step
+
+Three formats in the table below — LinkedIn's profile cover (`4:1`), LinkedIn's
+company page cover (`189:32`), and X's profile header (`3:1`) — are wider
+than any image model can generate natively. No model in the catalog declares
+those ratios, so they resolve to the closest ratio a model *can*
+produce — in practice, **16:9** — and you get a wide rectangle, not a true
+banner. The substitution is reported the same way as any other format
+substitution, so it won't be a silent surprise, but the result on its own is
+not yet a usable banner: it needs a crop to reach the format's real dimensions.
+
+**Over the API, the rectangle to crop to comes back on a response header.**
+Any image response generated with a `format_preset` carries
+`x-infery-format-frame`: a JSON object, **percent-encoded** (a display name
+contains an em-dash, which is not a legal HTTP header character — run it through
+`decodeURIComponent` before `JSON.parse`). Its fields are `preset_key`,
+`display_name`, `aspect_ratio` (the format's TRUE ratio, not the one the model
+produced), `width` and `height` (the exact pixels above), `crop_needed`, and
+`hinted`. `crop_needed: true` is the case described here — the model could not
+produce the format's shape, and the image you got needs cutting down to
+`width` × `height`. `hinted: true` means the prompt sent to the model was
+extended with a composition hint, so the subject sits inside that rectangle.
+Cropping to it is yours to do, with whatever image library you already use.
+
+**In the dashboard, that crop is one click.** The Playground draws the frame
+over the generated image, you position it, and the crop runs server-side and
+resizes to the exact pixels above — as a new image, with the original left
+where it is. That affordance is a dashboard action authenticated as a signed-in
+user; there is no crop endpoint for API-key callers, and it is offered only for
+a response holding exactly **one** image (one frame cannot say which of several
+images it applies to). A request with `n` above 1 still gets the header on
+every such response — just no button.
+
+## All formats
+
+### Instagram
+
+| Key | Format | Kind | Ratio | Dimensions | Max duration |
+| --- | --- | --- | --- | --- | --- |
+| `instagram.feed_square` | Instagram — Feed (square) | Image | `1:1` | 1080 × 1080 | — |
+| `instagram.feed_portrait` | Instagram — Feed (portrait) | Image | `4:5` | 1080 × 1350 | — |
+| `instagram.story` | Instagram — Story | Image | `9:16` | 1080 × 1920 | — |
+| `instagram.reels` | Instagram — Reels | Video | `9:16` | 1080 × 1920 | 900s |
+
+### TikTok
+
+| Key | Format | Kind | Ratio | Dimensions | Max duration |
+| --- | --- | --- | --- | --- | --- |
+| `tiktok.video` | TikTok — Video | Video | `9:16` | 1080 × 1920 | 180s |
+
+### YouTube
+
+| Key | Format | Kind | Ratio | Dimensions | Max duration |
+| --- | --- | --- | --- | --- | --- |
+| `youtube.short` | YouTube — Short | Video | `9:16` | 1080 × 1920 | 180s |
+| `youtube.thumbnail` | YouTube — Thumbnail | Image | `16:9` | 3840 × 2160 | — |
+| `youtube.video` | YouTube — Video | Video | `16:9` | 1920 × 1080 | — |
+| `youtube.channel_art` | YouTube — Channel art \* | Image | `16:9` | 2560 × 1440 | — |
+
+\* **YouTube — Channel art**: the full 2560 × 1440 canvas is not all guaranteed visible — only the centered 1546 × 422 "safe zone" survives every device's crop (phone, desktop and TV each crop it differently outside that area), so don't put anything you need seen near the edges.
+
+### X
+
+| Key | Format | Kind | Ratio | Dimensions | Max duration |
+| --- | --- | --- | --- | --- | --- |
+| `x.post` | X — Post image | Image | `16:9` | 1600 × 900 | — |
+| `x.video` | X — Video | Video | `16:9` | 1920 × 1080 | 140s |
+| `x.header` | X — Profile header | Image | `3:1` | 1500 × 500 | — |
+
+### LinkedIn
+
+| Key | Format | Kind | Ratio | Dimensions | Max duration |
+| --- | --- | --- | --- | --- | --- |
+| `linkedin.post` | LinkedIn — Post image | Image | `1:1` | 1200 × 1200 | — |
+| `linkedin.video` | LinkedIn — Video | Video | `16:9` | 1920 × 1080 | 1800s |
+| `linkedin.profile_cover` | LinkedIn — Profile cover | Image | `4:1` | 1584 × 396 | — |
+| `linkedin.company_cover` | LinkedIn — Company page cover | Image | `189:32` | 1512 × 256 | — |
+| `linkedin.company_logo` | LinkedIn — Company logo | Image | `1:1` | 400 × 400 | — |
+
+### Facebook
+
+| Key | Format | Kind | Ratio | Dimensions | Max duration |
+| --- | --- | --- | --- | --- | --- |
+| `facebook.feed` | Facebook — Feed | Image | `4:5` | 1440 × 1800 | — |
+| `facebook.story` | Facebook — Story | Image | `9:16` | 1440 × 2560 | — |
+| `facebook.page_cover` | Facebook — Page cover | Image | `851:315` | 851 × 315 | — |
+
+### Pinterest
+
+| Key | Format | Kind | Ratio | Dimensions | Max duration |
+| --- | --- | --- | --- | --- | --- |
+| `pinterest.pin` | Pinterest — Pin | Image | `2:3` | 1000 × 1500 | — |
+
+<Note>
+Dimensions marked `—` for max duration are image formats and have no
+duration. Duration ceilings shown here are the platform's own published
+limit; the model you generate with may offer a shorter maximum, in which
+case the shorter one applies.
+</Note>

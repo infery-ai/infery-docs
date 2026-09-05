@@ -1,0 +1,30 @@
+---
+title: "Text-to-speech"
+description: "POST /v1/audio/speech — synthesise speech from text."
+openapi: "openapi.json POST /v1/audio/speech"
+---
+
+```bash
+curl https://api.infery.ai/v1/audio/speech \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "tts-1",
+    "input": "Hello from Infery",
+    "voice": "alloy"
+  }' --output out.mp3
+```
+
+Response is the audio binary (`audio/mpeg` / `audio/wav` depending on `response_format`).
+
+### Sample output
+
+<video controls src="/samples/tts.wav" style={{ width: '100%', maxWidth: 480, height: 54 }} />
+
+*Generated with `gemini-2.5-flash-tts`, voice Kore. [Download tts.wav](/samples/tts.wav).*
+
+## Parameters
+
+- `voice` — model-dependent (`alloy`, `echo`, `onyx`, `nova`, `shimmer`, etc.)
+- `response_format` — `mp3`, `wav`, `opus`, `flac`, `pcm`
+- `speed` — 0.25–4.0

@@ -1,0 +1,76 @@
+---
+title: "Choosing a model"
+description: "A pragmatic guide to picking between the major chat models."
+---
+
+Some opinionated advice on which model to pick for common use cases.
+
+## Speed vs quality vs price
+
+```
+Fastest & cheapest:   gemini-2.5-flash, gpt-4o-mini, deepseek-v3.1, qwen-flash
+Best quality/price:   gemini-2.5-pro, claude-sonnet-4.6, gpt-4o, qwen3.5-plus
+Flagship (most $):    gpt-5.5, gpt-5.4, claude-opus-4.7, gemini-2.5-pro
+Reasoning:            claude-opus-4.7, o3, qwq-plus, deepseek-reasoner
+```
+
+## Long context
+
+Need >100k tokens? Sort by `maxContextTokens`:
+
+- **qwen-long** — 10M tokens
+- **grok-4.20** — 2M tokens
+- **gemini-2.5-pro / flash** — 1M tokens
+- **claude-opus-4.7 / 4.6 / sonnet-4.6** — 1M tokens
+- **qwen3.5-plus / flash** — 1M tokens
+- **gpt-5.5** — 272K tokens
+- **gpt-5.4 / 5.2** — 200K tokens
+- **gpt-4o** — 128K tokens
+
+## Vision
+
+For images in prompts:
+- General-purpose: **gpt-4o** (best accuracy on OCR + natural images)
+- Huge context (many images): **gemini-2.5-pro**
+- Document-heavy (PDF + text): **claude-opus-4.7** or **qwen3-max**
+
+## Coding
+
+- **claude-opus-4.7** — step-change improvement in agentic coding over 4.6
+- **claude-sonnet-4.6** — fast, great at code review and refactor
+- **gpt-5.5 / 5.4** — strong on general programming
+- **deepseek-v3.1** / **qwen3-coder-plus** — budget options for mass code gen
+
+## Tool calling
+
+All major flagships (gpt-5.5, gpt-5.4, claude-opus-4.7, gemini-2.5-pro, grok-4.20, qwen3-max, deepseek-v3.1) support `tools`. For best-reliability production agents, pick one and stick to it — don't round-robin.
+
+## JSON mode / Structured Outputs
+
+- **gpt-5.5 / 5.4 / o3** — best at strict JSON schema
+- **gemini-2.5-pro** — excellent
+- **claude-opus-4.7** — good; returns strict JSON when requested
+
+## Cost-sensitive
+
+The cheap tier moves too fast for a table here to stay true — a price list in
+static documentation is a promise about money that nobody is maintaining. Sort
+the [live catalogue](https://infery.ai/models) by price, or read `pricing` from
+`GET /v1/models` and pick in code.
+
+As a shape rather than a number: the budget tier sits roughly an order of
+magnitude below the flagships, and the small models from Alibaba, Google and
+DeepSeek are usually the floor.
+
+## Fallback pairs
+
+Safe production pairs (primary → fallback):
+- `gpt-5.5` → `claude-opus-4.7` (cross-provider top-tier)
+- `gpt-5.5` → `gpt-5.4` (within OpenAI, cheaper)
+- `gpt-5.4` → `gpt-5.4-mini`
+- `claude-opus-4.7` → `gpt-5.5` (cross-provider top-tier)
+- `claude-opus-4.7` → `claude-sonnet-4.6`
+- `gemini-2.5-pro` → `gemini-2.5-flash`
+- `gpt-5.4` → `gemini-2.5-flash` (cross-provider safety)
+
+Configure in Settings → Fallbacks. See [Fallback chains](/workspaces/fallback-chains).

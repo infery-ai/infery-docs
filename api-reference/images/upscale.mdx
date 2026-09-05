@@ -1,0 +1,9 @@
+---
+title: "Upscale an image"
+description: "POST /v1/images/upscale"
+openapi: "openapi.json POST /v1/images/upscale"
+---
+
+Runs a super-resolution model and returns the result on the same request.
+
+There is no prompt and no editing: the image is enlarged, and nothing about its content is directed. If you want the content changed, that is [image edits](/api-reference/images/edits).

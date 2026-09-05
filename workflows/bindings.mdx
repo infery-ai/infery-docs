@@ -1,0 +1,178 @@
+---
+title: "Bindings"
+description: "The binding grammar: roots, paths, projections, fallbacks and artifact references."
+---
+
+A **binding** is a `${…}` token in a step's fields. It is replaced with a value just
+before the step runs.
+
+```json
+{
+  "id": "post",
+  "type": "model",
+  "model": "gpt-5",
+  "input": {
+    "messages": [
+      { "role": "user", "content": "Rewrite this for ${input.audience}:\n${steps.draft.output.choices.0.message.content}" }
+    ]
+  }
+}
+```
+
+Bindings resolve in **values**, never in property names. A token in a key is refused at
+write time with `invalid_key` — in a key it would reach the provider as literal text.
+
+## Roots
+
+A token names one of five roots, followed by an optional dotted path.
+
+| Root | Resolves to | Where it is allowed |
+| --- | --- | --- |
+| `input` | The run's inputs, as sent in the request body. | Anywhere |
+| `steps` | `steps.<stepId>.…` — a completed step's contribution. | Anywhere |
+| `secrets` | A workspace secret, by flat name — lowercase letters, digits and `_`. No dotted path inside the name. | **`http` steps only** |
+| `item` | The current `foreach` item. | Inside a `foreach` body only |
+| `index` | The current `foreach` index. A scalar — it carries no path. | Inside a `foreach` body only |
+
+A token whose first alternative names none of these roots is **not a binding** and is left
+as literal text. `${1+1}`, `${VAR:-default}` and an unterminated `${` all pass through
+untouched rather than raising.
+
+## Paths
+
+A path is split on `.` and each segment is looked up verbatim.
+
+<Warning>
+**There is no bracket form.** `${steps.x.output[0].url}` reads a key literally named
+`output[0]`, resolves to `undefined`, and **does not raise** — the step still runs and is
+still billed with a missing input. `output.0` is the only spelling for an array element.
+</Warning>
+
+A reference that resolves to nothing is `undefined` as a whole value, and blank when
+interpolated into surrounding text. It is never a run-time error, which is why the
+[refusals](/workflows/errors) that catch these at write time matter.
+
+### Whole token vs. interpolation
+
+If the entire string is one token, the **raw value** is returned with its type intact — an
+array stays an array, a number stays a number. That is what lets `foreach.items` take
+`"${steps.search.output.results}"`.
+
+If the token sits inside other text, its value is coerced to a string; a non-string is
+JSON-encoded first.
+
+### `*` — projection
+
+`${steps.loop.output.*.text}` applies the rest of the path to every element and returns an
+array.
+
+- **Array-only.** Projecting over anything that is not an array yields `undefined`. This is
+  why a `parallel` fan-out — which publishes an object keyed by branch — has no projection
+  form.
+- **One `*` per path.** A second one yields `undefined` rather than guessing a level.
+- `null` and `undefined` holes are **dropped**, not kept — so a loop running under
+  `failure_mode: "continue"` projects only the iterations that succeeded.
+- A trailing `.join` segment joins the projection into one block of text separated by blank
+  lines: `${steps.loop.output.*.text.join}`. Off a projection, `join` is just a key name.
+
+### `|` — fallbacks
+
+A token may carry alternatives, resolved **left to right**; the first one that has a value
+wins.
+
+```
+${steps.a.output.text | steps.b.output.text | "nothing found"}
+```
+
+- Missing means `undefined`, `null` or the empty string — and nothing else. `0` and `false`
+  are values and win.
+- A double-quoted literal always has a value, so it wins outright and must be last.
+- Inside a literal, `|` and `}` are ordinary characters: `${input.x | "a|b"}` has two
+  alternatives, and `${input.x | "a}b"}` is one token. A literal cannot itself contain a
+  `"` — there is no escape syntax.
+
+<Note>
+Every alternative is checked at write time, not just the first. A fallback does **not**
+excuse an out-of-scope or forward reference in an earlier alternative — see
+[Containers](/workflows/containers#scope).
+</Note>
+
+## Step ids are path segments
+
+A step id may contain only `A–Z`, `a–z`, `0–9`, `_` and `-`, and may be up to 120
+characters. The reason is this page: an id is a path segment, so a `.` would split it, a
+`"`, `|` or `}` would end the token early, and a `*` is the projection operator. Each of
+those resolves to nothing silently, on a step that still bills.
+
+Ids must be **unique across the whole definition** — including steps nested inside a
+`foreach` body or a `parallel` branch.
+
+## Naming an artifact
+
+When a step produces a file, the file handle rides **beside** the step's output, not inside
+it. Bind it as `outputRef`:
+
+| Where the producing step sits | The spelling that reaches its artifact |
+| --- | --- |
+| top level | `${steps.<id>.outputRef}` |
+| inside a `foreach` | `${steps.<loop>.output.<n>.outputRef}` — `<n>` is a 0-based ordinal |
+| inside a `foreach`, all of them | `${steps.<loop>.output.*.outputRef}` |
+| inside a `parallel` | `${steps.<par>.output.<branchId>.outputRef}` — a branch id, not an ordinal |
+
+A container publishes no single artifact of its own, so `${steps.<loop>.outputRef}` and
+`${steps.<par>.outputRef}` name nothing.
+
+Which step types publish a ref at all:
+
+| Step type | Publishes `outputRef`? |
+| --- | --- |
+| `media` | **Yes**, except transcription — a transcript is text, bound as `${steps.<id>.output.text}` |
+| a capability | **Only when it produces exactly one new file** — see below |
+| `model` | No |
+| `http` | No |
+| `sub_pipeline` | No — it passes the child workflow's own `output` through |
+| `foreach` / `parallel` | No — the refs are per element |
+
+For a capability, the tell is its `output_modality`, published on every entry of
+`GET /v1/tools`:
+
+| `output_modality` | Ref? |
+| --- | --- |
+| `image`, `video`, `audio`, `document`, `archive` | **Yes** — one file |
+| `text` | **No** — the deliverable is in `output`. One exception below. |
+| `any` | **No** — many files, or none |
+
+<Note>
+**`document.extract_text` is the exception, and the only conditional one.** Its
+`output_modality` is `text`, but it *does* publish an `outputRef` whenever the extraction
+returns structured JSON — that is, whenever you set `params.output_format: "json"`. With
+any other `output_format` it behaves as the table says.
+
+So for that capability the ref is a property of the request, not of the capability. Its
+`output` carries `file_id`, `gs_url`, `outputRef`, `size_bytes` and `mime`, plus an inline
+`text` field only when the extraction is small enough to inline — the JSON itself is
+behind the ref, not in `output`.
+</Note>
+
+### `output.url` is not a public URL
+
+A media step and a file-producing capability both publish `output.url`, and it is a
+**relative** path of the form `/v1/files/<fileId>/content`. Pass it to a capability's
+`image_url` and the capability refuses it, because it is not a URL.
+
+- **Downstream, inside the workflow:** use `${steps.<id>.outputRef}`.
+- **Outside, to fetch the bytes:** prefix it with `https://api.infery.ai` and send your API
+  key, or use the `file_id` with the [Files API](/api-reference/files/content).
+
+## Spellings that look right and are not
+
+| Spelling | What it actually does |
+| --- | --- |
+| `${steps.x.output[0].url}` | `undefined`. There is no bracket form. |
+| `${steps.x.output.url}` into a capability's `image_url` | Resolves to a host-less `/v1/files/…` path and fails the capability's URL check. Use `${steps.x.outputRef}`. |
+| `${steps.<par>.output.*.outputRef}` | `undefined` — `parallel` publishes an object, and `*` is array-only. Name each branch. |
+| `${steps.<loop>.outputRef}` / `${steps.<par>.outputRef}` | `undefined` — a container publishes no single artifact. |
+| a binding in a **numeric** or **enum** parameter | Refused at write time. A binding-bearing value is validated with its tokens masked to a placeholder string, and no string satisfies a number or an enum. |
+
+That last one is why a `foreach` cannot drive `video.extract_frame`'s `time_sec` from
+`${item}`.

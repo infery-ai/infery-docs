@@ -1,0 +1,9 @@
+---
+title: "Estimate a run"
+description: "POST /v1/workflows/estimate"
+openapi: "openapi.json POST /v1/workflows/estimate"
+---
+
+A dry run for cost. Nothing executes and nothing is charged.
+
+<Warning>An estimate is not a reservation. Prices and routing can change between the estimate and the run, and the estimate cannot know how many tokens a model will actually emit. Treat it as an order of magnitude.</Warning>

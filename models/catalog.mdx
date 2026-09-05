@@ -1,0 +1,46 @@
+---
+title: "Model catalog"
+description: "Every model available through the API, by modality."
+---
+
+{/* GENERATED from the public catalogue — do not edit. */}
+
+**1439 models** are callable right now. Every one of them takes the same request
+shape for its modality and the same API key — which provider is behind a slug is our problem,
+not yours.
+
+| Kind | Models | Page |
+| --- | --- | --- |
+| Text | 388 | [Text models](/models/text) |
+| Image | 439 | [Image models](/models/image) |
+| Video | 407 | [Video models](/models/video) |
+| Audio | 89 | [Audio models](/models/audio) |
+| Music | 41 | [Music models](/models/music) |
+| Speech-to-text | 18 | [Speech-to-text models](/models/speech-to-text) |
+| Vision | 13 | [Vision models](/models/vision) |
+| 3D | 18 | [3D models](/models/3d) |
+| Upscale | 16 | [Upscale models](/models/upscale) |
+| Embedding | 9 | [Embedding models](/models/embeddings) |
+| Rerank | 1 | [Rerank models](/models/rerank) |
+
+Also: [owners](/models/owners) — who made what — and the [tool catalog](/tools/catalog), the
+deterministic operations that are not models.
+
+## What a slug means
+
+A slug is stable and is the only thing a request names. Routing sits behind it, so a model can
+change how it is served without your code changing.
+
+## Parameters belong to the model
+
+Beyond the few fields every request shares, what a call accepts depends on the model: an image
+model declares its own sizes, a speech model its voices, a video model its durations. The
+authoritative list is `_infery.allowed_params` on [`GET /v1/models`](/api-reference/models),
+and each model's page on the [live catalogue](https://infery.ai/models) renders its full input schema.
+
+The SDKs pass unknown keys straight through, so a parameter a model gained yesterday works
+today without an SDK release.
+
+Prices live on the [live catalogue](https://infery.ai/models) as well — they change, and a stale price in
+static documentation is worse than no price.
+

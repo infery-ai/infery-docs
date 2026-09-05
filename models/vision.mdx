@@ -1,0 +1,40 @@
+---
+title: "Vision models"
+description: "Every vision model on Infery, grouped by what it takes as input."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+Models that read an image or video as input and answer in text, through `POST /v1/chat/completions`.
+
+**13 models.** Grouped by input, because that is the choice you make first — a model that
+turns an image into a video is not interchangeable with one that starts from a prompt.
+
+Prices are not listed here: they change, and a stale price is worse than none. See the
+[live catalogue](https://infery.ai/models) for current rates, and each model's own page there for its full
+parameter schema.
+
+## Image → text (9)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `got-ocr-v2` | got-ocr | — | GOT-OCR2 works on a wide range of tasks, including plain document OCR, scene text OCR, formatted document OCR, and even OCR for tables… |
+| `llava-next` | llava-next | — | Vision |
+| `moondream2` | moondream | — | Moondream2 is a highly efficient open-source vision language model that combines powerful image understanding capabilities with a… |
+| `moondream2-object-detection` | moondream | — | Moondream2 is a highly efficient open-source vision language model that combines powerful image understanding capabilities with a… |
+| `moondream2-point-object-detection` | moondream | — | Moondream2 is a highly efficient open-source vision language model that combines powerful image understanding capabilities with a… |
+| `moondream2-visual-query` | moondream | — | Moondream2 is a highly efficient open-source vision language model that combines powerful image understanding capabilities with a… |
+| `nemotron-3-nano-omni-vision` | nvidia | — | Vision reasoning variant of NVIDIA's Nemotron 3 Nano Omni. |
+| `nemotron-diffusion-vlm` | nvidia | — | Nemotron-Labs-Diffusion-VLM-8B is the vision-language extension of the Nemotron-Labs-Diffusion family. |
+| `x-ailab-nsfw` | x-ailab | — | Predict whether an image is NSFW or SFW. |
+
+## Video → text (4)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `scene-finder` | infery | — | Search any video with a text prompt - Scene Finder locates the matching moments and returns their time segments and extracted frames. |
+| `marlin` | marlin | — | Marlin is a 2B video VLM tuned for the two questions developers actually want to ask of their videos: what is happening, and when? |
+| `marlin-find` | marlin | — | Marlin is a 2B video VLM tuned for the two questions developers actually want to ask of their videos: what is happening, and when? |
+| `nemotron-3-nano-omni-video` | nvidia | — | Video reasoning variant of NVIDIA's Nemotron 3 Nano Omni. |
+

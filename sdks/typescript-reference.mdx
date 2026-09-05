@@ -1,0 +1,1832 @@
+---
+title: "TypeScript SDK reference"
+description: "Every method on the client, its signature, and the shape of every type it takes and returns."
+---
+
+{/* GENERATED — do not edit.
+    Signatures, type shapes and field notes come from sdks/typescript/src;
+    routes from operations.ts joined with apps/docs/openapi.json.
+    Regenerate with `node scripts/generate-sdk-reference.js`; CI diffs it. */}
+
+Every call the client makes, grouped the way the client is. Each method shows its real
+signature; every type it names is linked to its own section below, with each field's
+type and whether it is required.
+
+One thing this cannot tell you: the parameters that belong to a MODEL rather than to
+the endpoint. An image model declares its own sizes, a speech model its voices. Those
+come from `_infery.allowed_params` on [`GET /v1/models`](/api-reference/models) and are
+rendered per model on the [live catalogue](https://infery.ai/models). Every params type
+here carries an index signature so they pass straight through.
+
+## `client.chat.completions`
+
+### `chat.completions.create()`
+
+```ts
+create(params: ChatParams, opts: RequestCallOptions = {}): APIPromise<ChatCompletion>
+```
+
+`POST /v1/chat/completions` — Create chat completion
+
+Types: [`ChatParams`](#chatparams) · [`RequestCallOptions`](#requestcalloptions) · [`ChatCompletion`](#chatcompletion)
+
+### `chat.completions.stream()`
+
+```ts
+async *stream(params: ChatParams, opts: RequestCallOptions = {}): AsyncGenerator<ChatCompletionChunk>
+```
+
+The last chunk before `[DONE]` carries `credits_used` and an empty `choices` array — it is yielded like any other chunk rather than hidden, because it is the only place the cost of a streamed call appears.
+
+Types: [`ChatParams`](#chatparams) · [`RequestCallOptions`](#requestcalloptions) · [`ChatCompletionChunk`](#chatcompletionchunk)
+
+## `client.embeddings`
+
+### `embeddings.create()`
+
+```ts
+create(params: EmbeddingParams, opts: RequestCallOptions = {}): APIPromise<EmbeddingResponse>
+```
+
+`POST /v1/embeddings` — Create embeddings
+
+Types: [`EmbeddingParams`](#embeddingparams) · [`RequestCallOptions`](#requestcalloptions) · [`EmbeddingResponse`](#embeddingresponse)
+
+## `client.images`
+
+### `images.generate()`
+
+```ts
+generate(params: ImageGenerateParams, opts: MediaCallOptions = {}): APIPromise<ImageResult>
+```
+
+`POST /v1/images/generations` — Create image generation
+
+Generates images, waiting for the result.
+
+**Note.** Works for the common case. A fal/replicate-routed model can instead answer 504 with a `job_id` (the request is still running and still billed) — poll `GET /v1/images/jobs/{job_id}`, which the OpenAI SDK will not do for you.
+
+Types: [`ImageGenerateParams`](#imagegenerateparams) · [`MediaCallOptions`](#mediacalloptions) · [`ImageResult`](#imageresult)
+
+### `images.edit()`
+
+```ts
+edit(params: ImageEditParams, opts: MediaCallOptions = {}): APIPromise<ImageResult>
+```
+
+`POST /v1/images/edits` — Edit an existing image
+
+Edits an image, optionally through a mask.
+
+**Note.** The OpenAI SDK posts multipart; this endpoint takes JSON with image_base64.
+
+Types: [`ImageEditParams`](#imageeditparams) · [`MediaCallOptions`](#mediacalloptions) · [`ImageResult`](#imageresult)
+
+### `images.upscale()`
+
+```ts
+upscale(params: ImageUpscaleParams, opts: MediaCallOptions = {}): APIPromise<ImageResult>
+```
+
+`POST /v1/images/upscale` — Upscale an image
+
+Upscales an image by URL. Needs an `upscale`-modality model that accepts an image — a video upscaler is refused with a 400 and points you at `videos.upscale`. Same deferral behaviour as `generate()`.
+
+Types: [`ImageUpscaleParams`](#imageupscaleparams) · [`MediaCallOptions`](#mediacalloptions) · [`ImageResult`](#imageresult)
+
+## `client.videos`
+
+### `videos.submit()`
+
+```ts
+submit(params: VideoSubmitParams, opts: RequestCallOptions = {}): APIPromise<VideoSubmitResult>
+```
+
+`POST /v1/videos/generations` — Create video generation
+
+Submits and returns immediately. The job handle is `id`.
+
+Types: [`VideoSubmitParams`](#videosubmitparams) · [`RequestCallOptions`](#requestcalloptions) · [`VideoSubmitResult`](#videosubmitresult)
+
+### `videos.retrieve()`
+
+```ts
+retrieve(jobId: string, opts: RequestCallOptions = {}): APIPromise<VideoJobStatus>
+```
+
+`GET /v1/videos/generations/{jobId}` — Get video generation status
+
+Types: [`RequestCallOptions`](#requestcalloptions) · [`VideoJobStatus`](#videojobstatus)
+
+### `videos.generate()`
+
+```ts
+async generate(params: VideoSubmitParams, opts: PollOptions<VideoJobStatus> = {}): Promise<VideoJobStatus>
+```
+
+Submits and polls to completion. Default interval 5s, deadline one hour — the gateway's own budget (`VideoMediaJobAdapter.deadlineMs`).
+
+Types: [`VideoSubmitParams`](#videosubmitparams) · [`PollOptions`](#polloptions) · [`VideoJobStatus`](#videojobstatus)
+
+### `videos.upscale()`
+
+```ts
+upscale(params: VideoUpscaleParams, opts: MediaCallOptions = {}): APIPromise<VideoUpscaleResult>
+```
+
+`POST /v1/video/upscale` — Upscale a video
+
+Served by `POST /v1/video/upscale` — singular, unlike every other video path. Submitted and polled INSIDE the gateway request, so this can take minutes; should the gateway stop waiting, it answers 504 with a `job_id` (`video-upscale.controller.ts:61`) — the work continues server-side and is billed either way, and the result is collected from the SAME durable job endpoint every other deferred media call uses (`GET /v1/images/jobs/{id}`, despite the path — `:78`). Previously this was a bare request with no deferral recovery at all, so a deferred upscale threw at the caller instead of collecting the result they had already paid for; fixed to match `images.upscale()`'s handling.
+
+Types: [`VideoUpscaleParams`](#videoupscaleparams) · [`MediaCallOptions`](#mediacalloptions) · [`VideoUpscaleResult`](#videoupscaleresult)
+
+## `client.music`
+
+### `music.generate()`
+
+```ts
+generate(params: MusicGenerateParams, opts: MediaCallOptions = {}): APIPromise<MusicResult>
+```
+
+`POST /v1/music/generations` — Generate music from text prompt
+
+One synchronous call — there is no job to poll. Allow a generous client timeout; a three-minute song takes 60-90 seconds to render.
+
+Types: [`MusicGenerateParams`](#musicgenerateparams) · [`MediaCallOptions`](#mediacalloptions) · [`MusicResult`](#musicresult)
+
+### `music.stream()`
+
+```ts
+async *stream(params: MusicGenerateParams, opts: RequestCallOptions = {}): AsyncGenerator<MusicStreamEvent>
+```
+
+The same route read as SSE: `progress` frames while the track renders, then exactly ONE terminal frame — `completed` or `error`.
+
+Types: [`MusicGenerateParams`](#musicgenerateparams) · [`RequestCallOptions`](#requestcalloptions) · [`MusicStreamEvent`](#musicstreamevent)
+
+## `client.audio.speech`
+
+### `audio.speech.create()`
+
+```ts
+async create(params: SpeechParams, opts: MediaCallOptions = {}): Promise<Response>
+```
+
+`POST /v1/audio/speech` — Text-to-speech
+
+Returns the `Response`; the body is audio bytes, not JSON.
+
+**Note.** Works for the common case — answers audio bytes. A fal/replicate-routed voice can instead answer a JSON 504 with a `job_id` in place of audio (still billed) — poll `GET /v1/images/jobs/{job_id}` for a signed download URL; the OpenAI SDK has no path for a JSON body where it expects bytes.
+
+Types: [`SpeechParams`](#speechparams) · [`MediaCallOptions`](#mediacalloptions)
+
+## `client.audio.transcriptions`
+
+### `audio.transcriptions.create()`
+
+```ts
+create(params: TranscriptionParams, opts: TranscriptionCallOptions = {}): APIPromise<TranscriptionResult | string>
+```
+
+`POST /v1/audio/transcriptions` — Speech-to-text
+
+Multipart by default, which is what the OpenAI SDK sends and what this endpoint prefers (base64 in JSON costs 33% more bandwidth).
+
+**Note.** Works, but timestamp_granularities is dropped and srt/vtt/text come back as a JSON envelope.
+
+Types: [`TranscriptionParams`](#transcriptionparams) · [`TranscriptionCallOptions`](#transcriptioncalloptions) · [`TranscriptionResult`](#transcriptionresult)
+
+## `client.audio.transformations`
+
+### `audio.transformations.create()`
+
+```ts
+create(params: AudioTransformationParams, opts: MediaCallOptions = {}): APIPromise<AudioTransformationResult>
+```
+
+`POST /v1/audio/transformations` — Transform audio (voice-changer, stem separation, video→audio extraction, …)
+
+`POST /v1/audio/transformations` reaches `MediaJobFacade.runToCompletion` on the durable path (`audio.controller.ts:914`), and that facade is what answers 504 with a `job_id` once it stops waiting (`media-job.facade.ts:157-177`) — the work continues server-side and is billed either way. This was a bare `transport.request` with no deferral recovery, so a deferred transformation threw `JobDeferredError` at the customer for a result they had already paid for: the exact failure the deferral machinery exists to prevent, and the same bug `videos.upscale()` had. `speech` and `transcriptions` in this file already handled it.
+
+Types: [`AudioTransformationParams`](#audiotransformationparams) · [`MediaCallOptions`](#mediacalloptions) · [`AudioTransformationResult`](#audiotransformationresult)
+
+## `client.media`
+
+One call for every media modality.
+
+### `media.generate()`
+
+```ts
+async generate(params: MediaGenerateParams, opts: MediaGenerateOptions = {}): Promise<MediaResult>
+```
+
+Produces media of any modality and waits for it.
+
+Types: [`MediaGenerateParams`](#mediagenerateparams) · [`MediaGenerateOptions`](#mediagenerateoptions) · [`MediaResult`](#mediaresult)
+
+### `media.wait()`
+
+```ts
+async wait(params: { modality: MediaModality; jobId: string }, opts: MediaGenerateOptions = {}): Promise<MediaResult>
+```
+
+Collects a job started with `background: true`.
+
+Types: [`MediaModality`](#mediamodality) · [`MediaGenerateOptions`](#mediagenerateoptions) · [`MediaResult`](#mediaresult)
+
+## `client.threeD`
+
+### `threeD.generate()`
+
+```ts
+generate(params: ThreeDGenerateParams, opts: MediaCallOptions = {}): APIPromise<ThreeDResult>
+```
+
+`POST /v1/3d/generations` — Generate a 3D model from text or an image
+
+`APIPromise`, so `withResponse()` reaches an envelope on the deferred paths too, carrying the BILLED request's id — the gateway sets `x-request-id` on error responses as well now. `modelUsed` is the one field a deferral does not carry; see `deferrable` in `core/poll.ts`.
+
+Types: [`ThreeDGenerateParams`](#threedgenerateparams) · [`MediaCallOptions`](#mediacalloptions) · [`ThreeDResult`](#threedresult)
+
+## `client.files`
+
+### `files.create()`
+
+```ts
+create(params: FileCreateParams, opts: RequestCallOptions = {}): APIPromise<FileObject>
+```
+
+`POST /v1/files` — Upload a file
+
+Types: [`FileCreateParams`](#filecreateparams) · [`RequestCallOptions`](#requestcalloptions) · [`FileObject`](#fileobject)
+
+### `files.list()`
+
+```ts
+list(query?: FileListParams, opts: RequestCallOptions = {}): APIPromise<FileListResult>
+```
+
+`GET /v1/files` — List uploaded files
+
+Types: [`FileListParams`](#filelistparams) · [`RequestCallOptions`](#requestcalloptions) · [`FileListResult`](#filelistresult)
+
+### `files.retrieve()`
+
+```ts
+retrieve(fileId: string, opts: RequestCallOptions = {}): APIPromise<FileObject>
+```
+
+`GET /v1/files/{fileId}` — Retrieve file metadata
+
+Types: [`RequestCallOptions`](#requestcalloptions) · [`FileObject`](#fileobject)
+
+### `files.content()`
+
+```ts
+async content(fileId: string, opts: RequestCallOptions = {}): Promise<Response>
+```
+
+`GET /v1/files/{fileId}/content` — Download file contents
+
+The raw bytes. Returns the `Response` so the caller picks the reader.
+
+Types: [`RequestCallOptions`](#requestcalloptions)
+
+### `files.del()`
+
+```ts
+del(fileId: string, opts: RequestCallOptions = {}): APIPromise<{ id: string; deleted: boolean }>
+```
+
+`DELETE /v1/files/{fileId}` — Delete a file
+
+Types: [`RequestCallOptions`](#requestcalloptions)
+
+## `client.models`
+
+### `models.list()`
+
+```ts
+async list(opts: ModelListOptions = {}): Promise<{ object: string; data: CatalogModel[] }>
+```
+
+`GET /v1/models` — List available models
+
+**Note.** Reachable, but the _infery extension and client-side modality filtering are ours.
+
+Types: [`ModelListOptions`](#modellistoptions) · [`CatalogModel`](#catalogmodel)
+
+### `models.estimate()`
+
+```ts
+estimate(slug: string, params: ModelEstimateParams, opts: RequestCallOptions = {}): APIPromise<ModelEstimateResult>
+```
+
+`POST /v1/models/{slug}/estimate` — Estimate credits for a model request
+
+Types: [`ModelEstimateParams`](#modelestimateparams) · [`RequestCallOptions`](#requestcalloptions) · [`ModelEstimateResult`](#modelestimateresult)
+
+## `client.tools`
+
+### `tools.list()`
+
+```ts
+list(opts: RequestCallOptions = {}): APIPromise<ToolListResult>
+```
+
+`GET /v1/tools` — List available workflow capabilities
+
+Types: [`RequestCallOptions`](#requestcalloptions) · [`ToolListResult`](#toollistresult)
+
+## `client.capabilities`
+
+### `capabilities.run()`
+
+```ts
+run(capabilityId: string, params: CapabilityRunParams, opts: RequestCallOptions = {}): APIPromise<CapabilityRunResult>
+```
+
+`POST /v1/capabilities/{id}/run` — Run a single capability synchronously
+
+Types: [`CapabilityRunParams`](#capabilityrunparams) · [`RequestCallOptions`](#requestcalloptions) · [`CapabilityRunResult`](#capabilityrunresult)
+
+## `client.workflows`
+
+### `workflows.list()`
+
+```ts
+list(query?: WorkflowListParams, opts: RequestCallOptions = {}): APIPromise<WorkflowListResult>
+```
+
+`GET /v1/workflows` — List workflows
+
+Types: [`WorkflowListParams`](#workflowlistparams) · [`RequestCallOptions`](#requestcalloptions) · [`WorkflowListResult`](#workflowlistresult)
+
+### `workflows.create()`
+
+```ts
+create(body: WorkflowCreateParams, opts: RequestCallOptions = {}): APIPromise<WorkflowCreateResult>
+```
+
+`POST /v1/workflows` — Create a reusable workflow
+
+Types: [`WorkflowCreateParams`](#workflowcreateparams) · [`RequestCallOptions`](#requestcalloptions) · [`WorkflowCreateResult`](#workflowcreateresult)
+
+### `workflows.retrieve()`
+
+```ts
+retrieve(pipelineId: string, query?: WorkflowRetrieveParams, opts: RequestCallOptions = {}): APIPromise<WorkflowRetrieveResult>
+```
+
+`GET /v1/workflows/{id}` — Get workflow (latest or specific version)
+
+Types: [`WorkflowRetrieveParams`](#workflowretrieveparams) · [`RequestCallOptions`](#requestcalloptions) · [`WorkflowRetrieveResult`](#workflowretrieveresult)
+
+### `workflows.update()`
+
+```ts
+update(pipelineId: string, body: WorkflowUpdateParams, opts: RequestCallOptions = {}): APIPromise<WorkflowUpdateResult>
+```
+
+`PUT /v1/workflows/{id}` — Update workflow (creates new version if definition changed)
+
+Types: [`WorkflowUpdateParams`](#workflowupdateparams) · [`RequestCallOptions`](#requestcalloptions) · [`WorkflowUpdateResult`](#workflowupdateresult)
+
+### `workflows.del()`
+
+```ts
+del(pipelineId: string, opts: RequestCallOptions = {}): APIPromise<WorkflowDeleteResult>
+```
+
+`DELETE /v1/workflows/{id}` — Soft-delete workflow
+
+Types: [`RequestCallOptions`](#requestcalloptions) · [`WorkflowDeleteResult`](#workflowdeleteresult)
+
+### `workflows.estimate()`
+
+```ts
+estimate(body: WorkflowEstimateParams, opts: RequestCallOptions = {}): APIPromise<WorkflowEstimateResult>
+```
+
+`POST /v1/workflows/estimate` — Dry-run cost estimate for a workflow definition (no execution)
+
+Types: [`WorkflowEstimateParams`](#workflowestimateparams) · [`RequestCallOptions`](#requestcalloptions) · [`WorkflowEstimateResult`](#workflowestimateresult)
+
+## `client.workflows.runs`
+
+### `workflows.runs.create()`
+
+```ts
+create(params: RunCreateCallParams, opts: RunOptions = {}): APIPromise<RunCreateResult>
+```
+
+`POST /v1/workflows/runs` — Run a workflow (sync default; mode=async returns job id; mode=stream returns SSE)
+
+**Note.** mode: "stream" is refused here at compile time; workflows.runs.stream() is the SAME route, read as SSE.
+
+Types: [`RunCreateCallParams`](#runcreatecallparams) · [`RunOptions`](#runoptions) · [`RunCreateResult`](#runcreateresult)
+
+### `workflows.runs.stream()`
+
+```ts
+async *stream(params: RunCreateParams, opts: RunOptions = {}): AsyncGenerator<WorkflowRunEvent>
+```
+
+`mode: 'stream'` — the thirteen named SSE events on `WorkflowRunEvent`, terminated on the wire by `data: [DONE]` (not yielded). Same `Idempotency-Key` default and forwarding as `create()` — see the comment there — because this is the SAME route (`POST /pipelines/runs`), just read as a stream instead of awaited as JSON. A completed run under a reused key replays as a synthetic event sequence, exactly as it would answer a fresh `sync` call for that key; a run still IN FLIGHT under that key is refused with 409 (`idempotency_in_progress`) — `requestStream` throws for any non-2xx response, so that surfaces as a rejected promise before this generator yields anything, not as an event.
+
+Types: [`RunCreateParams`](#runcreateparams) · [`RunOptions`](#runoptions) · [`WorkflowRunEvent`](#workflowrunevent)
+
+### `workflows.runs.retrieve()`
+
+```ts
+retrieve(runId: string, opts: RequestCallOptions = {}): APIPromise<RunRetrieveResult>
+```
+
+`GET /v1/workflows/runs/{id}` — Get workflow run by id
+
+Types: [`RequestCallOptions`](#requestcalloptions) · [`RunRetrieveResult`](#runretrieveresult)
+
+### `workflows.runs.logs()`
+
+```ts
+logs(runId: string, opts: RequestCallOptions = {}): APIPromise<RunLogsResult>
+```
+
+`GET /v1/workflows/runs/{id}/logs` — Get per-step model_call_logs for a workflow run
+
+Types: [`RequestCallOptions`](#requestcalloptions) · [`RunLogsResult`](#runlogsresult)
+
+### `workflows.runs.cancel()`
+
+```ts
+cancel(runId: string, opts: RequestCallOptions = {}): APIPromise<RunCancelResult>
+```
+
+`POST /v1/workflows/runs/{id}/cancel` — Best-effort cancel of a running or queued workflow run
+
+Types: [`RequestCallOptions`](#requestcalloptions) · [`RunCancelResult`](#runcancelresult)
+
+## `client.workflows.templates`
+
+### `workflows.templates.list()`
+
+```ts
+list(query?: TemplateListParams, opts: RequestCallOptions = {}): APIPromise<TemplateListResult>
+```
+
+`GET /v1/workflows/templates` — List workflow templates (paginate + filter)
+
+Types: [`TemplateListParams`](#templatelistparams) · [`RequestCallOptions`](#requestcalloptions) · [`TemplateListResult`](#templatelistresult)
+
+### `workflows.templates.retrieve()`
+
+```ts
+retrieve(slug: string, opts: RequestCallOptions = {}): APIPromise<TemplateRetrieveResult>
+```
+
+`GET /v1/workflows/templates/{slug}` — Get a single workflow template (full, with definition + sample_input)
+
+Types: [`RequestCallOptions`](#requestcalloptions) · [`TemplateRetrieveResult`](#templateretrieveresult)
+
+## `client.jobs`
+
+### `jobs.retrieve()`
+
+```ts
+async retrieve(jobId: string, opts: RequestCallOptions = {}): Promise<MediaJobStatus>
+```
+
+`GET /v1/images/jobs/{id}` — Poll an image generation job
+
+Serves media jobs of EVERY modality despite the `/v1/images` path — image, video, 3D, upscale, speech and transcription alike.
+
+Types: [`RequestCallOptions`](#requestcalloptions) · [`MediaJobStatus`](#mediajobstatus)
+
+### `jobs.wait()`
+
+```ts
+wait(jobId: string, opts: PollOptions<MediaJobStatus> = {}): Promise<MediaJobStatus>
+```
+
+Polls until the job reaches a terminal state.
+
+Types: [`PollOptions`](#polloptions) · [`MediaJobStatus`](#mediajobstatus)
+
+## Types
+
+Every type the signatures above name, alphabetically. A field marked required must be
+present; the rest are optional. Notes are the type's own documentation, so they say
+what the field means rather than restating its name.
+
+### `AsyncRunAccepted`
+
+The queued run's identity, as answered by an `async` run.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** |  |
+| `status` | `'queued'` | **yes** | Always `queued`, including on an idempotent replay. |
+| `createdAt` | `string` | **yes** |  |
+
+### `AudioTransformationParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `string` | **yes** | Model ID to use for the transformation. |
+| `audio_url` | `string` | no | Source audio URL — required for audio-input models (voice-changer, demucs). |
+| `video_url` | `string` | no | Source video URL — required for video-input models (video→audio extraction). |
+| `response_format` | `string` | no | Requested output audio format (model-dependent; applied best-effort). |
+| `[param: string]` | `unknown` | — |  |
+
+### `AudioTransformationResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `created` | `number` | no |  |
+| `data` | `Array<{ url?: string; b64_audio?: string; content_type?: string; duration_seconds?: number; file_id?: string; }>` | no | The aggregator's own hosted output URL, or a private-storage signed URL (7-day expiry) when the provider only returns inline bytes. |
+| `credits_used` | `number` | no |  |
+| `job_id` | `string` | no | Present only when `background: true` and the call was deferred rather than collected. |
+| `artifacts_expired` | `boolean` | no | Present, and always `true`, only on a result COLLECTED from a deferred job whose artifacts are no longer all retrievable (`MediaJobResponseDto .artifacts_expired`): `data` is then shorter than the job produced. A synchronous 200 never carries it, so `undefined` means "nothing known to be missing", not "nothing missing". |
+
+### `BinaryInput`
+
+```ts
+type BinaryInput = Uint8Array | ArrayBuffer | Blob | File
+```
+
+### `CapabilityRunParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `input` | `Record<string, unknown>` | no | Validated against the capability's own Zod input schema — shape varies per capability. |
+| `params` | `Record<string, unknown>` | no | Validated against the capability's own Zod params schema — shape varies per capability. |
+| `[param: string]` | `unknown` | — |  |
+
+### `CapabilityRunResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** | The literal prefix `cap_` followed by a UUID. |
+| `capability` | `string` | **yes** | The capability that ran — echoes the `id` path parameter. |
+| `file_id` | `string` | no | Present only for capabilities that produce a single stored artifact. |
+| `url` | `string` | no | Only ever present alongside `file_id`. |
+| `mime` | `string` | no | MIME type the engine reported for the produced file. Only ever present alongside `file_id`. |
+| `size_bytes` | `number` | no | Size of the produced file in bytes. Only ever present alongside `file_id`. |
+| `result` | `Record<string, unknown>` | no | The capability's own output body, for capabilities that produce no single stored file. |
+| `credits_used` | `number` | **yes** | Credits settled for this run. `0` means unbilled, not free by policy. May be fractional. |
+
+### `CatalogModel`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** |  |
+| `object` | `string` | no |  |
+| `created` | `number` | no |  |
+| `owned_by` | `string` | no |  |
+| `_infery` | `{ modality?: string; supports_chat?: boolean; supports_tools?: boolean; supports_streaming?: boolean; max_context_tokens?: number \| null; max_output_tokens?: number \| null; pricing?: Record<string, unknown> \| null; allowed_params?: Record<string, unknown> \| null; }` | no |  |
+
+### `ChatAnnotation`
+
+Mirrors `ChatAnnotationDto`. A web-search `url_citation` annotation — every field optional because the translator only fills in what the upstream provider returned.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `'url_citation'` | no |  |
+| `url` | `string` | no |  |
+| `title` | `string` | no |  |
+| `start_index` | `number` | no |  |
+| `end_index` | `number` | no |  |
+
+### `ChatCompletion`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** |  |
+| `object` | `string` | no |  |
+| `created` | `number` | no |  |
+| `model` | `string` | no |  |
+| `choices` | [`ChatCompletionChoice[]`](#chatcompletionchoice) | **yes** |  |
+| `usage` | [`ChatUsage`](#chatusage) | no |  |
+| `credits_used` | `number` | no |  |
+| `web_search_credits` | `number` | no | Credits spent on the grounded web-search call itself (separate from `credits_used`, the model call's own cost). Present only when the request actually used a grounded web-search provider — set at `apps/gateway/src/modules/chat/chat.controller.ts:580` (`response.web_search_credits = webSearchCreditsActual;`). NOT in the OpenAPI document — the non-streaming response schema omits it, so nothing binds this field; the citation above is the only guard. (Recorded as a gateway follow-up to add it to the schema.) |
+| `infery_web_search` | `{ provider: string; searches: number; citations: { url: string; title: string }[]; }` | no | Grounded web-search accounting, alongside `web_search_credits` — same presence rule, same emission site (`apps/gateway/src/modules/chat/chat.controller.ts:581-585`). Citation shape confirmed at `chat.controller.ts:307` and the `citations` mapping at `chat.controller.ts:564`. Declared on the wire now as `ChatWebSearchDto`, and bound by `_c30k`. |
+
+### `ChatCompletionChoice`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `index` | `number` | no |  |
+| `message` | [`ChatCompletionMessage`](#chatcompletionmessage) | no |  |
+| `finish_reason` | `'stop' \| 'length' \| 'tool_calls' \| 'content_filter'` | no |  |
+
+### `ChatCompletionChunk`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** |  |
+| `object` | `'chat.completion.chunk'` | **yes** |  |
+| `created` | `number` | no | Set only by the native OpenAI Responses-API streaming path — `apps/gateway/src/providers/openai-responses/stream-translator.ts:178,193` (`created: this.created`, sampled once per turn at line 58). Anthropic's and Google's streaming paths never set it on a chunk (they only set it on their non-streaming response body — `apps/gateway/src/providers/anthropic.provider.ts:474#model`, `apps/gateway/src/providers/google.provider.ts:615#model`), and the gateway's own trailing credits/usage chunk (`chat.controller.ts:770-775`) doesn't set it either. |
+| `model` | `string` | no | Set by every provider's streaming chunk — `apps/gateway/src/providers/anthropic.provider.ts:255,282,295,303`, `apps/gateway/src/providers/google.provider.ts:349,423,432`, `apps/gateway/src/providers/openai-responses/stream-translator.ts:179,194` — except the gateway's own trailing credits/usage chunk (`chat.controller.ts:770-775`), which carries neither `created` nor `model`. Optional for that reason, not because any provider omits it on a real content chunk. |
+| `choices` | [`ChatCompletionChunkChoice[]`](#chatcompletionchunkchoice) | **yes** |  |
+| `usage` | [`ChatUsage`](#chatusage) | no |  |
+| `credits_used` | `number` | no | Present on the final chunk before `[DONE]`. |
+| `web_search_credits` | `number` | no | Credits spent on the grounded web-search call itself (separate from `credits_used`, the model call's own cost). Present only when the request actually used a grounded web-search provider — set on the final chunk at `apps/gateway/src/modules/chat/chat.controller.ts:778` (`finalChunk.web_search_credits = webSearchCreditsActual;`). Declared on `ChatCompletionChunkDto` now, so `_c57j` binds it — it was undeclared when this type was written, which meant the citation was its only guard. |
+| `infery_web_search` | `{ provider: string; searches: number; citations: { url: string; title: string }[]; }` | no | Grounded web-search accounting, alongside `web_search_credits` — same presence rule, same emission site (`apps/gateway/src/modules/chat/chat.controller.ts:779-783`). Citation shape confirmed at `chat.controller.ts:307` and the `citations` mapping at `chat.controller.ts:762-765`/`chat.controller.ts:564` (`{ url: c.url, title: c.title }` / `{ url: a.url ?? '', title: a.title ?? '' }`). Declared on the wire now as `ChatWebSearchDto`, and bound by `_c57k`. |
+
+### `ChatCompletionChunkChoice`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `index` | `number` | **yes** |  |
+| `delta` | [`ChatCompletionChunkDelta`](#chatcompletionchunkdelta) | **yes** | Partial by nature — never a whole message. A caller accumulating text must concatenate `delta.content` across chunks, not read it as the full reply. |
+| `finish_reason` | `'stop' \| 'length' \| 'tool_calls' \| 'content_filter' \| null` | no |  |
+
+### `ChatCompletionChunkDelta`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `role` | `'assistant'` | no | Only ever `"assistant"` when present, and only on the first chunk of a turn. |
+| `content` | `string` | no |  |
+| `tool_calls` | [`ChatToolCallDelta[]`](#chattoolcalldelta) | no | See `ChatToolCallDelta` for why this differs from the non-streaming `tool_calls` shape. |
+| `refusal` | `string` | no | Streams a reasoning model's refusal text in place of `content`. Emitted only on the native OpenAI Responses-API path — `apps/gateway/src/providers/openai-responses/stream-translator.ts:119-121` (`case 'response.refusal.delta': yield this.baseChunk({ delta: { refusal: event.delta } })`), declared on that file's own internal chunk type at line 13. |
+| `annotations` | [`ChatAnnotation[]`](#chatannotation) | no | Accumulated `url_citation` annotations for grounded web search, flushed once on the final delta of a turn (not incrementally on every chunk) — `apps/gateway/src/providers/openai-responses/stream-translator.ts:188` (`if (this.accumulatedAnnotations.length > 0) delta.annotations = this.accumulatedAnnotations;`), declared on that file's own internal chunk type at line 20. |
+
+### `ChatCompletionMessage`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `role` | `string` | no | Documented on the wire as a plain `string`, not narrowed to the request side's role union — kept that way here rather than assumed to always be `"assistant"`. |
+| `content` | `string` | no |  |
+| `tool_calls` | [`ChatToolCall[]`](#chattoolcall) | no | Present when the model invokes tools — and not necessarily just one: `apps/gateway/src/providers/openai-responses/response-translator.ts:68` (`functionCallItems.map((f, i) => ({ index: i, ... }))`) maps EVERY function call item in a Responses-API turn onto its own entry here, so several concurrent calls in one turn all arrive, not just the first. See `ChatToolCallDelta` for the STREAMING equivalent. |
+| `annotations` | [`ChatAnnotation[]`](#chatannotation) | no | Web-search `url_citation` annotations (OpenAI-grounded chat only), attached by `responsesToChatCompletion` in `apps/gateway/src/providers/openai-responses/response-translator.ts:80` (`if (annotations.length > 0) message.annotations = annotations;`) — only when non-empty. |
+
+### `ChatCompletionTokensDetails`
+
+`reasoning_tokens` is set on the native OpenAI Responses-API streaming path (`apps/gateway/src/providers/openai-responses/stream-translator.ts:204-206`). `audio_tokens` is read off the same block on both the non-streaming and streaming paths in `apps/gateway/src/modules/chat/chat.controller.ts:475-476,722-723` (audio chat models split prompt/completion tokens into text + audio here). Both optional — no single provider path sets both at once.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `reasoning_tokens` | `number` | no |  |
+| `audio_tokens` | `number` | no |  |
+
+### `ChatContentPart`
+
+```ts
+type ChatContentPart = | ChatTextContentPart | ChatImageUrlContentPart | ChatInputAudioContentPart | ChatFileContentPart
+```
+
+### `ChatFileContentPart`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `'file'` | **yes** |  |
+| `file` | [`ChatFilePayload`](#chatfilepayload) | no |  |
+| `file_id` | `string` | no | Shorthand for `file.file_id` — the gateway reads whichever is present (`file.file_id ?? file_id`). |
+
+### `ChatFilePayload`
+
+Mirrors `ChatFilePayloadDto`. Exactly one of `data`+`mime_type`, `file_id`, or `url` is the intended way to supply the file — all three are optional here because the wire does not enforce which one at the type level.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `data` | `string` | no | Base64-encoded file data. Alternative to `file_id` and `url`. |
+| `mime_type` | `string` | no | MIME type of `data`. |
+| `file_id` | `string` | no | Id of a file previously uploaded via `POST /v1/files`. Alternative to `data` and `url`. |
+| `url` | `string` | no | Source URL for the file content. Alternative to `data` and `file_id`. Passed through as-is to the Anthropic and Google provider paths, which accept a file by URL natively. |
+
+### `ChatFunctionDefinition`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `name` | `string` | **yes** | Function name. |
+| `description` | `string` | no | Description of what the function does, used by the model to decide when to call it. |
+| `parameters` | `Record<string, unknown>` | no | JSON Schema describing the function's parameters. |
+
+### `ChatFunctionTool`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `'function'` | **yes** |  |
+| `function` | [`ChatFunctionDefinition`](#chatfunctiondefinition) | **yes** |  |
+
+### `ChatImageUrl`
+
+Mirrors `ChatImageUrlDto`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `url` | `string` | **yes** | Either an `http(s):` URL or a `data:<mime>;base64,<data>` data URI. |
+
+### `ChatImageUrlContentPart`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `'image_url'` | **yes** |  |
+| `image_url` | [`ChatImageUrl`](#chatimageurl) | **yes** |  |
+
+### `ChatInputAudio`
+
+Mirrors `ChatInputAudioDto`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `data` | `string` | **yes** | Base64-encoded audio data. |
+| `format` | `string` | **yes** | Audio encoding/format, e.g. `wav`, `mp3`. |
+
+### `ChatInputAudioContentPart`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `'input_audio'` | **yes** |  |
+| `input_audio` | [`ChatInputAudio`](#chatinputaudio) | **yes** |  |
+
+### `ChatMessage`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `role` | `'system' \| 'user' \| 'assistant' \| 'tool'` | **yes** |  |
+| `content` | `string \| ChatContentPart[]` | **yes** | Message content: a plain string, or an array of content parts for multimodal input (text, `image_url`, `input_audio`, `file`). |
+| `name` | `string` | no | Participant name. |
+| `tool_call_id` | `string` | no | Id of the tool call this message answers. Present on a `role: "tool"` result message, echoing `id` from the assistant's `tool_calls` entry it responds to. |
+| `tool_calls` | [`ChatToolCall[]`](#chattoolcall) | no | Tool calls made by the model. Present on an `assistant` message that called tools. |
+
+### `ChatParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `string` | **yes** |  |
+| `messages` | [`ChatMessage[]`](#chatmessage) | **yes** |  |
+| `temperature` | `number` | no |  |
+| `max_tokens` | `number` | no |  |
+| `top_p` | `number` | no | Nucleus sampling. Reaches Anthropic and Google through their own request translators (`apps/gateway/src/providers/anthropic.provider.ts:423#top_p`, `apps/gateway/src/providers/google.provider.ts:553#topP`) and every pass-through provider through the verbatim `{ ...req }` upstream body. One exception worth knowing: on extended-thinking Claude models the gateway DROPS this and `temperature` before sending, because the upstream rejects them with a 400 — silently, so the call succeeds with the model's own defaults rather than failing (`apps/gateway/src/providers/anthropic.provider.ts:405-409#samplingDeprecated`). |
+| `top_k` | `number` | no | Top-K sampling. Mapped by the Google translator ALONE (`apps/gateway/src/providers/google.provider.ts:554#topK` → `generationConfig.topK`); no other provider reads it, and the pass-through providers forward it verbatim into an upstream body that never asked for it. |
+| `presence_penalty` | `number` | no | Mapped to Google's `generationConfig.presencePenalty` (`apps/gateway/src/providers/google.provider.ts:555#presencePenalty`) and forwarded verbatim to the OpenAI-family upstreams that own the name. The Anthropic translator builds a NAMED body and has no slot for it, so it is dropped there rather than rejected. |
+| `frequency_penalty` | `number` | no | Same routing as `presence_penalty` — Google's `frequencyPenalty` (`apps/gateway/src/providers/google.provider.ts:556#frequencyPenalty`), verbatim for OpenAI-family, dropped for Anthropic. |
+| `seed` | `number` | no | Reproducibility hint, not a guarantee: `apps/gateway/src/providers/google.provider.ts:557#seed` maps it into `generationConfig.seed` and the OpenAI-family upstreams accept it, but no provider contract promises identical output for a repeated seed. |
+| `stop` | `string \| string[]` | no | Stop sequences. Reaches only the pass-through providers, which forward the request body verbatim. Neither translator maps it: Anthropic's builds a named body with no `stop_sequences` entry (`apps/gateway/src/providers/anthropic.provider.ts:417-425#max_tokens`) and Google's `generationConfig` has no stop field (`apps/gateway/src/providers/google.provider.ts:550-559#generationConfig`) — so on those two it is accepted and ignored. |
+| `prompt_cache_key` | `string` | no | Opaque cache-routing key for providers that cache prompt prefixes per-server. Honoured by exactly TWO providers — xAI (as the `x-grok-conv-id` header) and OpenAI (as the body field of the same name, on both the chat-completions and Responses transports); the parameter is unused for every other provider (`providers/types.ts:112-116`). The gateway strips it from the body before dispatch, so it never rides the verbatim `{ ...req }` spread into an upstream that would 400 on it (`chat.controller.ts:240-241`). |
+| `tools` | [`ChatTool[]`](#chattool) | no | Tool definitions available to the model. See `ChatTool` for why this is a union rather than just `ChatFunctionTool[]`. |
+| `tool_choice` | [`ChatToolChoice`](#chattoolchoice) | no |  |
+| `response_format` | [`ChatResponseFormat`](#chatresponseformat) | no |  |
+| `web_search` | [`ChatWebSearchOptions`](#chatwebsearchoptions) | no | Ground the completion in web search. See `ChatWebSearchOptions` — and note that it is billed, on every backend. |
+| `[param: string]` | `unknown` | — |  |
+
+### `ChatPromptTokensDetails`
+
+Mirrors `PromptTokensDetails` in `apps/gateway/src/common/cache-usage.ts:35-41` — the OpenAI-shaped `usage.prompt_tokens_details` block the gateway both emits and consumes. `cached_tokens`/`cache_write_tokens` are OpenAI's own fields; `cache_write_1h_tokens` is this gateway's extension carrying Anthropic's 1-hour TTL cache writes, which OpenAI's shape has no field for.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `cached_tokens` | `number` | no |  |
+| `cache_write_tokens` | `number` | no |  |
+| `cache_write_1h_tokens` | `number` | no |  |
+| `audio_tokens` | `number` | no |  |
+
+### `ChatResponseFormat`
+
+```ts
+type ChatResponseFormat = | ChatResponseFormatText | ChatResponseFormatJsonObject | ChatResponseFormatJsonSchema
+```
+
+### `ChatResponseFormatJsonObject`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `'json_object'` | **yes** |  |
+
+### `ChatResponseFormatJsonSchema`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `'json_schema'` | **yes** |  |
+| `json_schema` | `Record<string, unknown>` | **yes** |  |
+
+### `ChatResponseFormatText`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `'text'` | **yes** |  |
+
+### `ChatTextContentPart`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `'text'` | **yes** |  |
+| `text` | `string` | **yes** |  |
+
+### `ChatTool`
+
+A tool definition on `ChatParams.tools`. The gateway translates ONLY entries shaped `{type:"function", function:{name, description?, parameters?}}` into each provider's native tool-calling form; any other entry is forwarded upstream byte-identical — provider-native tools (web search, grounding, …) already arrive in their own shape, hence the escape hatch to a bare record alongside `ChatFunctionTool`.
+
+```ts
+type ChatTool = ChatFunctionTool | Record<string, unknown>
+```
+
+### `ChatToolCall`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** | Tool call id. On a `tool` result message, echoed back as `tool_call_id`. |
+| `type` | `'function'` | **yes** |  |
+| `function` | [`ChatToolCallFunction`](#chattoolcallfunction) | **yes** |  |
+
+### `ChatToolCallDelta`
+
+A tool call as it appears on a STREAMING chunk's `delta.tool_calls`. Mirrors `ChatCompletionChunkToolCallDeltaDto` (bound in `types.spec.ts`, see `ChatCompletionChunk` below for how the wider chunk graph is now bound). `index` is how a caller DEMULTIPLEXES calls that may be CONCURRENT, not merely how it reassembles the pieces of one: the native OpenAI Responses-API path assigns it from the upstream `output_index` (`apps/gateway/src/providers/openai-responses/stream-translator.ts:93,98,113`), so a `web_search_call` at output position 0 pushes a genuine function call to index 1+, and a pass-through provider forwards whatever concurrent-call indices the upstream model itself used, untouched. Every other field is partial because a call's id/name typically arrive on the first chunk and its arguments accumulate over the following ones.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `index` | `number` | **yes** |  |
+| `id` | `string` | no |  |
+| `type` | `'function'` | no |  |
+| `function` | `{ name?: string; arguments?: string; }` | no |  |
+
+### `ChatToolCallFunction`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `name` | `string` | **yes** | Function name the model wants to call. |
+| `arguments` | `string` | **yes** | JSON-encoded (stringified) arguments for the function call. |
+
+### `ChatToolChoice`
+
+Controls whether/which tool the model must call: `"none"`, `"auto"`, `"required"`, or an object naming one specific function tool to force.
+
+```ts
+type ChatToolChoice = 'none' | 'auto' | 'required' | ChatToolChoiceObject
+```
+
+### `ChatToolChoiceFunctionName`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `name` | `string` | **yes** | Name of the function tool to force. |
+
+### `ChatToolChoiceObject`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `'function'` | **yes** |  |
+| `function` | [`ChatToolChoiceFunctionName`](#chattoolchoicefunctionname) | **yes** |  |
+
+### `ChatUsage`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `prompt_tokens` | `number` | no |  |
+| `completion_tokens` | `number` | no |  |
+| `total_tokens` | `number` | no |  |
+| `prompt_tokens_details` | [`ChatPromptTokensDetails`](#chatprompttokensdetails) | no |  |
+| `completion_tokens_details` | [`ChatCompletionTokensDetails`](#chatcompletiontokensdetails) | no |  |
+| `[key: string]` | `unknown` | — |  |
+
+### `ChatWebSearchOptions`
+
+`web_search` on `ChatParams` — the REQUEST shorthand that opts a completion into grounded web search. Distinct from the RESPONSE block `infery_web_search`, which reports what a search actually did; the two are different shapes and only this one is sent.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `provider` | `'auto' \| 'brave' \| 'openai' \| 'gemini' \| 'anthropic'` | no | Which search backend runs the query. `auto` (the default) derives it from the model family — `gpt-*`/`o*` → openai, `gemini*` → gemini, `claude*` → anthropic — and any other model with `auto` is refused with 400 `web_search_provider_required`, so name one explicitly there. `brave` is the decoupled path: the search runs first, its results are prepended to the conversation, and it is BILLED SEPARATELY as `web_search_credits` on the response. |
+| `max_results` | `number` | no | Result count. Honoured on the `brave` path; the natively-grounded backends pick their own. |
+| `allowed_domains` | `string[]` | no | Restrict results to these domains. Reaches Anthropic's native tool and the `brave` path; OpenAI and Gemini take no domain filter. |
+| `blocked_domains` | `string[]` | no | Exclude these domains. Same reach as `allowed_domains`. |
+| `answer` | `boolean` | no | Ask the backend for a synthesised answer alongside the raw results. Defaults to `true`. |
+| `model` | `string` | no | Search-backend model override — NOT the chat model, which is the top-level `model`. |
+
+### `ClientOptions`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `apiKey` | `string` | **yes** |  |
+| `baseURL` | `string` | no |  |
+| `timeout` | `number` | no | Per-attempt timeout in milliseconds. Default 310_000. |
+| `maxRetries` | `number` | no | Total attempts is maxRetries + 1. Default 2. |
+| `fetch` | `typeof fetch` | no |  |
+| `dangerouslyAllowBrowser` | `boolean` | no | Required to construct a client where `window` exists. |
+| `maxWaitMs` | `number` | no | Ceiling for collecting a deferred job. Default 600_000. |
+
+### `EmbeddingParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `string` | **yes** |  |
+| `input` | `string \| string[]` | **yes** |  |
+| `encoding_format` | `'float' \| 'base64'` | no |  |
+| `dimensions` | `number` | no |  |
+| `[param: string]` | `unknown` | — |  |
+
+### `EmbeddingResponse`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `object` | `string` | **yes** |  |
+| `data` | `Array<{ object: string; index: number; embedding: number[] \| string }>` | **yes** |  |
+| `model` | `string` | **yes** |  |
+| `usage` | `Record<string, number>` | no |  |
+| `credits_used` | `number` | no |  |
+
+### `FileCreateParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `file` | [`BinaryInput`](#binaryinput) | **yes** |  |
+| `filename` | `string` | **yes** |  |
+| `purpose` | [`FilePurpose`](#filepurpose) | **yes** |  |
+| `contentType` | `string` | no |  |
+| `idempotencyKey` | `string` | no | Same key within 24h returns the originally created file. Defaults to a fresh UUID, so a retry of THIS call is deduplicated even when the caller supplies nothing. |
+
+### `FileListParams`
+
+```ts
+type FileListParams = { purpose?: FilePurpose; limit?: number; after?: string; [param: string]: string | number | boolean | undefined; }
+```
+
+### `FileListResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `data` | [`FileObject[]`](#fileobject) | **yes** |  |
+| `has_more` | `boolean` | no | Whether more pages exist after this one. |
+| `last_id` | `string \| null` | no | Cursor for the next page — pass as `after`. `null` (or absent) once this page is the end. |
+
+### `FileObject`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** |  |
+| `object` | `string` | **yes** |  |
+| `bytes` | `number` | **yes** |  |
+| `created_at` | `number` | **yes** |  |
+| `filename` | `string` | **yes** |  |
+| `purpose` | [`FilePurpose`](#filepurpose) | **yes** |  |
+| `status` | `string` | **yes** | Always `'processed'` — a constant kept for OpenAI parity. There is no asynchronous post-upload processing, so this never reports anything else and is not worth branching on. Typed as plain `string`, not the literal, because that constancy is a current fact about this gateway, not a contract the wire declares. |
+
+### `FilePurpose`
+
+```ts
+type FilePurpose = 'assistants' | 'vision' | 'user_data' | 'batch' | 'pipeline_artifact' | 'media_artifact'
+```
+
+### `ImageEditParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `string` | **yes** |  |
+| `prompt` | `string` | **yes** |  |
+| `image` | [`BinaryInput`](#binaryinput) | **yes** |  |
+| `imageMimeType` | `string` | no |  |
+| `mask` | [`BinaryInput`](#binaryinput) | no |  |
+| `maskMimeType` | `string` | no |  |
+| `n` | `number` | no |  |
+| `size` | `string` | no |  |
+| `aspect_ratio` | `string` | no | Aspect ratio of the edited image. Honoured by every edit-capable provider that has a field for it and dropped for one that has not; checked against the model's own schema enum when it has one, so read the allowed set from `GET /v1/models` rather than assuming a fixed list. |
+| `strength` | `number` | no | How much the source image steers the result — lower keeps more of the original. Clamped to the range the chosen model's own input schema declares (0–1 on every model that exposes it today) and dropped for a model that does not expose it. |
+| `person_generation` | `'dont_allow' \| 'allow_adult' \| 'allow_all'` | no | Person-generation policy. Validated — any other value is refused with 400 — but unlike `images.generate()`, no edit-capable provider forwards it upstream, so on this endpoint it constrains what you may send without changing what comes back. |
+| `response_format` | `'url' \| 'b64_json'` | no |  |
+| `quality` | `string` | no | Output quality, checked against the chosen model's own input schema — so NOT `'standard' \| 'hd' \| 'low' \| 'medium' \| 'high' \| 'auto'`, which is OpenAI's set rather than this endpoint's. Read the one that applies from `GET /v1/models`. |
+| `image_size` | `string` | no | Output resolution for models that size their output by label rather than by pixels (`'1K' \| '2K' \| '4K'` on Imagen and Gemini 3 image). Carried through on the edit paths that have a field for it (Gemini `imageSize`, xAI `resolution`), and the dimension the image price is looked up by when no `size` is sent. |
+| `style` | `string` | no | Style hint, checked against the chosen model's own input schema — NOT `'vivid' \| 'natural'`, which is DALL-E's pair and the set `images.generate()` takes. Accepted and validated here (an out-of-schema value is a 400) but forwarded by no edit path, so it constrains what you may send without changing what comes back — the same shape as `person_generation` above. |
+| `background` | `string` | no | Background treatment, checked against the chosen model's own input schema — NOT `'transparent' \| 'opaque' \| 'auto'`, which is GPT Image's set on `images.generate()`. Inert here for the same reason as `style` above. |
+| `steps` | `number` | no | Diffusion steps, validated and priced here exactly as on `images.generate()` — a whole number in 1–100 or a 400, and on a per-megapixel model the price is multiplied by `max(1, steps ÷ the model's default steps)`. Both rules live in module-level helpers the two image routes share. |
+| `prompt_extend` | `boolean` | no | Prompt rewriting. Reaches no provider from this endpoint — the edit request object has no such field — but the shared price-parameter builder reads it to pick `z-image-turbo`'s `extend` (absent or `true`) or `noextend` (`false`) rate. On this route it selects a price and nothing else. |
+| `[param: string]` | `unknown` | — |  |
+
+### `ImageGenerateParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `string` | **yes** |  |
+| `prompt` | `string` | **yes** |  |
+| `n` | `number` | no |  |
+| `size` | `string` | no |  |
+| `quality` | `string` | no |  |
+| `style` | `'vivid' \| 'natural'` | no |  |
+| `response_format` | `'url' \| 'b64_json'` | no |  |
+| `aspect_ratio` | `string` | no |  |
+| `image_size` | `string` | no |  |
+| `person_generation` | `'dont_allow' \| 'allow_adult' \| 'allow_all'` | no | Policy for generating recognizable people. Reaches Google's Imagen as `personGeneration` (`google-imagen.provider.ts:54`). An out-of-enum value is refused by the GATEWAY with a 400 before any provider is called (`images.controller.ts:503`), so a typo here costs nothing rather than silently rendering under the model default. `response_format` is checked the same way one line earlier (`:502`), and `size` is range-checked in `validateImageParams`; the rest of the fields on this type are forwarded to the provider and fail — or don't — there. |
+| `background` | `'transparent' \| 'opaque' \| 'auto'` | no | Read only for `gpt-image-*` models — the `isGptImage` gate at `openai-image.provider.ts:40`, the field itself at `:43`. `transparent` needs a format that carries alpha, so pair it with `output_format: 'png'` or `'webp'`. |
+| `output_format` | `'png' \| 'webp' \| 'jpeg'` | no | The encoding of the produced bytes — NOT the same axis as `response_format`, which chooses URL vs base64 delivery. The one field in this group that is not OpenAI-only: Replicate-routed models take it too, as a schema-name pass-through that is a real property on most flux models (`images.controller.ts:649-650`), and it is one of the keys the durable job path forwards by name (`:669`). |
+| `output_compression` | `number` | no | `gpt-image-*` only (`openai-image.provider.ts:45`), and only meaningful alongside `output_format: 'jpeg' \| 'webp'` — 0-100. |
+| `input_fidelity` | `'high' \| 'low'` | no | `gpt-image-*` only (`openai-image.provider.ts:47`): how closely the output should match the style of the input images. |
+| `moderation` | `'auto' \| 'low'` | no | `gpt-image-*` only (`openai-image.provider.ts:46`): upstream content-filter strictness. `low` relaxes the filter, it does not remove it. |
+| `negative_prompt` | `string` | no |  |
+| `seed` | `number` | no |  |
+| `strength` | `number` | no | How much an existing image steers the result — the image-EDIT parameter, accepted here because the gateway snaps both routes through one schema-grounded param gate (`resolveImageParams`, whose `fields` array is shared by `/v1/images/generations` and `/v1/images/edits`). Clamped to the range the chosen model's own input schema declares and dropped for a model that does not declare it, so on this endpoint it is inert almost everywhere. If you are editing an image, use `images.edit()`. |
+| `steps` | `number` | no | Diffusion steps: a whole number in 1–100, refused with a 400 outside that range. That ceiling is THIS ENDPOINT's (`MAX_IMAGE_STEPS`), not the model's, which is normally far lower — FLUX defaults to 4. Read the model's own from `GET /v1/models`. |
+| `prompt_extend` | `boolean` | no | Let the model rewrite the prompt before rendering. Read by the Alibaba/DashScope path only, which treats an absent value as `true`; every other image source ignores it. |
+| `[param: string]` | `unknown` | — |  |
+
+### `ImageItem`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `url` | `string` | no |  |
+| `b64_json` | `string` | no |  |
+| `revised_prompt` | `string` | no |  |
+| `file_id` | `string` | no |  |
+
+### `ImageResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `created` | `number` | no |  |
+| `data` | [`ImageItem[]`](#imageitem) | **yes** |  |
+| `credits_used` | `number` | no |  |
+| `job_id` | `string` | no | Present only when `background: true` and the call was deferred. |
+| `artifacts_expired` | `boolean` | no | Present, and always `true`, only on a result COLLECTED from a deferred job whose artifacts are no longer all retrievable (`MediaJobResponseDto .artifacts_expired`): `data` is then shorter than the job produced. A synchronous 200 never carries it, so `undefined` means "nothing known to be missing", not "nothing missing". |
+
+### `ImageUpscaleParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `string` | **yes** | Slug of the upscale model to run, as listed by `GET /v1/models`. Must be an `upscale`-modality model that accepts an image input. |
+| `image_url` | `string` | **yes** | Source image to upscale, as a URL or a data URI. |
+| `scale` | `number` | no | Upscale factor. Omit to use the model's own default. |
+| `[param: string]` | `unknown` | — |  |
+
+### `MediaArtifact`
+
+One produced artifact, normalised across modalities.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `url` | `string` | no |  |
+| `b64` | `string` | no |  |
+| `bytes` | `Uint8Array` | no |  |
+| `mimeType` | `string` | no |  |
+| `fileId` | `string` | no | The durable `ApiFile` this artifact was registered as, when one was. |
+| `durationSeconds` | `number` | no |  |
+
+### `MediaCallOptions`
+
+Extends `PollOptions, RequestCallOptions`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `background` | `boolean` | no | Return the job id instead of waiting for a deferred result. |
+
+### `MediaGenerateOptions`
+
+Extends `Omit<MediaCallOptions, 'onProgress'>`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `onProgress` | `(progress: MediaProgress) => void` | no |  |
+
+### `MediaGenerateParams`
+
+A request for any media modality.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `modality` | [`MediaModality`](#mediamodality) | **yes** |  |
+| `model` | `string` | **yes** |  |
+| `prompt` | `string` | no | Every modality here takes one except `upscale`, which takes a source URL instead. |
+| `image_url` | `string` | no | `upscale` of an image, and the source for image-to-image models. |
+| `video_url` | `string` | no | `upscale` of a video, and the source for video-to-video models. |
+| `[param: string]` | `unknown` | — |  |
+
+### `MediaJobArtifact`
+
+One produced artifact on a completed media job — the shape of each `data[]` element.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `url` | `string` | **yes** |  |
+| `file_id` | `string` | no | Identifier of the durable `ApiFile` this artifact was registered as. Omitted (never null) when no file was registered. |
+
+### `MediaJobStatus`
+
+The cross-modality media job — served by `GET /v1/images/jobs/{id}` for EVERY durable media job despite the `/v1/images` path: image, video (only when deferred), 3D, upscale, speech and transcription alike. Bound to `MediaJobResponseDto` (`ApiMediaJob` in `src/types.ts`) — see the whole-type and per-field assertions in `types.spec.ts`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** |  |
+| `status` | `'queued' \| 'processing' \| 'completed' \| 'failed'` | **yes** |  |
+| `progress` | `number` | **yes** |  |
+| `data` | [`MediaJobArtifact[]`](#mediajobartifact) | no | Present only when `status` is `completed`. May be empty, or shorter than the job produced — see `artifacts_expired`. |
+| `payload` | `Record<string, unknown>` | no | The non-file deliverable, for modalities that have one — `{text, language}` for a transcription, `{duration_seconds}` for music. Nested rather than spread by the gateway on purpose, so a modality key can never collide with the envelope's own. |
+| `credits_used` | `number` | no |  |
+| `artifacts_expired` | `boolean` | no |  |
+| `error` | `string` | no |  |
+
+### `MediaModality`
+
+The modalities `media.generate()` can produce.
+
+```ts
+type MediaModality = 'image' | 'video' | 'audio' | 'music' | 'object_3d' | 'upscale'
+```
+
+### `MediaProgress`
+
+Progress across modalities. Only `video` reports a percentage today.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `status` | `string` | **yes** |  |
+| `progress` | `number` | no | 0-100, when the modality reports it. |
+| `jobId` | `string` | no |  |
+
+### `MediaResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `modality` | [`MediaModality`](#mediamodality) | **yes** | Echoed back, so a result can be handled without keeping the request around. |
+| `artifacts` | [`MediaArtifact[]`](#mediaartifact) | **yes** |  |
+| `created` | `number` | no |  |
+| `creditsUsed` | `number` | no |  |
+| `jobId` | `string` | no | Set only for `background: true` — pass it to `media.wait()`. |
+| `artifactsExpired` | `boolean` | no | `true` only on a result collected from a deferred job whose artifacts are no longer all retrievable: `artifacts` is then SHORTER than the job produced. `undefined` means "nothing known to be missing", not "nothing missing". |
+| `raw` | `unknown` | **yes** | The untouched per-modality payload — an `ImageResult`, a `VideoJobStatus`, a `Response` for audio. Normalising is lossy by design (`revised_prompt`, `lyrics`, `resolution` have no cross-modality home), and this is the escape hatch rather than a reason to fall back to the per-modality method. |
+
+### `ModelEstimateParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `n` | `number` | no | Number of outputs (images/videos). Defaults to 1. |
+| `size` | `string` | no | Image size, e.g. "1024x1024" or a provider label ("1K"). |
+| `quality` | `string` | no | Image quality (DALL-E standard\|hd, GPT Image low\|medium\|high\|auto). |
+| `steps` | `number` | no | Diffusion steps (per_megapixel FLUX models). |
+| `imageInputCount` | `number` | no | Number of source images (per_image edit mode). 1 for edits, 0 for generate. |
+| `characters` | `number` | no | TTS character count. |
+| `durationSeconds` | `number` | no | Video/STT duration in seconds. |
+| `resolution` | `string` | no | Video resolution tier ("720p" \| "1080p" \| "4k"). |
+| `maxOutputTokens` | `number` | no | Upper bound of output tokens for text models. |
+| `totalTokens` | `number` | no | Total tokens for embedding/rerank models. |
+| `[param: string]` | `unknown` | — |  |
+
+### `ModelEstimateResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `credits` | `number \| null` | no | Estimated credits this request would cost. `null` when the model has no active price (unknown — not free). |
+
+### `ModelListOptions`
+
+Extends `RequestCallOptions`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `modality` | `string` | no | Filtered CLIENT-SIDE. `GET /v1/models` takes only `include_tools` and ignores any other query key, so sending this to the server would return the whole catalogue while looking like it had filtered. |
+| `includeTools` | `boolean` | no |  |
+
+### `MusicGenerateParams`
+
+No duration parameter exists — length follows the model and the material.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `string` | **yes** |  |
+| `prompt` | `string` | **yes** |  |
+| `operation` | [`MusicOperation`](#musicoperation) | no |  |
+| `response_format` | `'mp3' \| 'wav'` | no |  |
+| `custom_mode` | `boolean` | no |  |
+| `instrumental` | `boolean` | no |  |
+| `title` | `string` | no |  |
+| `style` | `string` | no |  |
+| `lyrics` | `string` | no |  |
+| `negative_tags` | `string` | no |  |
+| `vocal_gender` | `'m' \| 'f'` | no |  |
+| `style_weight` | `number` | no | Suno: style adherence weight (0.0-1.0). |
+| `weirdness_constraint` | `number` | no | Suno: creativity/novelty constraint (0.0-1.0). |
+| `audio_weight` | `number` | no | Suno: input audio influence weight (0.0-1.0). |
+| `persona_id` | `string` | no | Suno, custom mode: persona ID to apply. |
+| `persona_model` | `'style_persona' \| 'voice_persona'` | no | Suno, custom mode: persona model type, alongside `persona_id`. |
+| `audio_id` | `string` | no | Suno `extend` and `vocal_removal`: source audio ID. |
+| `task_id` | `string` | no | Suno `vocal_removal`: task ID referencing the original generation task. |
+| `upload_url` | `string` | no | Suno `upload_cover`, `upload_extend`, `add_instrumental`, `add_vocals`: audio file URL. |
+| `continue_at` | `number` | no | Suno `extend`: continue from this second mark. |
+| `default_param_flag` | `boolean` | no | Suno `extend`: use default params. |
+| `separation_type` | `'separate_vocal' \| 'split_stem'` | no | Suno `vocal_removal`: 2 stems (`separate_vocal`) vs up to 12 stems (`split_stem`). |
+| `tags` | `string` | no | Suno `add_instrumental`: tags describing the instrumental to add. |
+| `sound_loop` | `boolean` | no | Suno `sounds`: loop the generated sound effect. |
+| `sound_tempo` | `number` | no | Suno `sounds`: BPM (1-300). |
+| `sound_key` | `string` | no | Suno `sounds`: musical key. |
+| `images` | [`MusicReferenceImage[]`](#musicreferenceimage) | no | Lyria 3 only: up to 10 reference images to inspire the music. |
+| `[param: string]` | `unknown` | — |  |
+
+### `MusicOperation`
+
+```ts
+type MusicOperation = | 'generate' | 'extend' | 'upload_cover' | 'upload_extend' | 'add_instrumental' | 'add_vocals' | 'sounds' | 'vocal_removal' | 'lyrics'
+```
+
+### `MusicReferenceImage`
+
+One Lyria 3 reference image (`images`, up to 10 per request).
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `data` | `string` | **yes** | Base64-encoded image data. |
+| `mime_type` | `'image/jpeg' \| 'image/png' \| 'image/webp' \| 'image/gif'` | no |  |
+
+### `MusicResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `created` | `number` | no |  |
+| `data` | [`MusicTrack[]`](#musictrack) | **yes** |  |
+| `credits_used` | `number` | no |  |
+| `job_id` | `string` | no |  |
+| `artifacts_expired` | `boolean` | no | Present, and always `true`, only on a result COLLECTED from a deferred job whose artifacts are no longer all retrievable (`MediaJobResponseDto .artifacts_expired`): `data` is then shorter than the job produced. A synchronous 200 never carries it, so `undefined` means "nothing known to be missing", not "nothing missing". |
+
+### `MusicStreamError`
+
+The `error` frame's payload — an object, unlike a progress frame's `error`, which is a bare string.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `message` | `string` | **yes** |  |
+| `type` | `string` | **yes** |  |
+| `status` | `number` | **yes** | The HTTP status this would have been, had the SSE headers not already been flushed. |
+
+### `MusicStreamEvent`
+
+One `data:` payload on `music.stream()`, discriminated on `type`.
+
+```ts
+type MusicStreamEvent =
+  | { type: 'progress'; status: string; progress: number; provider_status?: string; message?: string; error?: string; data?: MusicTrack[]; }
+  | { type: 'completed'; created: number; data: MusicTrack[]; credits_used: number; model: string; fallback_from?: string; }
+  | { type: 'error'; error: MusicStreamError; }
+  | { type: 'unknown_event'; name: string; data: unknown }
+```
+
+### `MusicTrack`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `url` | `string` | no |  |
+| `b64_audio` | `string` | no |  |
+| `content_type` | `string` | no |  |
+| `duration_seconds` | `number` | no |  |
+| `lyrics` | `string` | no |  |
+| `file_id` | `string` | no | Identifier of the durable `ApiFile` this track was registered as. Sent per artifact on the durable-job path (`music.controller.ts:356`) and on every recovered job (`MediaJobArtifactDto.file_id`); omitted, never null, when registration failed. The OpenAPI document's music `data[]` element does not declare it — see the note by `_r21g` in `types.spec.ts`. |
+
+### `PollOptions`
+
+Type parameters: `<J extends Pollable = MediaJobStatus>`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `intervalMs` | `number` | no | Default 5000, matching the gateway's own polling guidance. |
+| `maxWaitMs` | `number` | no |  |
+| `signal` | `AbortSignal` | no |  |
+| `onProgress` | `(job: J) => void` | no |  |
+
+### `RequestCallOptions`
+
+Per-call knobs every request-making method accepts.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `signal` | `AbortSignal` | no | Cancels this call. On the HTTP request the platform raises its own `AbortError`; while a deferred job is being polled the SDK raises one that reports the same `err.name`. Cancelling does NOT cancel work the gateway has already started, and does not refund it. |
+| `timeout` | `number` | no | Per-attempt timeout for this call only, in milliseconds, overriding the client's default of 310 000. |
+
+### `RunCancelResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** |  |
+| `status` | `'succeeded' \| 'failed' \| 'cancelled'` | **yes** | `cancelled` when this call moved the run; the run's existing status echoed back when it was already terminal. |
+
+### `RunCreateCallParams`
+
+The params `runs.create()` actually accepts — `RunCreateParams` minus `'stream'` on `mode`. A caller who sends `mode: 'stream'` here would get back an `APIPromise<RunCreateResult>` that promises JSON which never arrives on the wire; `create()` refuses it at COMPILE TIME instead — the same GOAL as `VideoSubmitParams.duration_seconds?: never` (refuse a value that costs money if it silently slips through), but NOT the same mechanism: that field is declared `never` directly inside an interface that also carries an index signature, which works because the named field wins over the index signature for THAT key specifically. `mode` has two legitimate values here, not zero, so a bare `never` would refuse everything; see below for the mechanism this type actually uses instead. Use `runs.stream()` for `mode: 'stream'` — it returns the typed `AsyncGenerator<WorkflowRunEvent>` this method's return type cannot.
+
+```ts
+type RunCreateCallParams = RunCreateParams & { mode?: 'sync' | 'async' }
+```
+
+### `RunCreateParams`
+
+TWO VOCABULARIES, ON PURPOSE.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `pipeline_id` | `string` | no | Reusable workflow id. Provide either this OR `definition`. |
+| `pipeline_version` | `number` | no | A specific version of `pipeline_id`. Defaults to the latest. |
+| `definition` | `Record<string, unknown>` | no | An inline pipeline definition, used instead of `pipeline_id`. |
+| `input` | `Record<string, unknown>` | **yes** | Top-level inputs, referenced from the pipeline as `${input.X}`. Required, and singular — `inputs` is not a field the gateway knows. |
+| `mode` | `'sync' \| 'async' \| 'stream'` | no | Execution mode. `stream` makes the response `text/event-stream` — use `RunCreateCallParams` (what `runs.create()` actually accepts) if you want `mode: 'stream'` refused at compile time in favor of `runs.stream()`. |
+| `only_step_id` | `string` | no | Run ONLY this step, reusing the outputs its upstream steps recorded on earlier runs. Requires `pipeline_id`, and every step it reads from must already have a succeeded result — refused (400) if not, and refused together with `mode: 'async'`. |
+| `resume_from_run_id` | `string` | no | Continue a run that FAILED, instead of starting over and re-billing what already ran: steps it recorded as succeeded are reused (not dispatched, not billed again); only the step that failed and everything downstream of it runs again. Send `definition` (or `pipeline_id`) alongside to fix the step that failed before it re-runs — swap the model, change a param; send neither to resume against the definition the run originally executed. Refused before anything is billed when: the run did not fail; the edit changes a step that already produced a result (that is a new run, not a resume); `input` differs from what the run used; a reused step's artifact has since been deleted; the run's source definition version is unknown and the workflow has been saved since; or together with `mode: 'async'` or with `only_step_id`. |
+| `rerun_from_step_id` | `string` | no | Used alongside `resume_from_run_id` (which may name a run in ANY finished state — succeeded, failed or cancelled, not only failed): run THIS STEP and every step that transitively depends on it; every other step is reused from that run — not dispatched, not billed. Dependency- based, not positional: a step declared after this one that does not read it (directly or transitively) is neither re-run nor re-billed. Send an edited `definition` (or `pipeline_id`) to change what the step does — unlike a bare resume, editing a step that already produced a result is NOT refused here; it widens the re-run set, and the credit hold, to include that step and everything below it. A step with no recorded result always runs again, which on a run that was CANCELLED mid-flight can mean work already charged gets charged a second time. Refused before anything is billed when: sent without `resume_from_run_id`; the named run has not finished; no step of the definition has this id; or together with `mode: 'async'`. |
+| `[param: string]` | `unknown` | — |  |
+
+### `RunCreateResult`
+
+`sync` (default) answers the completed run; `async` answers the queued run's identity. `stream` answers `text/event-stream` and matches neither JSON shape — callers using `mode: 'stream'` read the response as a stream, not through this type.
+
+```ts
+type RunCreateResult = WorkflowRunResult | AsyncRunAccepted
+```
+
+### `RunError`
+
+Failure recorded against a run. Absent from a run that was cancelled rather than failed.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `code` | `string` | **yes** |  |
+| `message` | `string` | **yes** |  |
+| `stepId` | `string` | no | The step that failed, present only on the response of a run that failed IN THIS REQUEST. |
+
+### `RunLogEntry`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** | `model_call_logs` row UUID. |
+| `step_id` | `string` | **yes** | The step id from the definition, matching `stepRuns[].id` on the run. |
+| `attempt` | `number` | **yes** |  |
+| `status` | `'in_flight' \| 'succeeded' \| 'failed'` | **yes** |  |
+| `input_tokens` | `number \| null` | **yes** |  |
+| `output_tokens` | `number \| null` | **yes** |  |
+| `settled_credits` | `number \| null` | **yes** |  |
+| `error_message` | `string \| null` | **yes** |  |
+| `started_at` | `string` | **yes** |  |
+| `completed_at` | `string \| null` | **yes** |  |
+
+### `RunLogsResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `data` | [`RunLogEntry[]`](#runlogentry) | **yes** |  |
+
+### `RunOptions`
+
+Extends `RequestCallOptions`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `idempotencyKey` | `string` | no | Same key replays the original run — the guard is workspace-scoped and never expires. Defaults to a fresh UUID, so a retry of THIS call replays rather than starting a second billed run. |
+
+### `RunRetrieveResult`
+
+```ts
+type RunRetrieveResult = WorkflowRunResult
+```
+
+### `RunStepError`
+
+Failure recorded against a single step attempt.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `code` | `string` | **yes** |  |
+| `message` | `string` | **yes** |  |
+
+### `RunStepResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** | The step id from the definition, not a database row id. |
+| `type` | `string` | **yes** | The step type from the definition (`model`, `media`, `http`, `foreach`, `parallel`, `sub_pipeline`, or a capability id). |
+| `status` | `'pending' \| 'running' \| 'succeeded' \| 'failed' \| 'skipped' \| 'cancelled'` | **yes** |  |
+| `output` | `string \| number \| boolean \| Record<string, unknown> \| unknown[] \| null` | no | Whatever the step produced. `null` when the step was skipped; absent when it produced nothing (a failure). |
+| `outputRef` | `string` | no | Internal handle (`gs://...`) for the artifact this step wrote, not a fetchable URL. |
+| `error` | [`RunStepError`](#runsteperror) | no | Present only when this attempt failed. |
+| `skippedReason` | `'condition_false' \| 'resumed_from_prior_attempt' \| 'not_selected'` | no |  |
+| `childRunIds` | `string[]` | **yes** | Child runs this step spawned (`foreach` iterations, or a `sub_pipeline` invocation). `[]` when none. |
+| `creditsUsed` | `number` | **yes** |  |
+| `durationMs` | `number` | **yes** |  |
+| `attempt` | `number` | **yes** | 1-based attempt counter for this step within the run. |
+
+### `SpeechParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `string` | **yes** |  |
+| `input` | `string` | **yes** |  |
+| `voice` | `string` | no | OPTIONAL, and typed that way since #869. It was `voice: string` because `POST /v1/audio/speech` declared it `required` — a claim no handler ever enforced. Every provider path is written for its absence (two substitute a name, three send none and let the model pick), so requiring it here made this SDK refuse to compile a call the gateway accepts. |
+| `response_format` | `'mp3' \| 'opus' \| 'aac' \| 'flac' \| 'wav' \| 'pcm'` | no |  |
+| `speed` | `number` | no |  |
+
+### `StreamStepResult`
+
+The step-run shape inside a STREAMING run's terminal events — `RunStepResult` minus `childRunIds`, which the SSE path never sets.
+
+```ts
+type StreamStepResult = Omit<RunStepResult, 'childRunIds'> & { childRunIds?: string[] }
+```
+
+### `TemplateListParams`
+
+```ts
+type TemplateListParams = { category?: string; tag?: string; limit?: number; offset?: number; [param: string]: string | number | boolean | undefined; }
+```
+
+### `TemplateListResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `items` | [`TemplateSummary[]`](#templatesummary) | **yes** | One page of templates, oldest first. |
+| `total` | `number` | **yes** |  |
+| `limit` | `number` | **yes** |  |
+| `offset` | `number` | **yes** |  |
+
+### `TemplateRetrieveResult`
+
+Extends `TemplateSummary`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `definition` | `Record<string, unknown>` | no | Absent when `unavailable` is present. |
+| `sample_input` | `Record<string, unknown>` | no | Absent when `unavailable` is present. |
+| `inputs` | [`WorkflowInputDeclaration[]`](#workflowinputdeclaration) | no | Absent when `unavailable` is present. |
+| `unavailable` | [`TemplateUnavailable`](#templateunavailable) | no | Present only when the template is hidden. |
+
+### `TemplateSummary`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `slug` | `string` | **yes** | Stable identifier, and the path segment for the detail route. |
+| `title` | `string` | **yes** |  |
+| `description` | `string` | **yes** |  |
+| `category` | `string \| null` | **yes** |  |
+| `tags` | `string[]` | **yes** |  |
+| `step_types_used` | `string[]` | **yes** |  |
+| `thumbnail_url` | `string \| null` | **yes** |  |
+| `created_at` | `string` | **yes** |  |
+
+### `TemplateUnavailable`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `reason` | `string` | **yes** | Operator-supplied reason. Empty string when hidden without one. |
+
+### `ThreeDGenerateParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `string` | **yes** |  |
+| `prompt` | `string` | no | At least one of `prompt` and `image_url` is required. |
+| `image_url` | `string` | no |  |
+| `mesh_url` | `string` | no | An existing mesh to transform, as a URL — what 3D-to-3D models (rigging, remesh, retexture, segment) take instead of `prompt`/`image_url`. Forwarded onto whichever field the model's own schema declares for it (`mesh_url` on hi3d and tripo, `model_url` on meshy). Required by a model that transforms a mesh — refused without it — and refused by a model that generates one. |
+| `seed` | `number` | no | Forwarded onto the model's own seed input field when it declares one, and dropped otherwise. |
+| `[param: string]` | `unknown` | — |  |
+
+### `ThreeDResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `created` | `number` | no | Absent only on the client-synthesized placeholder `generate()` returns for a deferred (`background: true`) call — that object never touched the wire, so `created` is not yet known. A real response always carries it (`ApiThreeDGenerateResponse['created']` is required). |
+| `data` | `Array<{ url: string; content_type?: string; file_id?: string }>` | **yes** |  |
+| `credits_used` | `number` | no | Same story as `created` — required on the wire, absent on the deferred placeholder. |
+| `job_id` | `string` | no | Present only when `background: true` and the call was deferred. |
+| `artifacts_expired` | `boolean` | no | Present, and always `true`, only on a result COLLECTED from a deferred job whose artifacts are no longer all retrievable (`MediaJobResponseDto .artifacts_expired`): `data` is then shorter than the job produced. A synchronous 200 never carries it, so `undefined` means "nothing known to be missing", not "nothing missing". |
+
+### `Tool`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** | `<category>.<operation>` — the value to send as `type` on a pipeline step and as the `:id` path parameter of `POST /v1/capabilities/{id}/run`. |
+| `object` | `'capability'` | **yes** |  |
+| `category` | `'video' \| 'audio' \| 'image' \| 'document' \| 'archive' \| 'web' \| 'code'` | **yes** |  |
+| `display_name` | `string` | **yes** |  |
+| `description` | `string` | **yes** |  |
+| `long_description` | `string` | no | Long-form Markdown documentation. Present only for capabilities that ship a documentation file. |
+| `output_modality` | `'video' \| 'audio' \| 'image' \| 'document' \| 'text' \| 'archive' \| 'any'` | **yes** |  |
+| `composite` | `boolean` | no | Present, and always `true`, for the multi-operation capabilities whose `params` chain a list of operations in one call. |
+| `params_schema` | `Record<string, unknown>` | **yes** | JSON Schema (draft-07) for this capability's `params` object. |
+| `input_schema` | `Record<string, unknown>` | **yes** | JSON Schema (draft-07) for this capability's `input` object. |
+| `sample_input` | `Record<string, unknown>` | no | An `input` object valid against `input_schema`, for capabilities that declare one. |
+| `examples` | [`ToolExample[]`](#toolexample) | no | Worked `params` examples, for capabilities that declare any. |
+| `pricing` | [`ToolPricing`](#toolpricing) | no | Absent when the capability has no active catalogue price — unknown, not free. |
+
+### `ToolExample`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `title` | `string` | **yes** | Human-readable label for this worked example. |
+| `params` | `Record<string, unknown>` | **yes** | A `params` object valid against this capability's `params_schema`. |
+
+### `ToolListResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `object` | `'list'` | **yes** |  |
+| `data` | [`Tool[]`](#tool) | **yes** | Every capability in the taxonomy, grouped by category in the order video, audio, image, document, archive, web, code. |
+
+### `ToolPricing`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `currency` | `'credits'` | **yes** | Always `credits` — the unit customers spend from their wallet. 1 credit = $0.01. |
+| `input_per_million` | `number` | no |  |
+| `output_per_million` | `number` | no |  |
+| `audio_input_per_million` | `number` | no |  |
+| `audio_output_per_million` | `number` | no |  |
+| `image_input_per_million` | `number` | no |  |
+| `image_output_per_million` | `number` | no |  |
+| `cached_input_per_million` | `number` | no | Cheaper than the input rate. Omitted when no cached rate is published, in which case the full input rate applies. |
+| `cache_write_per_million` | `number` | no | DEARER than the input rate. Omitted when no write rate is published. |
+| `cache_write_1h_per_million` | `number` | no | Dearer again than the 5-minute write rate. Omitted when no 1-hour rate is published. |
+| `request_price` | `number` | no |  |
+| `image_price` | `number` | no |  |
+| `second_price` | `number` | no |  |
+| `minute_price` | `number` | no |  |
+| `character_price` | `number` | no |  |
+| `operation_price` | `number` | no |  |
+| `megapixel_price` | `number` | no |  |
+
+### `TranscriptionCallOptions`
+
+Everything `MediaCallOptions` offers except `background`, spelled as an `Omit` so it cannot drift from it. `background: true` is excluded because this method returns a document string or a transcription object and neither can carry a job id — see the note on `create`.
+
+```ts
+type TranscriptionCallOptions = Omit<MediaCallOptions, 'background'>
+```
+
+### `TranscriptionFormat`
+
+```ts
+type TranscriptionFormat = 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt'
+```
+
+### `TranscriptionParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `file` | [`BinaryInput`](#binaryinput) | **yes** |  |
+| `filename` | `string` | **yes** |  |
+| `model` | `string` | **yes** |  |
+| `language` | `string` | no |  |
+| `prompt` | `string` | no |  |
+| `temperature` | `number` | no |  |
+| `response_format` | [`TranscriptionFormat`](#transcriptionformat) | no |  |
+| `contentType` | `string` | no |  |
+
+### `TranscriptionResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `text` | `string` | **yes** |  |
+| `language` | `string` | no |  |
+| `duration` | `number` | no |  |
+| `segments` | `Array<{ start: number; end: number; text: string }>` | no |  |
+| `credits_used` | `number` | no |  |
+
+### `VideoJobStatus`
+
+A video generation job — served by `GET /v1/videos/generations/{jobId}`. Disjoint from `MediaJobStatus`: no `data`, no `payload`, no `artifacts_expired`; carries `created`/`model` instead of them.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** |  |
+| `status` | `'queued' \| 'processing' \| 'completed' \| 'failed'` | **yes** |  |
+| `progress` | `number` | **yes** |  |
+| `created` | `number` | **yes** |  |
+| `model` | `string` | **yes** |  |
+| `result` | `{ url: string; duration_seconds?: number; resolution?: string }` | no | Present only when `status` is `"completed"`. |
+| `credits_used` | `number` | no |  |
+| `error` | `string` | no |  |
+
+### `VideoSubmitParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `string` | **yes** |  |
+| `prompt` | `string` | **yes** |  |
+| `duration` | `number` | no | Seconds. NOT `duration_seconds` — the gateway ignores unknown keys, so a misspelling silently renders and bills the model's default duration. |
+| `duration_seconds` | `never` | no | Declared `never` on purpose. The index signature below keeps this type open for model-specific params, which would otherwise let `duration_seconds` through untyped — the exact mistake `duration` exists to prevent, and one that costs the caller money rather than raising an error. Naming it here turns it into a compile error while every other extra key stays allowed. |
+| `resolution` | `string` | no |  |
+| `aspect_ratio` | `string` | no |  |
+| `n` | `number` | no |  |
+| `image_url` | `string` | no | Fetched anonymously, so it must be publicly reachable. |
+| `video_url` | `string` | no |  |
+| `audio_url` | `string` | no |  |
+| `person_generation` | `'dont_allow' \| 'allow_adult' \| 'allow_all'` | no |  |
+| `fps` | `24 \| 30 \| 60` | no | Frame rate. A closed set enforced by the gateway itself, not per-model: anything other than 24, 30 or 60 is refused with 400, and so is any value at all on a model served directly by Google (the Veo family), which has no frame-rate parameter. Where accepted it is a BILLING dimension — the hold and the settle are both priced on it. |
+| `style` | `string` | no | Free-form style hint. Accepted and carried into the provider request, but INERT today: no video provider reads it. Declared because the endpoint takes it, not because it changes the video. |
+| `[param: string]` | `unknown` | — |  |
+
+### `VideoSubmitResult`
+
+Immediate answer to `POST /v1/videos/generations` — a submitted job's identity, not a completed result. A DIFFERENT wire shape from `VideoJobStatus` (the polling GET's response): never carries `result`, `credits_used` or `error`, because `VideoController.submit` (video.controller.ts) ends with a `reply.send({ id, status, progress, created, model })` that names only these five keys, always. The document types all five optional on this operation's 200 too (same spec gap as `VideoJobStatus`), but the same unconditional literal justifies requiring them here for the same reason — see the comment on `VideoJobStatus` in `core/poll.ts`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** |  |
+| `status` | `'queued' \| 'processing' \| 'completed' \| 'failed'` | **yes** |  |
+| `progress` | `number` | **yes** |  |
+| `created` | `number` | **yes** |  |
+| `model` | `string` | **yes** |  |
+
+### `VideoUpscaleParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `string` | **yes** | Slug of the upscale model to run, as listed by `GET /v1/models`. Must be an `upscale`-modality model that accepts a video input — an image upscaler is refused with 400 and directed to `images.upscale`. |
+| `video_url` | `string` | **yes** | Source video to upscale, as a URL or a data URI. |
+| `scale` | `number` | no | Upscale factor. Omit to use the model's own default. |
+| `[param: string]` | `unknown` | — |  |
+
+### `VideoUpscaleResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `created` | `number` | no | Unix timestamp, in seconds, of when the result was produced. Present on the synchronous 200 (`MediaGenerationResponseDto.created`, always set) — ABSENT when this result came from collecting a 504-deferred job instead: `GET /v1/images/jobs/{id}` (`MediaJobResponseDto`) is what `POST /v1/video/upscale` directs a deferred caller to (`video-upscale.controller.ts:61,78`), and that response carries no timestamp field at all, so a recovered result cannot honestly invent one. Optional for the same reason `ImageResult.created` is. |
+| `data` | `Array<{ url: string; file_id?: string; }>` | **yes** | One entry per produced artifact, in the order the provider returned them. |
+| `credits_used` | `number` | no | Credits actually settled for this request (1 credit = $0.01). May be fractional. Optional for the same reason as `created` above: a recovered job's `credits_used` (`MediaJobResponseDto.credits_used`) is itself optional on the wire, present only once the job reaches `completed`. |
+| `job_id` | `string` | no | Present only when `background: true` and the call was deferred rather than collected. |
+| `artifacts_expired` | `boolean` | no | Present, and always `true`, only on a result COLLECTED from a deferred job whose artifacts are no longer all retrievable (`MediaJobResponseDto .artifacts_expired`): `data` is then shorter than the job produced. A synchronous 200 never carries it, so `undefined` means "nothing known to be missing", not "nothing missing". |
+
+### `WorkflowCreateParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `name` | `string` | **yes** | Human-readable name. Not unique — identity is the returned `id`. |
+| `description` | `string` | no |  |
+| `definition` | `Record<string, unknown>` | **yes** | The pipeline document: `steps`, their bindings, and the `inputs` it declares. The document publishes this as a free-form object rather than a modelled schema — the step union lives in Zod, not in this DTO. |
+| `[param: string]` | `unknown` | — |  |
+
+### `WorkflowCreateResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** | Pipeline UUID. Unchanged by an update. |
+| `version` | `number` | **yes** | The version this write left as latest. Always 1 from `POST`. |
+| `name` | `string` | **yes** |  |
+
+### `WorkflowDeleteResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** | The pipeline that was soft-deleted. |
+| `deleted` | `boolean` | **yes** | Always `true` — the route either soft-deletes and returns this, or throws. |
+
+### `WorkflowEstimateParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `definition` | `Record<string, unknown>` | no | Inline pipeline definition. Mutually exclusive with `pipeline_id`. |
+| `pipeline_id` | `string` | no | Stored pipeline UUID. Mutually exclusive with `definition`. |
+| `pipeline_version` | `number` | no | Required alongside `pipeline_id` — this route does not fall back to the latest version. |
+| `input` | `Record<string, unknown>` | no | Optional initial input, used for `${input.X}` resolution where possible. |
+| `[param: string]` | `unknown` | — |  |
+
+### `WorkflowEstimateResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `min_credits` | `number` | **yes** | Sum of the steps' `min_credits`. The low end of the quote, not a floor on what a run will cost. |
+| `max_credits` | `number` | **yes** | Sum of the steps' `max_credits`. NOT a cap on billing. |
+| `currency` | `'credits'` | **yes** |  |
+| `breakdown` | [`WorkflowStepEstimate[]`](#workflowstepestimate) | **yes** | Per-step rows, in definition order. Container steps carry their own nested breakdowns. |
+
+### `WorkflowInputDeclaration`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `name` | `string` | **yes** | Referenced inside the definition as `${input.<name>}`. |
+| `type` | `'text' \| 'number' \| 'boolean' \| 'json' \| 'image' \| 'video' \| 'audio' \| 'file'` | **yes** |  |
+| `required` | `boolean` | no | Absent means required — the validator treats a missing `required` as `true`. |
+| `default` | `string \| number \| boolean \| Record<string, unknown> \| unknown[]` | no | The value a run receives when it omits this input. |
+| `savedValue` | `string \| number \| boolean \| Record<string, unknown> \| unknown[]` | no | The value the editor last saved for this input. NOT a default. |
+| `label` | `string` | no |  |
+| `description` | `string` | no |  |
+
+### `WorkflowListParams`
+
+```ts
+type WorkflowListParams = { limit?: number; offset?: number; [param: string]: string | number | boolean | undefined; }
+```
+
+### `WorkflowListResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `items` | [`WorkflowSummary[]`](#workflowsummary) | **yes** | One page of pipelines this caller may see, newest first by `createdAt`. |
+| `total` | `number` | **yes** |  |
+| `limit` | `number` | **yes** |  |
+| `offset` | `number` | **yes** |  |
+
+### `WorkflowRetrieveParams`
+
+```ts
+type WorkflowRetrieveParams = { version?: number; [param: string]: string | number | boolean | undefined; }
+```
+
+### `WorkflowRetrieveResult`
+
+Extends `WorkflowSummary`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `definition` | `Record<string, unknown>` | **yes** | The stored pipeline definition for `version`, exactly as it was written. |
+| `version` | `number` | **yes** | The version this `definition` came from. |
+| `inputs` | [`WorkflowInputDeclaration[]`](#workflowinputdeclaration) | **yes** | The declared run inputs read out of `definition.inputs`. `[]` for a legacy definition. |
+
+### `WorkflowRunEvent`
+
+One event of a `mode: 'stream'` pipeline run, as yielded by `runs.stream()`. See the block comment above for why `type` is reconstructed rather than read off the wire, and `WorkflowStepDelta` for why `step.delta.delta` is not the chat SDK's chunk type.
+
+```ts
+type WorkflowRunEvent =
+  | { type: 'pipeline.started'; runId: string; totalSteps: number; createdAt: string }
+  | { type: 'step.started'; stepId: string; stepType: string; startedAt: string; attempt?: number; }
+  | { type: 'step.delta'; stepId: string; delta: WorkflowStepDelta }
+  | { type: 'step.completed'; stepId: string; output: unknown; outputRef?: string; creditsUsed: number; durationMs: number; attempt?: number; }
+  | { type: 'step.failed'; stepId: string; error: RunStepError; attempt?: number }
+  | { type: 'step.skipped'; stepId: string; reason: 'resumed_from_prior_attempt' | 'condition_false' | 'not_selected'; }
+  | { type: 'pipeline.completed'; output: Record<string, unknown>; creditsUsed: number; durationMs: number; stepRuns: StreamStepResult[]; }
+  | { type: 'pipeline.failed'; error: RunError; creditsUsed: number; durationMs: number; stepRuns: StreamStepResult[]; }
+  | { type: 'foreach.started'; stepId: string; totalIterations: number }
+  | { type: 'iteration.started'; stepId: string; iterationIndex: number; childRunId?: string; }
+  | { type: 'iteration.succeeded'; stepId: string; iterationIndex: number; creditsUsed: number; durationMs: number }
+  | { type: 'iteration.failed'; stepId: string; iterationIndex: number; error: RunStepError }
+  | { type: 'foreach.completed'; stepId: string; successCount: number; failureCount: number; durationMs: number }
+  | { type: 'unknown_event'; name: string; data: unknown }
+```
+
+### `WorkflowRunResult`
+
+A completed (or in-progress) run, as answered by a `sync` run and by `GET /pipelines/runs/{id}`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** |  |
+| `status` | `'queued' \| 'running' \| 'succeeded' \| 'failed' \| 'cancelled' \| 'partial'` | **yes** | `partial` exists in the enum; no writer in this repo produces it. |
+| `attempt` | `number` | **yes** |  |
+| `maxAttempts` | `number` | **yes** |  |
+| `input` | `Record<string, unknown>` | no | The input the run was given, after declared defaults were applied. Absent from a fresh sync run's response. |
+| `output` | `Record<string, unknown>` | no | Absent for a run that failed or was cancelled before producing one. |
+| `error` | [`RunError`](#runerror) | no | Present only for a failed run. |
+| `creditsUsed` | `number` | **yes** |  |
+| `stepRuns` | [`RunStepResult[]`](#runstepresult) | **yes** | One entry per step ATTEMPT, not one per step. |
+| `durationMs` | `number` | **yes** |  |
+| `createdAt` | `string` | **yes** |  |
+
+### `WorkflowStepDelta`
+
+`step.delta`'s own delta shape — the gateway's OWN `ChatCompletionChunkDelta` interface, declared in the same `pipeline-event.types.ts` file as `PipelineEvent`. Deliberately NOT this SDK's chat `ChatCompletionChunk`: the two have diverged since PR #766 required `object` on a chat chunk and `index` on each of its choices, neither of which this step-local shape has — it comes from inside a pipeline `model` step, not a top-level chat completion. Reusing the chat type here would claim fields a step delta does not actually carry. One more divergence worth naming explicitly: this SDK's OWN `ChatCompletionChunkDelta` (`chat.ts`) is a PER-CHOICE delta (one entry of `ChatCompletionChunkChoice.delta`), while the gateway's same-named interface here is a WHOLE-CHUNK shape (it has its own `choices` array, `id`, `object`, `usage`) — same name, unrelated shape, on both sides of this divergence.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `choices` | `Array<{ delta?: { content?: string; role?: string; tool_calls?: unknown }; finish_reason?: string \| null; index?: number; }>` | no |  |
+| `usage` | `{ prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }` | no |  |
+| `id` | `string` | no |  |
+| `object` | `string` | no |  |
+| `created` | `number` | no |  |
+| `model` | `string` | no |  |
+
+### `WorkflowStepEstimate`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `step_id` | `string` | **yes** | The step id from the definition. |
+| `type` | `'model' \| 'media' \| 'three_d' \| 'capability' \| 'http' \| 'parallel' \| 'sub_pipeline' \| 'foreach'` | **yes** | NOT identical to the definition's `step.type` — every capability step comes back as one `capability` row. |
+| `min_credits` | `number` | **yes** | Floored to 0 for any step carrying a `condition`, because the step may not run at all. |
+| `max_credits` | `number` | **yes** | For a `foreach` row this is already multiplied by the iteration count. |
+| `note` | `string` | no | Ambiguity / fallback marker. An OPEN string, not a closed enum. |
+| `model` | `string` | no | Present for `model`, `media` and `three_d` rows. |
+| `input_tokens` | `number` | no | Present for a `model` row. |
+| `max_output_tokens` | `number` | no | Present for a `model` row. |
+| `capability_id` | `string` | no | Present for a `capability` row. |
+| `branches` | [`WorkflowStepEstimate[]`](#workflowstepestimate) | no | For a `parallel` row: one entry per step of every branch. |
+| `child_pipeline_id` | `string` | no | For a `sub_pipeline` row: the child workflow, when found and recursed into. |
+| `child_pipeline_version` | `number` | no | For a `sub_pipeline` row: the child version that was priced. |
+| `child_breakdown` | [`WorkflowStepEstimate[]`](#workflowstepestimate) | no | For a `sub_pipeline` row: the child workflow's own breakdown. |
+| `max_iterations` | `number` | no | For a `foreach` row: the iteration ceiling the quote used. |
+| `items_known` | `boolean` | no | For a `foreach` row: whether `items` is an inline literal array. |
+| `items_count` | `number` | no | For a `foreach` row: the literal item count, present only when `items_known` is true. |
+| `body_steps` | [`WorkflowStepEstimate[]`](#workflowstepestimate) | no | For a `foreach` row: every step of the loop body, each priced for ONE iteration. |
+| `inner_step` | [`WorkflowStepEstimate`](#workflowstepestimate) | no | For a `foreach` row: literally `body_steps[0]`. |
+
+### `WorkflowSummary`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** |  |
+| `workspaceId` | `string` | **yes** |  |
+| `name` | `string` | **yes** |  |
+| `description` | `string \| null` | **yes** |  |
+| `latestVersion` | `number` | **yes** |  |
+| `isActive` | `boolean` | **yes** |  |
+| `createdAt` | `string` | **yes** |  |
+| `updatedAt` | `string` | **yes** |  |
+| `deletedAt` | `string \| null` | **yes** | Always null on these responses — a deleted pipeline is a 404 rather than a row with a value here. |
+| `createdByUserId` | `string \| null` | **yes** |  |
+| `sharingScope` | `'private' \| 'workspace' \| 'users'` | **yes** |  |
+| `sharePermission` | `'read' \| 'write'` | **yes** |  |
+
+### `WorkflowUpdateParams`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `name` | `string` | no | Omit to leave the name unchanged — this is a partial update. |
+| `description` | `string` | no |  |
+| `definition` | `Record<string, unknown>` | no | Supplying this creates a NEW version rather than editing the current one. |
+| `[param: string]` | `unknown` | — |  |
+
+### `WorkflowUpdateResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `string` | **yes** |  |
+| `version` | `number` | **yes** | The previous latest + 1 when the request carried a `definition`, unchanged otherwise. |
+| `name` | `string` | **yes** |  |
+

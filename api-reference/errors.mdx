@@ -1,0 +1,102 @@
+---
+title: "Errors"
+description: "OpenAI-compatible error envelope with Infery-specific codes."
+---
+
+## Envelope
+
+All errors follow OpenAI's format:
+
+```json
+{
+  "error": {
+    "message": "Human-readable description",
+    "type": "invalid_request_error",
+    "code": "file_too_large",
+    "param": "file"
+  }
+}
+```
+
+The body is always valid JSON. `param` is included when the error relates to a specific field.
+
+## Types
+
+| `type` | HTTP | Meaning |
+| --- | --- | --- |
+| `invalid_request_error` | 400 / 413 | Bad input, quota exceeded, unsupported format |
+| `invalid_request_error` with `code: model_not_found` | 404 | Model slug doesn't exist or isn't available on your plan |
+| `auth_error` | 401 | Missing or invalid API key |
+| `rate_limit_error` | 429 | Per-key or per-IP rate limit hit |
+| `quota_exceeded` | 403 | A plan-level quota was hit — disallowed model, requests/minute, daily tokens, or budget period exceeded |
+| `billing_error` | 403 | Wallet/credit-balance failure — insufficient credits or no wallet on the workspace |
+| `server_error` | 5xx | Upstream provider failure (often retried by fallback chain) |
+
+## Common codes
+
+The table below is generated from the shared error registry — see
+`packages/errors/src/domains/*.ts` — and lists every code that can appear on
+the wire. Run `pnpm docs:errors` to regenerate it after a registry change;
+`pnpm docs:errors:check` fails CI if it drifts.
+
+<!-- BEGIN GENERATED CODES -->
+
+| `code` | HTTP | `type` | Meaning |
+| --- | --- | --- | --- |
+| `agent_compare_judge_unavailable` | 400 | `invalid_request_error` | The selected review model is unavailable for this comparison. |
+| `audio_not_supported_by_model` | 400 | `invalid_request_error` | This model does not support audio input. |
+| `audio_url_required` | 400 | `invalid_request_error` | This model requires audio_url. |
+| `captcha_failed` | 400 | `invalid_request_error` | Captcha verification failed. |
+| `concurrent_run_limit_reached` | 429 | `rate_limit_error` | Too many workflow runs in flight for your plan. Wait for one to finish, or upgrade. |
+| `disposable_email` | 400 | `invalid_request_error` | Disposable or temporary email addresses are not allowed. Please use a permanent address. |
+| `email_domain_not_allowed` | 400 | `invalid_request_error` | Registration from this email domain is not allowed. |
+| `forbidden` | 403 | `auth_error` | You do not have permission to perform this action. |
+| `free_plan_limit` | 400 | `invalid_request_error` | You can only have one free workspace. |
+| `image_not_supported_by_model` | 400 | `invalid_request_error` | This model does not support image input for this content type. |
+| `image_url_required` | 400 | `invalid_request_error` | This model requires image_url. |
+| `insufficient_credits` | 403 | `billing_error` | Insufficient credit balance for this operation. |
+| `internal_error` | 500 | `server_error` | An unexpected error occurred. |
+| `not_found` | 404 | `not_found_error` | The requested resource was not found. |
+| `rate_limited` | 429 | `rate_limit_error` | Too many requests. |
+| `schedule_run_limit_reached` | 400 | `invalid_request_error` | This schedule has already run its full number of times. Raise or remove the run limit to resume it. |
+| `step_execution_failed` | 500 | `server_error` | The step failed to execute. |
+| `unauthorized` | 401 | `auth_error` | Missing or invalid credentials. |
+| `unsafe_audio_url` | 400 | `invalid_request_error` | The audio URL is not reachable from this service. |
+| `unsafe_image_url` | 400 | `invalid_request_error` | The image URL is not reachable from this service. |
+| `unsafe_video_url` | 400 | `invalid_request_error` | The video URL is not reachable from this service. |
+| `unsupported_mime` | 400 | `invalid_request_error` | The input file type is not supported by this operation. |
+| `validation_failed` | 400 | `invalid_request_error` | The request failed validation. |
+| `video_not_supported_by_model` | 400 | `invalid_request_error` | This model does not support video input. |
+| `video_url_required` | 400 | `invalid_request_error` | This model requires video_url. |
+
+<!-- END GENERATED CODES -->
+
+## Error IDs
+
+Every error response includes `x-request-id`. Include it when reporting issues — our support can look up the full request/response in seconds.
+
+## Retrying
+
+Retryable — with exponential backoff and jitter, **and only where repeating the
+call cannot be charged twice**: a `GET`, or a `POST` you sent an
+`Idempotency-Key` on (`/v1/files` and `/v1/pipelines/runs` are the only two that
+honour one):
+- 409 `upload_in_progress` — file writes for one workspace are serialised; we already
+  wait up to 10s for the lock, so this means the workspace was busy for longer than that
+- 500, 503
+
+Not retryable:
+- 403 `rate_limit_exceeded` — a 60-second sliding window that counts refused requests
+  too, so an early retry extends it. Wait out the window; see
+  [Rate limits](/api-reference/rate-limits)
+- 403 `daily_tokens_exceeded` — nothing to wait out before UTC midnight
+- 403 `insufficient_credits` — top up first
+- Any error whose body carries a `job_id` — including 504 `job_timeout` and
+  500 `artifact_unreadable`. The work exists server-side and is already billed:
+  collect it from `GET /v1/images/jobs/{job_id}` instead of paying for a second one
+- Every other 4xx — they're your client's fault; fix the request
+- A 5xx on a billed `POST` with no idempotency key. Distinct upstream failures —
+  some of them *after* your balance was debited — collapse into the same generic
+  500, so a blind retry can pay twice
+
+Our fallback chains already retry server-side for you if configured — see [Fallbacks](/workspaces/fallback-chains).

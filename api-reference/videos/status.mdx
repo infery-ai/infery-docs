@@ -1,0 +1,52 @@
+---
+title: "Get video generation status"
+description: "GET /v1/videos/generations/{jobId} — poll for job status and result."
+openapi: "openapi.json GET /v1/videos/generations/{jobId}"
+---
+
+Poll this endpoint to track an async video job submitted via [POST /v1/videos/generations](/api-reference/videos/generations).
+
+```bash
+curl https://api.infery.ai/v1/videos/generations/0f9c3b1e-6d2a-4c17-9f83-2b5e7a41c8d0 \
+  -H "Authorization: Bearer $INFERY_API_KEY"
+```
+
+The path segment is the `id` returned by the submit call — a UUID. Anything that is not a well-formed UUID answers 404.
+
+Response while running:
+
+```json
+{
+  "id": "0f9c3b1e-6d2a-4c17-9f83-2b5e7a41c8d0",
+  "status": "processing",
+  "progress": 42,
+  "created": 1713204900,
+  "model": "veo-3.1-fast"
+}
+```
+
+`status` is one of `queued`, `processing`, `completed`, `failed`. The terminal success value is **`completed`**.
+
+When done:
+
+```json
+{
+  "status": "completed",
+  "result": {
+    "url": "https://...",
+    "duration_seconds": 4,
+    "resolution": "1280x720"
+  },
+  "credits_used": 180
+}
+```
+
+### Sample output
+
+<video controls src="/samples/video.mp4" width="640" />
+
+*Generated with `veo-3-fast` (4s, 16:9).*
+
+## Polling guidance
+
+Poll every 5 seconds. Most videos finish in 30–90 s; hard timeout is 1 hour.

@@ -1,0 +1,422 @@
+---
+title: "Code tools"
+description: "Code tools available as workflow steps and through /v1/capabilities."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+**2 tools.** Each one is deterministic: the same input gives the same output, and
+nothing is inferred. Call one directly with
+[`POST /v1/capabilities/{id}/run`](/api-reference/capabilities/run), or use it as a step in a
+[workflow](/workflows/step-types).
+
+Prices are on the [live catalogue](https://infery.ai/models) — they change, and a stale price here would be
+worse than none.
+
+| Tool | Does | In → out |
+| --- | --- | --- |
+| [`code.run_node`](#coderun_node) | Execute Node.js in a sandboxed runtime. | any → text |
+| [`code.run_python`](#coderun_python) | Execute Python in a sandboxed runtime. | any → text |
+
+## `code.run_node`
+
+**any → text** · Billed per second
+
+Execute a Node.js snippet in an isolated sandbox and return the value of `result` (or `output`).
+
+### When to use
+
+- **JSON manipulation** — parse, transform, or validate JSON payloads with native JS tooling.
+- **String processing** — use regex, template literals, or Buffer operations.
+- **Lightweight scripting** — run any logic that benefits from the Node.js standard library.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Any (named variable bindings via `vars`) |
+| **Output modality** | Text / JSON (the value of `result` after execution) |
+| **Max source length** | 50 000 characters |
+| **Max timeout** | 30 seconds |
+
+### Input
+
+| Field | Description |
+|---|---|
+| `vars` | Named bindings. Each key that is a valid identifier — and is not `input`, `result` or `output` — is injected as a bare variable. Every key, including ones that are not valid identifiers, is also reachable through the `input` object. |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `source` | one of `source`/`files`/`archive_file_id` | Node.js source code (1–50 000 chars). Assign your answer to `result` (or to `output`, which is accepted for compatibility; `result` wins if you set both). Assigning neither returns `null`. **Unlike Python**, an explicit `result = undefined` does *not* win over `output`: the wrapper runs your code with `new Function`, which returns `undefined` for a `var` that was declared but never assigned — so "assigned `undefined`" and "never assigned" look identical, and the value falls through to `output` (or `null` if that is also unset). If you need to return a genuine "no value", assign `result = null` explicitly. |
+| `files` | one of `source`/`files`/`archive_file_id` | A project: path → content. See [Multi-file projects](#multi-file-projects). |
+| `archive_file_id` | one of `source`/`files`/`archive_file_id` | A stored file id whose unpacked contents become the working directory. See [Vendored dependencies](#vendored-dependencies). |
+| `entrypoint` | with `files` or `archive_file_id` | Which file runs: a key of `files`, or a path inside the unpacked archive. |
+| `timeout_seconds` | no | Execution time limit in seconds (1–30). Default: `5` |
+
+### Output
+
+| Field | Description |
+|---|---|
+| `result` | The value you assigned. Must be JSON-serialisable. |
+| `stdout` | Everything the program printed, up to 64 KiB. |
+| `stderr` | Anything written to standard error, up to 64 KiB. |
+| `stdout_truncated` | `true` when `stdout` hit the 64 KiB cap and was cut short. Absent otherwise. |
+| `stderr_truncated` | `true` when `stderr` hit the 64 KiB cap and was cut short. Absent otherwise. |
+
+### Runtime
+
+- **Standard library only.** The sandbox image has no package manager; `numpy`,
+  `pandas` and `requests` are not available.
+- **No network.** Outbound connections, including DNS, are blocked.
+- **No persistent filesystem.** Anything written is discarded when the run ends.
+- Memory is capped at 512 MB (Python) / 1 GB (Node) and the run is killed at
+  `timeout_seconds`.
+
+### Examples
+
+#### Simple arithmetic
+
+```json
+{
+  "type": "code.run_node",
+  "input": { "vars": {} },
+  "params": { "source": "result = 1 + 1", "timeout_seconds": 5 }
+}
+```
+
+#### Transform an array with input variables
+
+```json
+{
+  "type": "code.run_node",
+  "input": { "vars": { "items": ["foo", "bar", "baz"] } },
+  "params": { "source": "result = items.map(s => s.toUpperCase()).join(', ')", "timeout_seconds": 5 }
+}
+```
+
+#### Print progress while returning a value
+
+```json
+{
+  "type": "code.run_node",
+  "input": { "vars": { "data": [1, 2, 3] } },
+  "params": { "source": "console.log('summing')\nresult = data.reduce((a, b) => a + b, 0)", "timeout_seconds": 5 }
+}
+```
+
+### Multi-file projects
+
+Instead of `source`, a step can carry `files` — a map of path to content — with
+`entrypoint` naming which of them runs. `source` and `files` are mutually
+exclusive: set exactly one.
+
+The files are written into a fresh working directory for the run, and the entry
+point executes from there, so one file can import another
+(`require('./lib/util')` in Node). The directory is deleted when the run ends;
+nothing is shared between runs.
+
+In a multi-file run the entry point does not execute as a plain script: it runs
+inside a wrapper with a real `module`/`exports` pair bound, the way an ordinary
+CommonJS module does. The run's answer is chosen in this order: `result`, then
+`output`, then `module.exports` (counted as an answer when it was reassigned —
+`module.exports = {...}` — or when the initially-empty object was populated in
+place — `exports.foo = ...`), then `null`. Files other than the entry point that
+you load with `require('./lib/util')` are ordinary CJS modules with no such
+caveat — their own `module.exports` behaves exactly as Node normally behaves,
+independent of this priority order.
+
+Paths must be relative, use `/` as the separator, and stay inside the working
+directory — no leading `/`, no `..`.
+
+Limits: at most 64 files, 64 KiB per file, and 96 KiB for the whole request
+(files, vars and all). Exceeding one is a validation error, not a failed run.
+
+Dependency packages are not available: only the standard library and whatever
+the runtime image already ships. If you need a third-party package, see
+[Vendored dependencies](#vendored-dependencies) below.
+
+### Vendored dependencies
+
+**Archive support is off by default on this deployment** — an operator must explicitly enable it, or a run using `archive_file_id` refuses with `archive_mode_disabled` regardless of anything an author sets.
+
+Instead of `source` or `files`, a step can carry `archive_file_id` — the id of
+a previously-uploaded archive whose unpacked contents become the working
+directory. `entrypoint` names which unpacked file runs (a relative path, e.g.
+`src/main.js`).
+
+**Upload a `.zip` or a `.tar.gz`/`.tgz`** to get the id — those are the two
+formats the file upload endpoint accepts for this purpose. The sandbox can
+also unpack a `.rar` (and one can still reach it through a worker-registered
+file), but the upload endpoint does not admit one directly, so an author
+cannot get a `.rar` into `archive_file_id` by uploading it. Re-pack as `.zip`
+or `.tar.gz` if that's what you have.
+
+This is how you bring a third-party package into the sandbox: pack your
+project **together with its dependencies already installed** (e.g. a
+`node_modules` directory checked in ahead of time) into the archive. **The
+dependencies are vendored inside the archive — nothing is installed, and no
+package registry is ever contacted.** This is not a shortcut: **the sandbox has
+no network at all**, so `npm install`, `pip install`, or any other install step
+run *inside* the sandbox would simply fail. All of a run's dependencies must
+already be sitting on disk, inside the archive, before the run starts.
+
+`source`, `files` and `archive_file_id` are mutually exclusive: set exactly
+one. Unlike `files`, the archive's contents are not known until it is unpacked
+inside the sandbox at run time, so only `entrypoint`'s presence is checked when
+the step is saved — a wrong path is discovered when the run actually executes,
+not before.
+
+**Archive limits:**
+
+| Limit | Value |
+|---|---|
+| Uploaded archive size | 21 MiB, before decompression |
+| Unpacked (decompressed) size | 200 MiB total |
+| Entries (files + directories) | 20 000 |
+| Size of any single file | 50 MiB |
+| Compression ratio | 100:1 per entry (rejects a zip bomb) |
+
+Exceeding any of these refuses the upload or the run with a named error — an
+oversized archive is refused before it is unpacked, before an unpack slot or
+an execution pod is spent on it. A real `node_modules` routinely has more
+than 20 000 entries; prune `devDependencies`, `.bin`, docs and test fixtures
+out of the vendored tree if you hit the entry-count limit.
+
+### Pricing
+
+Billed per second of sandbox execution time, measured as an exact fraction — a run of 0.42 s is billed for 0.42 s, with no rounding up to a whole second. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `code.run_python` — execute Python code in a sandbox
+- `web.search` — retrieve live data to process with this capability
+
+### Examples
+
+**Add 1 to x**
+
+```json
+{
+  "type": "code.run_node",
+  "params": {
+    "source": "result = x + 1",
+    "timeout_seconds": 5
+  }
+}
+```
+
+**A two-file project**
+
+```json
+{
+  "type": "code.run_node",
+  "params": {
+    "files": {
+      "main.js": "const lib = require('./lib');\nresult = lib.double(x);\n",
+      "lib.js": "module.exports = { double: (n) => n * 2 };\n"
+    },
+    "entrypoint": "main.js",
+    "timeout_seconds": 5
+  }
+}
+```
+
+## `code.run_python`
+
+**any → text** · Billed per second
+
+Execute a Python snippet in an isolated sandbox and return the value of `result` (or `output`).
+
+### When to use
+
+- **Data transformation** — reshape, filter, or aggregate structured data before passing it downstream.
+- **Calculations** — run numerical or statistical computations without a separate service.
+- **Scripted automation** — generate or manipulate text, JSON, or binary payloads inline.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Any (named variable bindings via `vars`) |
+| **Output modality** | Text / JSON (the value of `result` after execution) |
+| **Max source length** | 50 000 characters |
+| **Max timeout** | 30 seconds |
+
+### Input
+
+| Field | Description |
+|---|---|
+| `vars` | Named bindings. Each key that is a valid identifier — and is not `input`, `result` or `output` — is injected as a bare variable. Every key, including ones that are not valid identifiers, is also reachable through the `input` dictionary. |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `source` | one of `source`/`files`/`archive_file_id` | Python source code (1–50 000 chars). Assign your answer to `result` (or to `output`, which is accepted for compatibility; `result` wins if you set both). Assigning neither returns `null`. |
+| `files` | one of `source`/`files`/`archive_file_id` | A project: path → content. See [Multi-file projects](#multi-file-projects). |
+| `archive_file_id` | one of `source`/`files`/`archive_file_id` | A stored file id whose unpacked contents become the working directory. See [Vendored dependencies](#vendored-dependencies). |
+| `entrypoint` | with `files` or `archive_file_id` | Which file runs: a key of `files`, or a path inside the unpacked archive. |
+| `timeout_seconds` | no | Execution time limit in seconds (1–30). Default: `5` |
+
+### Output
+
+| Field | Description |
+|---|---|
+| `result` | The value you assigned. Must be JSON-serialisable. |
+| `stdout` | Everything the program printed, up to 64 KiB. |
+| `stderr` | Anything written to standard error, up to 64 KiB. |
+| `stdout_truncated` | `true` when `stdout` hit the 64 KiB cap and was cut short. Absent otherwise. |
+| `stderr_truncated` | `true` when `stderr` hit the 64 KiB cap and was cut short. Absent otherwise. |
+
+### Runtime
+
+- **Standard library only.** The sandbox image has no package manager; `numpy`,
+  `pandas` and `requests` are not available.
+- **No network.** Outbound connections, including DNS, are blocked.
+- **No persistent filesystem.** Anything written is discarded when the run ends.
+- Memory is capped at 512 MB (Python) / 1 GB (Node) and the run is killed at
+  `timeout_seconds`.
+
+### Examples
+
+#### Add 1 to an input variable
+
+```json
+{
+  "type": "code.run_python",
+  "input": { "vars": { "x": 5 } },
+  "params": { "source": "result = x + 1", "timeout_seconds": 5 }
+}
+```
+
+#### Parse and summarise JSON
+
+```json
+{
+  "type": "code.run_python",
+  "input": { "vars": { "data": [1, 2, 3, 4, 5] } },
+  "params": { "source": "result = {'sum': sum(data), 'count': len(data)}", "timeout_seconds": 5 }
+}
+```
+
+#### Print progress while returning a value
+
+```json
+{
+  "type": "code.run_python",
+  "input": { "vars": { "data": [1, 2, 3] } },
+  "params": { "source": "print('summing')\nresult = sum(data)", "timeout_seconds": 5 }
+}
+```
+
+### Multi-file projects
+
+Instead of `source`, a step can carry `files` — a map of path to content — with
+`entrypoint` naming which of them runs. `source` and `files` are mutually
+exclusive: set exactly one.
+
+The files are written into a fresh working directory for the run, and the entry
+point executes from there, so one file can import another
+(`import lib.util` in Python, `require('./lib/util')` in Node). The directory is
+deleted when the run ends; nothing is shared between runs.
+
+Paths must be relative, use `/` as the separator, and stay inside the working
+directory — no leading `/`, no `..`.
+
+Limits: at most 64 files, 64 KiB per file, and 96 KiB for the whole request
+(files, vars and all). Exceeding one is a validation error, not a failed run.
+
+Dependency packages are not available: only the standard library and whatever
+the runtime image already ships. If you need a third-party package, see
+[Vendored dependencies](#vendored-dependencies) below.
+
+### Vendored dependencies
+
+**Archive support is off by default on this deployment** — an operator must explicitly enable it, or a run using `archive_file_id` refuses with `archive_mode_disabled` regardless of anything an author sets.
+
+Instead of `source` or `files`, a step can carry `archive_file_id` — the id of
+a previously-uploaded archive whose unpacked contents become the working
+directory. `entrypoint` names which unpacked file runs (a relative path, e.g.
+`src/main.py`).
+
+**Upload a `.zip` or a `.tar.gz`/`.tgz`** to get the id — those are the two
+formats the file upload endpoint accepts for this purpose. The sandbox can
+also unpack a `.rar` (and one can still reach it through a worker-registered
+file), but the upload endpoint does not admit one directly, so an author
+cannot get a `.rar` into `archive_file_id` by uploading it. Re-pack as `.zip`
+or `.tar.gz` if that's what you have.
+
+This is how you bring a third-party package into the sandbox: pack your
+project **together with its dependencies already installed** (e.g. a
+`site-packages`-style vendor directory your code adds to `sys.path`, or
+anything else that works without a package manager) into the archive. **The
+dependencies are vendored inside the archive — nothing is installed, and no
+package registry is ever contacted.** This is not a shortcut: **the sandbox has
+no network at all**, so `pip install`, `npm install`, or any other install step
+run *inside* the sandbox would simply fail. All of a run's dependencies must
+already be sitting on disk, inside the archive, before the run starts.
+
+`source`, `files` and `archive_file_id` are mutually exclusive: set exactly
+one. Unlike `files`, the archive's contents are not known until it is unpacked
+inside the sandbox at run time, so only `entrypoint`'s presence is checked when
+the step is saved — a wrong path is discovered when the run actually executes,
+not before.
+
+**Archive limits:**
+
+| Limit | Value |
+|---|---|
+| Uploaded archive size | 21 MiB, before decompression |
+| Unpacked (decompressed) size | 200 MiB total |
+| Entries (files + directories) | 20 000 |
+| Size of any single file | 50 MiB |
+| Compression ratio | 100:1 per entry (rejects a zip bomb) |
+
+Exceeding any of these refuses the upload or the run with a named error — an
+oversized archive is refused before it is unpacked, before an unpack slot or
+an execution pod is spent on it. A real `node_modules` routinely has more
+than 20 000 entries; prune `devDependencies`, `.bin`, docs and test fixtures
+out of the vendored tree if you hit the entry-count limit.
+
+### Pricing
+
+Billed per second of sandbox execution time, measured as an exact fraction — a run of 0.42 s is billed for 0.42 s, with no rounding up to a whole second. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `code.run_node` — execute Node.js code in a sandbox
+- `web.search` — retrieve live data to process with this capability
+
+### Examples
+
+**Add 1 to x**
+
+```json
+{
+  "type": "code.run_python",
+  "params": {
+    "source": "result = x + 1",
+    "timeout_seconds": 5
+  }
+}
+```
+
+**A two-file project**
+
+```json
+{
+  "type": "code.run_python",
+  "params": {
+    "files": {
+      "main.py": "import lib\nresult = lib.double(x)\n",
+      "lib.py": "def double(n):\n    return n * 2\n"
+    },
+    "entrypoint": "main.py",
+    "timeout_seconds": 5
+  }
+}
+```
+

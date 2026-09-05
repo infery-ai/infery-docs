@@ -1,0 +1,471 @@
+---
+title: "Image models"
+description: "Every image model on Infery, grouped by what it takes as input."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+Generation and editing, called through `POST /v1/images/generations` and `/v1/images/edits`.
+
+**439 models.** Grouped by input, because that is the choice you make first — a model that
+turns an image into a video is not interchangeable with one that starts from a prompt.
+
+Prices are not listed here: they change, and a stale price is worse than none. See the
+[live catalogue](https://infery.ai/models) for current rates, and each model's own page there for its full
+parameter schema.
+
+## Image → image (226)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `qwen-image-edit-2509` | alibaba | — | Endpoint for Qwen's Image Editing Plus model also known as Qwen-Image-Edit-2509. |
+| `qwen-image-edit-2509-lora` | alibaba | — | LoRA endpoint for the Qwen Image Edit 2509 model. |
+| `qwen-image-edit-2509-lora-gallery-add-background` | alibaba | — | Add a realistic scene behind the object with white background |
+| `qwen-image-edit-2509-lora-gallery-face-to-full-portrait` | alibaba | — | Generate full portrait from a cropped face photo |
+| `qwen-image-edit-2509-lora-gallery-group-photo` | alibaba | — | Create group photos |
+| `qwen-image-edit-2509-lora-gallery-integrate-product` | alibaba | — | Blend products into backgrounds with automatic perspective and lighting correction |
+| `qwen-image-edit-2509-lora-gallery-lighting-restoration` | alibaba | — | Removes harsh shadows and light spots from images, replacing them with soft, even, natural-looking illumination. |
+| `qwen-image-edit-2509-lora-gallery-multiple-angles` | alibaba | — | Precise camera position and angle control (rotation, zoom, vertical movement) |
+| `qwen-image-edit-2509-lora-gallery-next-scene` | alibaba | — | Create cinematic transitions and scene progressions (camera movements, framing changes) |
+| `qwen-image-edit-2509-lora-gallery-remove-element` | alibaba | — | Remove unwanted elements (objects, people, text) while maintaining image consistency |
+| `qwen-image-edit-2509-lora-gallery-remove-lighting` | alibaba | — | Remove existing lighting and apply soft, even illumination |
+| `qwen-image-edit-2509-lora-gallery-shirt-design` | alibaba | — | Apply designs/graphics onto people's shirts |
+| `qwen-image-edit-2511` | alibaba | — | Endpoint for Qwen's Image Editing 2511 model. |
+| `qwen-image-edit-2511-lora` | alibaba | — | Endpoint for Qwen's Image Editing 2511 model with LoRa support. |
+| `qwen-image-edit-2511-multiple-angles` | alibaba | — | Generates same scene from different angles (azimuth/elevation) with Qwen image Edit 2511 and the Lora Multiple Angles |
+| `qwen-image-edit-lora` | alibaba | — | LoRA inference endpoint for the Qwen Image Editing model. |
+| `qwen-image-edit-plus` | alibaba | — |  |
+| `qwen-image-edit-plus-lora` | alibaba | — | LoRA endpoint for the Qwen Image Edit Plus model. |
+| `qwen-image-edit-plus-lora-gallery-add-background` | alibaba | — | Add a realistic scene behind the object with white background |
+| `qwen-image-edit-plus-lora-gallery-face-to-full-portrait` | alibaba | — | Generate full portrait from a cropped face photo |
+| `qwen-image-edit-plus-lora-gallery-group-photo` | alibaba | — | Create group photos |
+| `qwen-image-edit-plus-lora-gallery-integrate-product` | alibaba | — | Blend products into backgrounds with automatic perspective and lighting correction |
+| `qwen-image-edit-plus-lora-gallery-lighting-restoration` | alibaba | — | Removes harsh shadows and light spots from images, replacing them with soft, even, natural-looking illumination. |
+| `qwen-image-edit-plus-lora-gallery-multiple-angles` | alibaba | — | Precise camera position and angle control (rotation, zoom, vertical movement) |
+| `qwen-image-edit-plus-lora-gallery-next-scene` | alibaba | — | Create cinematic transitions and scene progressions (camera movements, framing changes) |
+| `qwen-image-edit-plus-lora-gallery-remove-element` | alibaba | — | Remove unwanted elements (objects, people, text) while maintaining image consistency |
+| `qwen-image-edit-plus-lora-gallery-remove-lighting` | alibaba | — | Remove existing lighting and apply soft, even illumination |
+| `qwen-image-edit-plus-lora-gallery-shirt-design` | alibaba | — | Apply designs/graphics onto people's shirts |
+| `qwen-image-layered` | alibaba | — | Qwen-Image-Layered is a model capable of decomposing an image into multiple RGBA layers. |
+| `qwen-image-layered-lora` | alibaba | — | Qwen-Image-Layered is a model capable of decomposing an image into multiple RGBA layers. Use loras to get your custom outputs. |
+| `z-image-turbo-controlnet` | alibaba | — | Generate images from text and edge, depth or pose images using Z-Image Turbo, Tongyi-MAI's super-fast 6B model. |
+| `z-image-turbo-controlnet-lora` | alibaba | — | Generate images from text and edge, depth or pose images using custom LoRA and Z-Image Turbo, Tongyi-MAI's super-fast 6B model. |
+| `z-image-turbo-image-to-image-lora` | alibaba | — | Generate images from text and images using custom LoRA and Z-Image Turbo, Tongyi-MAI's super-fast 6B model. |
+| `z-image-turbo-inpaint-lora` | alibaba | — | Generate images from text, an image, a mask and custom LoRA using Z-Image Turbo, Tongyi-MAI's super-fast 6B model. |
+| `ben-v2-image` | ben | — | A fast and high quality model for image background removal. |
+| `bernini-r-edit-image` | bernini-r | — | Edit any image with a natural-language instruction using Bernini-R, changing the weather, materials, objects, or style while preserving the… |
+| `birefnet` | birefnet | — | bilateral reference framework (BiRefNet) for high-resolution dichotomous image segmentation (DIS) |
+| `birefnet-v2` | birefnet | — | bilateral reference framework (BiRefNet) for high-resolution dichotomous image segmentation (DIS) |
+| `flux-1-dev-redux` | black-forest-labs | — | FLUX.1 [dev] Redux is a high-performance endpoint for the FLUX.1 [dev] model that enables rapid transformation of existing images… |
+| `flux-1-krea-redux` | black-forest-labs | — | FLUX.1 Krea [dev] Redux is a high-performance endpoint for the FLUX.1 Krea [dev] model that enables rapid transformation of existing… |
+| `flux-1-schnell-redux` | black-forest-labs | — | FLUX.1 [schnell] Redux is a high-performance endpoint for the FLUX.1 [schnell] model that enables rapid transformation of existing images… |
+| `flux-2-klein-4b-base-edit-lora` | black-forest-labs | — | Image-to-image editing with LoRA support for FLUX.2 [klein] 4B Base from Black Forest Labs. |
+| `flux-2-klein-4b-edit-lora` | black-forest-labs | — | Image-to-image editing with FLUX.2 [klein] 4B from Black Forest Labs and custom LoRA. |
+| `flux-2-klein-9b-base-edit-lora` | black-forest-labs | — | Image-to-image editing with LoRA support for FLUX.2 [klein] 9B Base from Black Forest Labs. |
+| `flux-2-klein-9b-edit-lora` | black-forest-labs | — | Image-to-image editing with FLUX.2 [klein] 9B from Black Forest Labs and custom LoRA. |
+| `flux-2-klein-realtime` | black-forest-labs | — | Realtime generation with FLUX.2 [klein] from Black Forest Labs. |
+| `flux-2-lora-gallery-add-background` | black-forest-labs | — | Add a background to images with white/clean background |
+| `flux-2-lora-gallery-apartment-staging` | black-forest-labs | — | Virtually furnishes an empty apartment |
+| `flux-2-lora-gallery-face-to-full-portrait` | black-forest-labs | — | Extends a face into a full body portrait |
+| `flux-2-lora-gallery-multiple-angles` | black-forest-labs | — | Generates same object from different angles (azimuth/elevation) |
+| `flux-2-lora-gallery-virtual-tryon` | black-forest-labs | — | Virtual clothing try-on (2 images: person + garment) |
+| `flux-control-lora-canny` | black-forest-labs | — | FLUX Control LoRA Canny is a high-performance endpoint that uses a control image to transfer structure to the generated image, using a… |
+| `flux-control-lora-depth` | black-forest-labs | — | FLUX Control LoRA Depth is a high-performance endpoint that uses a control image to transfer structure to the generated image, using a… |
+| `flux-dev-redux` | black-forest-labs | — | FLUX.1 [dev] Redux is a high-performance endpoint for the FLUX.1 [dev] model that enables rapid transformation of existing images… |
+| `flux-fill-pro` | black-forest-labs | — | Inpainting FLUX.1 Model from Black Forest Labs. |
+| `flux-general-differential-diffusion` | black-forest-labs | — | A specialized FLUX endpoint combining differential diffusion control with LoRA, ControlNet, and IP-Adapter support, enabling precise… |
+| `flux-general-inpainting` | black-forest-labs | — | FLUX General Inpainting is a versatile endpoint that enables precise image editing and completion, supporting multiple AI extensions… |
+| `flux-general-rf-inversion` | black-forest-labs | — | A general purpose endpoint for the FLUX.1 [dev] model, implementing the RF-Inversion pipeline. |
+| `flux-kontext-dev` | black-forest-labs | — | FLUX.1 Kontext dev is an image-to-image model that edits your images with text. This is an open weights, open code, open source model. |
+| `flux-krea-lora-inpainting` | black-forest-labs | — | Super fast endpoint for the FLUX.1 [dev] inpainting model with LoRA support, enabling rapid and high-quality image inpaingting using… |
+| `flux-krea-redux` | black-forest-labs | — | FLUX.1 Krea [dev] Redux is a high-performance endpoint for the FLUX.1 Krea [dev] model that enables rapid transformation of existing… |
+| `flux-lora-inpainting` | black-forest-labs | — | Super fast endpoint for the FLUX.1 [dev] inpainting model with LoRA support, enabling rapid and high-quality image inpaingting using… |
+| `flux-pro-kontext-max-multi` | black-forest-labs | — | Experimental version of FLUX.1 Kontext [max] with multi image handling capabilities |
+| `flux-pro-kontext-multi` | black-forest-labs | — | Experimental version of FLUX.1 Kontext [pro] with multi image handling capabilities |
+| `flux-pro-v1-erase` | black-forest-labs | — | Latest object erasing model from Black Forest Labs. Remove undesired objects, texts from images. |
+| `flux-pro-v1-vto` | black-forest-labs | — | Generate virtual try-on results from a person image plus one or more garment references. |
+| `flux-pulid` | black-forest-labs | — | An endpoint for personalized image generation using Flux as per given description. |
+| `bria-background-remove` | bria | — | Bria RMBG 2.0 enables seamless removal of backgrounds from images, ideal for professional editing tasks. |
+| `bria-background-replace` | bria | — | Bria Background Replace allows for efficient swapping of backgrounds in images via text prompts or reference image, delivering realistic… |
+| `bria-eraser` | bria | — | Bria Eraser enables precise removal of unwanted objects from images while maintaining high-quality outputs. |
+| `bria-expand` | bria | — | Bria Expand expands images beyond their borders in high quality. Trained exclusively on licensed data for safe and risk-free commercial use. |
+| `bria-genfill` | bria | — | Bria GenFill enables high-quality object addition or visual transformation. |
+| `bria-product-shot` | bria | — | Place any product in any scenery with just a prompt or reference image while maintaining high integrity of the product. |
+| `fibo-edit-1.5` | bria | — | Commercially safe, multi-reference image editing model. |
+| `fibo-edit-add_object_by_text` | bria | — | Precisely insert new objects into images with structured spatial commands. Context-aware, high-quality editing with seamless blending. |
+| `fibo-edit-blend` | bria | — | image composition model. Combine and blend multiple image parts into complex compositions through natural language and sequential editing. |
+| `fibo-edit-colorize` | bria | — | Image colorization and color-grading model. |
+| `fibo-edit-edit` | bria | — | High-fidelity image editing model with state-of-the-art controllability. |
+| `fibo-edit-erase_by_text` | bria | — | Remove unwanted objects from images with a text prompt - fast, precise editing that seamlessly blends results. |
+| `fibo-edit-relight` | bria | — | Precise, controllable photo re-lighting with structured text inputs. |
+| `fibo-edit-replace_object_by_text` | bria | — | Replace any object in an image using plain language with fine-grained, precise edits and strong prompt adherence. |
+| `fibo-edit-reseason` | bria | — | Transform the season or weather of an image - summer to winter, sunny to rainy - with realistic atmosphere and lighting. |
+| `fibo-edit-restore` | bria | — | Photo restoration model that automatically denoises, deblurs, and enhances old or damaged photos - removes imperfections while preserving… |
+| `fibo-edit-restyle` | bria | — | Production-grade style transfer that maps photos to distinct artistic styles using curated, brand-safe presets. |
+| `fibo-edit-rewrite_text` | bria | — | Precisely rewrite text inside images while preserving typography, fonts, and layout. |
+| `fibo-edit-sketch_to_colored_image` | bria | — | Convert line drawings and sketches into photorealistic, fully colored images with preserved structure. |
+| `genfill-v2` | bria | — | The GenFill Route enables the generation of objects by prompt in a specific region of an image. |
+| `product-dimensions` | bria | — | Bria Product Dimensions turns one product photo and its measurements into a marketplace-ready dimension image with callout lines, labels… |
+| `replace-background` | bria | — | Generate professional, eCommerce-ready product shots by replacing backgrounds with realistic lighting and accurate perspective from a… |
+| `seedream-v5-pro-layerize` | bytedance | — | Splits a finished image into independent, editable transparent-PNG layers — background plus separate elements, from a text description… |
+| `cat-vton` | cat-vton | — | Image based high quality Virtual Try-On |
+| `chrono-edit` | chrono-edit | — | NVIDIA's Logically Consistent and Physics-Aware Image Editing Model |
+| `chrono-edit-lora` | chrono-edit-lora | — | LoRA endpoint for the Chrono Edit model. |
+| `chrono-edit-lora-gallery-paintbrush` | chrono-edit-lora-gallery | — | You can make edits simply by drawing a quick sketch on the input image. |
+| `control-light` | control-light | — | ControlLight is a LoRA fine-tune of FLUX.2 [klein] 9B that enhances low-light images while preserving scene structure and fine details… |
+| `dreamomni2-edit` | dreamomni2 | — | DreamOmni2 is a unified multimodal model for text and image guided image editing. |
+| `dwpose` | dwpose | — | Predict poses from images. |
+| `emu-3.5-image-edit-image` | emu-3.5-image | — | Edit images with a text prompt using Emu 3.5 Image |
+| `fashn-tryon-v1.5` | fashn | — | FASHN v1.5 delivers precise virtual try-on capabilities, accurately rendering garment details like text and patterns at 576x864 resolution… |
+| `fashn-tryon-v1.6` | fashn | — | FASHN v1.6 delivers precise virtual try-on capabilities, accurately rendering garment details like text and patterns at 864x1296 resolution… |
+| `feynobg` | feynobg | — | FeyNobg is a state of the art AI model for background removal from feyninc |
+| `film` | film | — | Interpolate images with FILM - Frame Interpolation for Large Motion |
+| `finegrain-eraser` | finegrain | — | Finegrain Eraser removes objects—along with their shadows, reflections, and lighting artifacts—using only natural language, seamlessly… |
+| `finegrain-eraser-bbox` | finegrain | — | Finegrain Eraser removes any object selected with a bounding box—along with its shadows, reflections, and lighting artifacts—seamlessly… |
+| `finegrain-eraser-mask` | finegrain | — | Finegrain Eraser removes any object selected with a mask—along with its shadows, reflections, and lighting artifacts—seamlessly… |
+| `firered-image-edit` | firered-image-edit | — | FireRed Image Edit is FireRed's state of the art open source editing model, re-trained from Qwen Image Edit 2509. |
+| `firered-image-edit-v1.1` | firered-image-edit-v1.1 | — | FireRed Image Edit v1.1 is an updated version of FireRed Image Edit, with improved image editing capabilities. |
+| `flowedit` | flowedit | — | The model provides you high quality image editing capabilities. |
+| `multi-image-kontext-max` | flux-kontext-apps | — | Merge two input images into a single cohesive output using this experimental FLUX.1 Kontext model. |
+| `multi-image-kontext-pro` | flux-kontext-apps | — | Merge two input images into a single output using this experimental FLUX.1 Kontext Pro AI model. |
+| `multi-image-list` | flux-kontext-apps | — | FLUX Kontext Max, a cutting-edge tool that lets you seamlessly combine images with AI-driven enhancements for stunning, context-aware… |
+| `virtual-try-on` | google | — | Generate realistic virtual try-on images from a person image and a clothing product image. |
+| `iclight-v2` | iclight-v2 | — | An endpoint for re-lighting photos and changing their backgrounds per a given description |
+| `ideogram-character` | ideogram | — | Generate consistent character appearances across multiple images. |
+| `ideogram-character-remix` | ideogram | — | Transform your consistent character into different art styles, settings, or scenarios while maintaining their distinctive appearance and… |
+| `ideogram-object-removal` | ideogram | — | Prompt-free object removal from an image and mask, erasing objects with their shadows and reflections and reconstructing the scene cleanly. |
+| `ideogram-remove-background` | ideogram | — | Remove backgrounds from existing images with Ideogram's remove background feature. |
+| `ideogram-v3-layerize-text` | ideogram | — | Ideogram Layerize takes an existing flat graphic, removes text, and returns structured text containers you can edit/recompose in html or… |
+| `ideogram-v3-reframe` | ideogram | — | Extend existing images with Ideogram V3's reframe feature. |
+| `ideogram-v3-remix` | ideogram | — | Reimagine existing images with Ideogram V3's remix feature. |
+| `ideogram-v3-replace-background` | ideogram | — | Replace backgrounds existing images with Ideogram V3's replace background feature. |
+| `v4-tiling` | ideogram | — | Ideogram V4.0q Tiling generates seamless, edge-matching textures and patterns that repeat infinitely in any direction, ideal for… |
+| `v4-tiling-lora` | ideogram | — | Ideogram V4.0q Tiling LoRA produces seamless repeatable patterns guided by a custom-trained LoRA, locking a specific aesthetic or motif… |
+| `imagineart-2.0-edit-preview-image-to-image` | imagineart | — | ImagineArt 2.0 Edit delivers precise prompt-guided image editing at 2K resolution, preserving fine detail and realism while accurately… |
+| `cartoonify` | infery | — | Transform images into 3D cartoon artwork using an AI model that applies cartoon stylization while preserving the original image's… |
+| `fast-lcm-diffusion-inpainting` | infery | — | Run SDXL at the speed of light |
+| `fast-sdxl-controlnet-canny` | infery | — | Generate Images with ControlNet. |
+| `fast-sdxl-controlnet-canny-inpainting` | infery | — | Generate Images with ControlNet. |
+| `fast-sdxl-inpainting` | infery | — | Run SDXL at the speed of light |
+| `ghiblify` | infery | — | Reimagine and transform your ordinary photos into enchanting Studio Ghibli style artwork |
+| `image-apps-v2-age-modify` | infery | — | Modify a face to look younger or older while keeping identity realistic. |
+| `image-apps-v2-city-teleport` | infery | — | Place a person’s photo into iconic cities worldwide. |
+| `image-apps-v2-expression-change` | infery | — | Change facial expressions in photos with realistic results. |
+| `image-apps-v2-hair-change` | infery | — | Change hairstyles and hair colors in photos realistically. |
+| `image-apps-v2-headshot-photo` | infery | — | Generate professional headshot photos with customizable backgrounds. |
+| `image-apps-v2-makeup-application` | infery | — | Apply realistic makeup styles with adjustable intensity. |
+| `image-apps-v2-object-removal` | infery | — | Remove unwanted objects seamlessly from any image. |
+| `image-apps-v2-outpaint` | infery | — | Directional outpainting. Choose edges to expand. left, right, top, or center (uniform all sides). |
+| `image-apps-v2-perspective` | infery | — | Easily adjust the perspective of any image to different angles. |
+| `image-apps-v2-photo-restoration` | infery | — | Restore old or damaged photos by fixing colors, scratches, and resolution. |
+| `image-apps-v2-photography-effects` | infery | — | Apply diverse photography styles and effects to transform your images. |
+| `image-apps-v2-portrait-enhance` | infery | — | Enhance and refine portrait photos with improved clarity and detail. |
+| `image-apps-v2-product-holding` | infery | — | Place products naturally in a person’s hands for realistic marketing visuals. |
+| `image-apps-v2-product-photography` | infery | — | Generate professional product photography with realistic lighting and backgrounds. |
+| `image-apps-v2-relighting` | infery | — | Adjust and enhance images with different lighting styles. |
+| `image-apps-v2-style-transfer` | infery | — | Apply artistic styles like impressionism, cubism, or surrealism to your images. |
+| `image-apps-v2-texture-transform` | infery | — | Transform objects with different surface textures like marble, wood, or fabric. |
+| `image-apps-v2-virtual-try-on` | infery | — | Try on clothes virtually by combining person and clothing images. |
+| `image-editing-age-progression` | infery | — | See how you or others might look at different ages, from younger to older, while preserving core facial features. |
+| `image-editing-baby-version` | infery | — | Transform any person into their baby version, while preserving the original pose and expression with childlike features. |
+| `image-editing-background-change` | infery | — | Replace your photo's background with any scene you desire, from beach sunsets to urban landscapes, with perfect lighting and shadows |
+| `image-editing-broccoli-haircut` | infery | — | Transform your character's hair into broccoli style while keeping the original characters likeness |
+| `image-editing-cartoonify` | infery | — | Transform your photos into vibrant cool cartoons with bold outlines and rich colors. |
+| `image-editing-color-correction` | infery | — | Perfect your photos with professional color grading, balanced tones, and vibrant yet natural colors |
+| `image-editing-expression-change` | infery | — | Change facial expressions in photos to any emotion you desire, from smiles to serious looks. |
+| `image-editing-face-enhancement` | infery | — | Enhance facial features with professional retouching while maintaining a natural, realistic look |
+| `image-editing-hair-change` | infery | — | Experiment with different hairstyles, from bald to any style you can imagine, while maintaining natural lighting and realistic results. |
+| `image-editing-object-removal` | infery | — | Remove unwanted objects or people from your photos while seamlessly blending the background. |
+| `image-editing-photo-restoration` | infery | — | Restore and enhance old or damaged photos by removing imperfections, adding color while preserving the original character and details of… |
+| `image-editing-plushie-style` | infery | — | Transform your photos into cool plushies while keeping the original characters likeness |
+| `image-editing-professional-photo` | infery | — | Turn your casual photos into stunning professional studio portraits with perfect lighting and high-end photography style. |
+| `image-editing-realism` | infery | — | Add details to faces, enhance face features, remove blur. |
+| `image-editing-reframe` | infery | — | The reframe endpoint intelligently adjusts an image's aspect ratio while preserving the main subject's position, composition, pose, and… |
+| `image-editing-retouch` | infery | — | Retouch photos of faces. Remove blemishes and improve the skin. |
+| `image-editing-scene-composition` | infery | — | Place your subject in any scene you imagine, from enchanted forests to urban settings, with professional composition and lighting |
+| `image-editing-style-transfer` | infery | — | Transform your photos into artistic masterpieces inspired by famous styles like Van Gogh's Starry Night or any artistic style you choose. |
+| `image-editing-text-removal` | infery | — | Remove all text and writing from images while preserving the background and natural appearance. |
+| `image-editing-time-of-day` | infery | — | Transform your photos to any time of day, from golden hour to midnight, with appropriate lighting and atmosphere. |
+| `image-editing-weather-effect` | infery | — | Add realistic weather effects like snowfall, rain, or fog to your photos while maintaining the scene's mood. |
+| `image-editing-wojak-style` | infery | — | Transform your photos into wojak style while keeping the original characters likeness |
+| `image-editing-youtube-thumbnails` | infery | — | Generate YouTube thumbnails with custom text |
+| `image-preprocessors-mlsd` | infery | — | M-LSD line segment detection preprocessor. |
+| `image2pixel` | infery | — | Turn images into pixel-perfect retro art |
+| `image2svg` | infery | — | Image2SVG transforms raster images into clean vector graphics, preserving visual quality while enabling scalable, customizable SVG outputs… |
+| `imageutils-rembg` | infery | — | Remove the background from an image. |
+| `lcm-sd15-i2i` | infery | — | Produce high-quality images with minimal inference steps. Optimized for 512x512 input image size. |
+| `object-removal` | infery | — | Removes objects and their visual effects using natural language, replacing them with contextually appropriate content |
+| `object-removal-bbox` | infery | — | Removes box-selected objects and their visual effects, seamlessly reconstructing the scene with contextually appropriate content. |
+| `object-removal-mask` | infery | — | Removes mask-selected objects and their visual effects, seamlessly reconstructing the scene with contextually appropriate content. |
+| `post-processing-blur` | infery | — | Apply Gaussian or Kuwahara blur effects with adjustable radius and sigma parameters |
+| `post-processing-chromatic-aberration` | infery | — | Create chromatic aberration by shifting red, green, and blue channels horizontally or vertically with customizable shift amounts. |
+| `post-processing-color-correction` | infery | — | Adjust color temperature, brightness, contrast, saturation, and gamma values for color correction. |
+| `post-processing-color-tint` | infery | — | Apply various color tints (sepia, red, green, blue, cyan, magenta, yellow, purple, orange, warm, cool, lime, navy, vintage, rose, teal… |
+| `post-processing-desaturate` | infery | — | Reduce color saturation using different methods (luminance Rec.709, luminance Rec.601, average, lightness) with adjustable factor. |
+| `post-processing-dissolve` | infery | — |  |
+| `post-processing-dodge-burn` | infery | — | Apply dodge and burn effects with multiple modes and adjustable intensity. |
+| `post-processing-grain` | infery | — | Apply film grain effect with different styles (modern, analog, kodak, fuji, cinematic, newspaper) and customizable intensity and scale |
+| `post-processing-parabolize` | infery | — | Apply a parabolic distortion effect with configurable coefficient and vertex position. |
+| `post-processing-sharpen` | infery | — | Apply sharpening effects with three modes: basic unsharp mask, smart sharpening with edge preservation, and Contrast Adaptive Sharpening… |
+| `post-processing-solarize` | infery | — | Apply solarization effect by inverting pixel values above a threshold |
+| `post-processing-vignette` | infery | — | Add a darkening vignette effect around the edges of the image with adjustable strength |
+| `smart-resize` | infery | — | Smart image resize to arbitrary dimensions, powered by Nano Banana Pro with vision-LLM-guided prompting for composition-aware recomposition. |
+| `instant-character` | instant-character | — | InstantCharacter creates high-quality, consistent characters from text prompts, supporting diverse poses, styles, and appearances with… |
+| `joyai-image-edit` | joyai-image-edit | — | All-in-one image AI with JoyAI-Image. |
+| `kling-image-o1` | kling | — | Perform precise image edits using strong reference control, transforming subjects, styles, and local details while preserving visual… |
+| `krea-2-turbo-style` | krea-2 | — | Generate high-fidelity images from text with Krea 2 using a style reference image. |
+| `luma-photon-flash-modify` | luma | — | Edit images from your prompts using Luma Photon. |
+| `luma-photon-flash-reframe` | luma | — | This advanced tool intelligently expands your visuals, seamlessly blending new content to enhance creativity and adaptability, offering… |
+| `luma-photon-modify` | luma | — | Edit images from your prompts using Luma Photon. |
+| `luma-photon-reframe` | luma | — | Extend and reframe images with Luma Photon Reframe. |
+| `minimax-image-01-subject-reference` | minimax | — | Generate images from text and a reference image using MiniMax Image-01 for consistent character appearance. |
+| `pasd` | pasd | — | Pixel-Aware Diffusion Model for Realistic Image Super-Resolution and Personalized Stylization |
+| `patina` | patina | — | PATINA creates seamless high-resolution normal, roughness, basecolor (albedo), height (displacement) and metalness maps from images |
+| `patina-material-extract` | patina | — | Extract seamless tiling textures with PBR attribute maps from images |
+| `phota-enhance` | phota | — | Enhance images while preserving identities with Phota |
+| `photomaker` | photomaker | — | Customizing Realistic Human Photos via Stacked ID Embedding |
+| `background-removal` | pixelcut | — | Pixelcut’s Background Remover enables fast, ultra high-quality removal of backgrounds from images. |
+| `product-photo` | pixelcut | — | Pixelcut's Background Remover produces fast, high-quality cutouts built for e-commerce product imagery |
+| `playground-v25-inpainting` | playground-ai | — | State-of-the-art open-source model in aesthetic quality |
+| `flux-kontext-fast` | prunaai | — | Ultra fast flux kontext endpoint |
+| `pulid` | pulid | — | Tuning-free ID customization. |
+| `qwen/qwen-image-edit-plus` | qwen | — | The latest Qwen-Image’s iteration with improved multi-image editing, single-image consistency, and native support for ControlNet |
+| `recraft-vectorize` | recraft | — | Converts a given raster image to SVG format using Recraft model. |
+| `recraft-v4-styles-pro-svg` | recraft-ai | — | Generate high-quality editable SVGs with Recraft V4 Styles Pro SVG. |
+| `2.1-remix` | reve | — | Remix images from text prompts with strong prompt adherence, layout intelligence, and accurate text rendering using Reve 2.1 |
+| `rife` | rife | — | Interpolate images with RIFE - Real-Time Intermediate Flow Estimation |
+| `juggernaut-flux-lora-inpainting` | rundiffusion | — | Juggernaut Base Flux LoRA Inpainting by RunDiffusion is a drop-in replacement for Flux [Dev] inpainting that delivers sharper details… |
+| `rembg-enhance` | smoretalk-ai | — | Rembg-enhance is optimized for 2D vector images, 3D graphics, and photos by leveraging matting technology. |
+| `stepx-edit2` | stepx-edit2 | — | Image-to-image editing with Step1X-Edit v2 from StepFun. |
+| `telestyle-v2` | telestyle-v2 | — | Restyle any image with TeleStyle v2 — provide an original image and a styling reference, and the model re-renders the original in the… |
+| `hunyuan_world` | tencent | — | Hunyuan World 1.0 turns a single image into a panorama or a 3D world. |
+| `uno` | uno | — | An AI model that transforms input images into new ones based on text prompts, blending reference visuals with your creative directions. |
+| `uso` | uso | — | Use USO to perform subject driven generations using reference image. |
+| `vecglypher-image-to-svg` | vecglypher | — | Vector font generation with VecGlypher. |
+| `vidu-q2-reference-to-image` | vidu | — | Vidu Reference-to-Image creates images by using a reference images and combining them with a prompt. |
+| `vidu-reference-to-image` | vidu | — | Vidu Reference-to-Image creates images by using a reference images and combining them with a prompt. |
+
+## Text → image (211)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `qwen-image` | alibaba | Image |  |
+| `qwen-image-2.0` | alibaba | — |  |
+| `qwen-image-2.0-pro` | alibaba | — |  |
+| `qwen-image-2512` | alibaba | — | Qwen Image 2512 is an improved version of Qwen Image with better text rendering, finer natural textures, and more realistic human… |
+| `qwen-image-2512-lora` | alibaba | — | LoRA inference endpoint for Qwen Image 2512, an improved version of Qwen Image with better text rendering, finer natural textures, and more… |
+| `qwen-image-edit-max` | alibaba | — |  |
+| `qwen-image-max` | alibaba | Image |  |
+| `qwen-image-plus` | alibaba | — |  |
+| `v2.6-text-to-image` | alibaba | Image | Wan 2.6 text-to-image model. |
+| `wan-25-preview-text-to-image` | alibaba | Image | Wan 2.5 text-to-image model. |
+| `wan-v2.2-5b-text-to-image` | alibaba | — | Wan 2.2's 5B model generates high-resolution, photorealistic images with powerful prompt understanding and fine-grained visual detail |
+| `wan-v2.2-a14b-text-to-image` | alibaba | Image | Wan 2.2's 14B model generates high-resolution, photorealistic images with powerful prompt understanding and fine-grained visual detail |
+| `wan-v2.2-a14b-text-to-image-lora` | alibaba | — | Wan 2.2's 14B model with LoRA support generates high-fidelity images with enhanced prompt alignment, style adaptability. |
+| `wan-v2.7-edit` | alibaba | Image | Transform and edit existing images with text-guided instructions using the WAN 2.7 model for creative image manipulation. |
+| `wan-v2.7-pro-edit` | alibaba | Image | Edit and transform images using text instructions with the WAN 2.7 Pro model for precise, professional-grade image modifications. |
+| `wan2-2-t2i-flash` | alibaba | — |  |
+| `wan2-2-t2i-plus` | alibaba | — |  |
+| `wan2-7-image` | alibaba | — |  |
+| `wan2-7-image-pro` | alibaba | — |  |
+| `wan2.5-i2i-preview` | alibaba | — |  |
+| `z-image-base` | alibaba | — | Z-Image is the foundation model of the Z- Image family, engineered for good quality, robust generative diversity, broad stylistic coverage… |
+| `z-image-base-lora` | alibaba | — | LoRA endpoint for Z-Image, the foundation model of the Z- Image family. |
+| `z-image-turbo` | alibaba | Image |  |
+| `z-image-turbo-lora` | alibaba | — | Text-to-Image endpoint with LoRA support for Z-Image Turbo, a super fast text-to-image model of 6B parameters developed by Tongyi-MAI. |
+| `z-image-turbo-tiling` | alibaba | — | Generate seamlessly tiling photorealistic images from text using Z-Image Turbo |
+| `z-image-turbo-tiling-lora` | alibaba | — | Generate seamlessly tiling photorealistic images from text using Z-Image Turbo and custom LoRA |
+| `bagel` | bagel | Image |  |
+| `ernie-image` | baidu | — | High-quality text-to-image model by Baidu. Supports English, Chinese, and Japanese prompts with built-in prompt expansion. |
+| `ernie-image-lora` | baidu | — | High-quality text-to-image model by Baidu. Supports English, Chinese, and Japanese prompts with built-in prompt expansion. |
+| `ernie-image-lora-turbo` | baidu | — | High-quality text-to-image model by Baidu. Supports English, Chinese, and Japanese prompts with built-in prompt expansion. |
+| `ernie-image-turbo` | baidu | — | High-quality text-to-image model by Baidu. Supports English, Chinese, and Japanese prompts with built-in prompt expansion. |
+| `flux-1-dev` | black-forest-labs | Image | FLUX.1 [dev] is a 12 billion parameter flow transformer that generates high-quality images from text. |
+| `flux-1-krea` | black-forest-labs | Image | FLUX.1 Krea [dev] is a 12 billion parameter flow transformer that generates high-quality images from text with incredible aesthetics. |
+| `flux-1-schnell` | black-forest-labs | — | Fastest inference in the world for the 12 billion parameter FLUX.1 [schnell] text-to-image model. |
+| `flux-1-srpo` | black-forest-labs | Image | FLUX.1 SRPO [dev] is a 12 billion parameter flow transformer that generates high-quality images from text with incredible aesthetics. |
+| `flux-1.1-pro-ultra` | black-forest-labs | Image | Black Forest Labs FLUX 1.1 Model. |
+| `flux-2` | black-forest-labs | Image | Text-to-image generation with FLUX.2 [dev] from Black Forest Labs. |
+| `flux-2-flash` | black-forest-labs | Image | Text-to-image generation with FLUX.2 [dev] from Black Forest Labs. |
+| `flux-2-flex` | black-forest-labs | Image | FLUX.2 [flex] is Black Forest Labs' image model with adjustable quality-speed trade-offs and strong text rendering. |
+| `flux-2-klein-4b` | black-forest-labs | Image |  |
+| `flux-2-klein-4b-base` | black-forest-labs | Image | Text-to-image generation with FLUX.2 [klein] 4B Base from Black Forest Labs. |
+| `flux-2-klein-4b-base-lora` | black-forest-labs | — | Text-to-image generation with LoRA support for FLUX.2 [klein] 4B Base from Black Forest Labs. |
+| `flux-2-klein-4b-lora` | black-forest-labs | — | Text-to-image generation with FLUX.2 [klein] 4B from Black Forest Labs and custom LoRA. |
+| `flux-2-klein-9b` | black-forest-labs | Image | Text-to-image generation with FLUX.2 [klein] 9B from Black Forest Labs. |
+| `flux-2-klein-9b-base` | black-forest-labs | Image | Text-to-image generation with FLUX.2 [klein] 9B Base from Black Forest Labs. |
+| `flux-2-klein-9b-base-lora` | black-forest-labs | — | Text-to-image generation with LoRA support for FLUX.2 [klein] 9B Base from Black Forest Labs. |
+| `flux-2-klein-9b-lora` | black-forest-labs | — | Text-to-image generation with FLUX.2 [klein] 9B from Black Forest Labs and custom LoRA. |
+| `flux-2-lora` | black-forest-labs | Image | Text-to-image generation with LoRA support for FLUX.2 [dev] from Black Forest Labs. Custom style adaptation and fine-tuned model variations. |
+| `flux-2-lora-gallery-ballpoint-pen-sketch` | black-forest-labs | — | Ballpoint pen sketch drawing style |
+| `flux-2-lora-gallery-digital-comic-art` | black-forest-labs | — | Transforms images into comic book style |
+| `flux-2-lora-gallery-hdr-style` | black-forest-labs | — | HDR surrealistic effect with intense colors |
+| `flux-2-lora-gallery-realism` | black-forest-labs | — | Makes images more photorealistic and natural |
+| `flux-2-lora-gallery-satellite-view-style` | black-forest-labs | — | Generates satellite/aerial view style images |
+| `flux-2-lora-gallery-sepia-vintage` | black-forest-labs | — | Applies sepia vintage effect to images |
+| `flux-2-max` | black-forest-labs | Image | FLUX.2 [max] is Black Forest Labs' highest-fidelity image model with top editing consistency and multi-reference support. |
+| `flux-2-pro` | black-forest-labs | Image |  |
+| `flux-2-turbo` | black-forest-labs | Image | Text-to-image generation with FLUX.2 [dev] from Black Forest Labs. |
+| `flux-dev` | black-forest-labs | Image | Generate high-quality images from text prompts using Flux Dev, a 12B parameter rectified flow transformer. |
+| `flux-dev-lora` | black-forest-labs | Image | Custom FLUX.1 dev image generation with LoRAs. |
+| `flux-general` | black-forest-labs | Image | A versatile endpoint for the FLUX.1 [dev] model that supports multiple AI extensions including LoRA, ControlNet conditioning, and… |
+| `flux-kontext-lora` | black-forest-labs | Image | Fast endpoint for the FLUX.1 Kontext [dev] model with LoRA support, enabling rapid and high-quality image editing using pre-trained LoRA… |
+| `flux-kontext-max` | black-forest-labs | Image | Transform images with text using FLUX.1 Kontext [max], a premium model built for maximum performance, enhanced prompt following, and… |
+| `flux-kontext-pro` | black-forest-labs | Image | Edit images using text prompts with FLUX.1 Kontext [pro], a state-of-the-art model for high-quality, consistent, and natural… |
+| `flux-krea` | black-forest-labs | Image | FLUX.1 Krea [dev] is a 12 billion parameter flow transformer that generates high-quality images from text with incredible aesthetics. |
+| `flux-krea-lora` | black-forest-labs | Image | Super fast endpoint for the FLUX.1 [dev] model with LoRA support, enabling rapid and high-quality image generation using pre-trained LoRA… |
+| `flux-krea-lora-stream` | black-forest-labs | — | Super fast endpoint for the FLUX.1 [dev] model with LoRA support, enabling rapid and high-quality image generation using pre-trained LoRA… |
+| `flux-lora` | black-forest-labs | Image | Super fast endpoint for the FLUX.1 [dev] model with LoRA support, enabling rapid and high-quality image generation using pre-trained LoRA… |
+| `flux-lora-stream` | black-forest-labs | — | Super fast endpoint for the FLUX.1 [dev] model with LoRA support, enabling rapid and high-quality image generation using pre-trained LoRA… |
+| `flux-pro` | black-forest-labs | Image | Generate detailed, high-quality images from text prompts using Flux Pro. |
+| `flux-pro-kontext` | black-forest-labs | Image | FLUX.1 Kontext [pro] handles both text and reference images as inputs, seamlessly enabling targeted, local edits and complex… |
+| `flux-pro-kontext-max` | black-forest-labs | Image | FLUX.1 Kontext [max] is a model with greatly improved prompt adherence and typography generation meet premium consistency for editing… |
+| `flux-pro-v1.1-ultra` | black-forest-labs | — | FLUX1.1 [pro] ultra is the newest version of FLUX1.1 [pro], maintaining professional-grade image quality while delivering up to 2K… |
+| `flux-pro-v1.1-ultra-finetuned` | black-forest-labs | — | FLUX1.1 [pro] ultra fine-tuned is the newest version of FLUX1.1 [pro] with a fine-tuned LoRA, maintaining professional-grade image quality… |
+| `flux-schnell` | black-forest-labs | — | Generate high-quality images from text prompts in seconds with Flux Schnell. |
+| `flux-srpo` | black-forest-labs | Image | FLUX.1 SRPO [dev] is a 12 billion parameter flow transformer that generates high-quality images from text with incredible aesthetics. |
+| `flux.1-kontext-max` | black-forest-labs | — |  |
+| `flux.1-kontext-pro` | black-forest-labs | — |  |
+| `flux.1.1-pro` | black-forest-labs | — |  |
+| `boogu-image` | boogu-image | Image | Text To Image Model using Boogu-Image |
+| `bria-reimagine` | bria | Image | Structure Reference allows generating new images while preserving the structure of an input image, guided by text prompts. |
+| `bria-text-to-image-base` | bria | — | Bria's Text-to-Image model, trained exclusively on licensed data for safe and risk-free commercial use. |
+| `bria-text-to-image-fast` | bria | — | Bria's Text-to-Image model with perfect harmony of latency and quality. |
+| `bria-text-to-image-hd` | bria | — | Bria's Text-to-Image model for HD images. Trained exclusively on licensed data for safe and risk-free commercial use. |
+| `embed-product` | bria | Image | Seamlessly embed products into any scene with pixel-perfect control, automatic perspective, and natural lighting. |
+| `expand-image` | bria | Image | Bria Expand expands images beyond their borders in high quality. |
+| `extract-object` | bria | Image | Bria Extract Object uses text prompts to isolate a selected object from an image and return it as an RGBA PNG with a transparent background. |
+| `fibo-bbq-preview-generate` | bria | — | A preview to the next level of control of Text-to-Image models. |
+| `fibo-gen-1.5` | bria | — | Text-to-image model with high-fidelity outputs, accurate typography, and style preset, strong in photorealism, textures, and beyond. |
+| `fibo-generate` | bria | Image | SOTA open-source text-to-image model delivering high-fidelity outputs with accurate typography. |
+| `fibo-lite-generate` | bria | — | Fast, low-latency text-to-image model with high-quality output and full JSON-structured controllability. |
+| `generate-background` | bria | Image | Bria Background Generation allows for efficient swapping of backgrounds in images via text prompts or reference image, delivering realistic… |
+| `genfill` | bria | Image | Bria GenFill enables high-quality object addition or visual transformation. |
+| `image-3.2` | bria | — | Use Bria's AI Image Generation model, Bria Image 3.2. |
+| `bytedance-seedream-v4-edit` | bytedance | Image | A new-generation image creation model ByteDance, Seedream 4.0 integrates image generation and image editing capabilities into a single… |
+| `bytedance-seedream-v4.5-edit` | bytedance | Image | A new-generation image creation model ByteDance, Seedream 4.5 integrates image generation and image editing capabilities into a single… |
+| `seedream-3` | bytedance | — | ByteDance's Seedream 3 generates native 2K resolution images from text with bilingual support, accurate text rendering, and cinematic… |
+| `seedream-4` | bytedance | Image | Seedream 4 from ByteDance: next-generation image creation model that combines text-to-image generation and image editing into a single… |
+| `seedream-4.5` | bytedance | Image | Seedream 4.5 is ByteDance's image generation model with cinematic aesthetics, strong spatial understanding, and precise instruction… |
+| `seedream-5-lite` | bytedance | Image | Seedream 5.0 lite is ByteDance's image generation model with built-in reasoning, example-based editing, and deep domain knowledge. |
+| `seedream-v5-lite-edit` | bytedance | Image | Image editing endpoint for the fast Lite version of Seedream 5.0, supporting high quality intelligent image editing with multiple inputs. |
+| `emu-3.5-image-text-to-image` | emu-3.5-image | — | Generate images from text using Emu 3.5 Image |
+| `gemini-3.1-flash-lite-image` | google | Image | 66k ctx, 66k out, vision |
+| `nano-banana` | google | Image | 33k ctx, 33k out · Nano Banana (aka Gemini 2.5 Flash Image from Google), Google's latest high quality image editing model with strong prompt adherence and… |
+| `nano-banana-2` | google | Image | 66k ctx, 66k out · Generate and edit images with Google's Nano Banana 2 (Gemini 3.1 Flash Image). |
+| `nano-banana-pro` | google | Image | 131k ctx, 33k out · Nano Banana Pro (or Gemini 3 Pro Image) is Google's new state-of-the-art image generation and editing model. |
+| `hidream-i1-dev` | hidream | — | HiDream-I1 dev is a new open-source image generative foundation model with 17B parameters that achieves state-of-the-art image generation… |
+| `hidream-i1-fast` | hidream | — | HiDream-I1 fast is a new open-source image generative foundation model with 17B parameters that achieves state-of-the-art image generation… |
+| `hidream-i1-full` | hidream | Image | HiDream-I1 full is a new open-source image generative foundation model with 17B parameters that achieves state-of-the-art image generation… |
+| `hidream-o1-image` | hidream | Image | Unified image generation with HiDream-O1-Image. |
+| `hidream-o1-image-dev` | hidream | Image | Unified image generation with HiDream-O1-Image. |
+| `ideogram-custom-models-generate` | ideogram | — | Train Ideogram on your photos, your style, your subject, your look, from a small set of reference images to images that feel consistently… |
+| `ideogram-v3` | ideogram | Image | Generate high-quality images, posters, and logos with Ideogram V3. |
+| `ideogram-v3-generate-transparent` | ideogram | — | Generate images with transparent backgrounds using Ideogram Transparent model |
+| `ideogram-v2` | ideogram-ai | Image | Ideogram V2 generates high-quality images from text with state-of-the-art inpainting, prompt comprehension, and text rendering. |
+| `ideogram-v2-turbo` | ideogram-ai | Image | Ideogram V2 Turbo generates images from text in seconds with strong inpainting, prompt comprehension, and text rendering. |
+| `ideogram-v2a` | ideogram-ai | — | Ideogram V2a generates high-quality images from text with strong prompt understanding and text rendering. |
+| `ideogram-v2a-turbo` | ideogram-ai | — | Ideogram V2a Turbo generates images from text in seconds. |
+| `ideogram-v3-balanced` | ideogram-ai | Image | Turn text prompts into stunning images using Ideogram 3.0. |
+| `ideogram-v3-quality` | ideogram-ai | Image | Turn text prompts into stunning images using Ideogram 3.0. |
+| `ideogram-v3-turbo` | ideogram-ai | Image | Turn text prompts into stunning images using Ideogram 3.0 Turbo. |
+| `imagineart-1.5-preview-text-to-image` | imagineart | — | ImagineArt 1.5 text-to-image model generates high-fidelity professional-grade visuals with lifelike realism, strong aesthetics, and text… |
+| `imagineart-1.5-pro-preview-text-to-image` | imagineart | — | ImagineArt 1.5 Pro is an advanced text-to-image model that creates ultra-high-fidelity 4K visuals with lifelike realism, refined… |
+| `aura-flow` | infery | — | AuraFlow v0.3 is an open-source flow-based text-to-image generation model that achieves state-of-the-art results on GenEval. |
+| `fast-lcm-diffusion` | infery | Image | Run SDXL at the speed of light |
+| `fast-lightning-sdxl` | infery | — | Run SDXL at the speed of light |
+| `fast-sdxl` | infery | Image | Run SDXL at the speed of light |
+| `lora` | infery | Image | Run Any Stable Diffusion model with customizable LoRA weights. |
+| `sdxl-controlnet-union` | infery | — | An efficent SDXL multi-controlnet text-to-image model. |
+| `kling-image-o3-text-to-image` | kling | Image | Kling Omni 3: Top-tier text-to-image with flawless consistency. |
+| `kling-image-v3-text-to-image` | kling | Image | Kling V3: Latest Kling Image model |
+| `kolors` | kling | Image | Photorealistic Text-to-Image |
+| `krea-2-turbo` | krea-2 | — | Generate high-fidelity images from text in seconds with Krea 2 Turbo, the speed-optimized open-source version of Krea 2, preserving its… |
+| `krea-2-turbo-lora` | krea-2 | — | Generate high-fidelity images from text with Krea 2 using a custom-trained LoRA. |
+| `lucid-origin` | leonardoai | — | Lucid Origin: a new AI image model delivering richer colours, diverse visuals, and sharp text – all in stunning Full HD |
+| `agent-uni-1-v1-edit` | luma | Image | Luma Uni-1 Edit reworks a source image from a text instruction, preserving the original composition while applying style changes and… |
+| `agent-uni-1-v1-max` | luma | Image | Luma Uni-1 Max generates a single image at the model's highest fidelity, delivering richer detail and stronger prompt adherence than the… |
+| `photon` | luma | Image | Luma Photon generates high-quality images with character consistency, multi-image references, and strong prompt adherence. |
+| `photon-flash` | luma | Image | Luma Photon Flash is a speed-optimized image generation model with character consistency and multi-image reference support. |
+| `lumina-image-v2` | lumina-image | — | Lumina-Image-2.0 is a 2 billion parameter flow-based diffusion transforer which features improved performance in image quality, typography… |
+| `longcat-image` | meituan | Image | LongCat image is a 6B parameter model excelling at multilingual text rendering, photorealism and deployment efficiency. |
+| `muse-image` | meta | Image | Meta's Muse Image model has faithful instruction-following and exceptional visual fidelity, with fine details like text, plots, and QR… |
+| `image-01` | minimax | Image | MiniMax Image 01 generates images from text with character reference support, detailed lighting, and realistic human subjects. |
+| `minimax-image-01` | minimax | — | Generate high quality images from text prompts using MiniMax Image-01. Longer text prompts will result in better quality images. |
+| `nucleus-image` | nucleus-image | — | Nucleus-Image is a text-to-image generation model built on a sparse mixture-of-experts (MoE) diffusion transformer architecture. |
+| `cosmos-3-super-text-to-image` | nvidia | — | Cosmos3 is a collection of Omnimodal world models capable of generating dynamic, high-quality video, image, audio, and action commands from… |
+| `sana` | nvidia | — |  |
+| `sana-sprint` | nvidia | — | Sana Sprint is a text-to-image model capable of generating 4K images with exceptional speed. |
+| `omnigen-v1` | omnigen-v1 | Image | OmniGen is a unified image generation model that can generate a wide range of images from multi-modal prompts. |
+| `omnigen-v2` | omnigen-v2 | Image | OmniGen is a unified image generation model that can generate a wide range of images from multi-modal prompts. |
+| `chatgpt-image-latest` | openai | Image |  |
+| `dall-e-2` | openai | Image |  |
+| `dall-e-3` | openai | — |  |
+| `gpt-image-1-mini` | openai | Image | A cost-efficient version of GPT Image 1 |
+| `gpt-image-1.5` | openai | Image | OpenAI's previous image generation model |
+| `gpt-image-2` | openai | Image | State-of-the-art image generation model |
+| `ovis-image` | ovis-image | — | Ovis-Image is a 7B text-to-image model specifically optimized for quick, high quality text rendering. |
+| `patina-material` | patina | — | Generate complete seamlessly tiling PBR materials including normal, roughness, basecolor, height and metalness maps up to 8K |
+| `playground-v25` | playground-ai | Image | State-of-the-art open-source model in aesthetic quality |
+| `pony-v7` | pony-v7 | — | Pony V7 is a finetuned text to image for superior aesthetics and prompt following. |
+| `flux-fast` | prunaai | — | Flux Fast by PrunaAI is the fastest Flux endpoint available, optimized for speed with PrunaAI's compression engine. Based on FLUX.1-dev. |
+| `hidream-l1-fast` | prunaai | — | HiDream L1 Fast is the fastest variant of HiDream-I1, optimized with PrunaAI for rapid image generation. Use HiDream L1 Fast with an API. |
+| `p-image` | prunaai | Image | P-Image by PrunaAI generates high-quality images in under a second with strong prompt adherence and text rendering. Use P-Image with an API. |
+| `p-image-lora` | prunaai | — | P-Image LoRA by PrunaAI lets you run trained LoRAs for customized image generation. Use P-Image LoRA with an API. |
+| `wan-2.2-image` | prunaai | — | PrunaAI's optimized Wan 2.2 generates cinematic 2 megapixel images in 3-4 seconds. |
+| `arrow-1.1` | quiverai | — | Generate clean, editable SVGs from text prompts. |
+| `arrow-1.1-max` | quiverai | — | Generate high-fidelity, detailed SVGs from text prompts. |
+| `qwen/qwen-image` | qwen | Image | Qwen Image open source model - fast, highly capable image generation model from Alibaba Qwen |
+| `recraft-v4` | recraft | — | Recraft V4 generates art-directed images with strong composition, accurate text rendering, and design taste built in. |
+| `recraft-v4-pro-text-to-vector` | recraft | — | Recraft V4 was developed with designers to bring true visual taste to AI image generation. |
+| `recraft-v4-text-to-vector` | recraft | — | Recraft V4 was developed with designers to bring true visual taste to AI image generation. |
+| `recraft-v4.1-pro-text-to-image` | recraft | — | Recraft V4.1 Pro pushes the V4.1 model into high-resolution territory — up to 2048×2048 and ultra-wide formats. |
+| `recraft-v4.1-pro-text-to-vector` | recraft | — | Recraft V4.1 Pro Vector generates large-format, fully editable SVGs with the structural clarity professional illustrators expect. |
+| `recraft-v4.1-text-to-image` | recraft | — | Recraft V4.1 builds on the design-first foundation of V4 with sharper prompt control and cleaner composition. |
+| `recraft-v4.1-text-to-vector` | recraft | — | Recraft V4.1 Vector turns prompts into fully editable SVGs with structured layers and clean geometry. |
+| `recraft-v4.1-utility-pro-text-to-image` | recraft | — | Recraft V4.1 Utility Pro pairs the high-resolution output of V4.1 Pro with a faster, cost-efficient runtime. |
+| `recraft-v4.1-utility-text-to-image` | recraft | — | Recraft V4.1 Utility is a faster, lighter variant of V4.1 made for high-volume creative workflows. |
+| `v4-style` | recraft | — | Generates raster images that hold a consistent style, from either a saved style ID or reference images attached directly. |
+| `v4-style-pro` | recraft | — | Generates raster images that hold a consistent style, from either a saved style ID or reference images attached directly. |
+| `v4-style-pro-text-to-vector` | recraft | — | Generates vector images that hold a consistent style, from either a saved style ID or reference images attached directly. |
+| `v4-style-text-to-vector` | recraft | — | Generates vector images that hold a consistent style, from either a saved style ID or reference images attached directly. |
+| `recraft-20b` | recraft-20b | — | Recraft 20b is a new and affordable text-to-image model. |
+| `recraft-v3` | recraft-ai | Image | Recraft V3 generates high-quality images and designs from text with accurate long text rendering, brand style customization, and raster or… |
+| `recraft-v3-svg` | recraft-ai | — | Recraft V3 SVG generates high-quality vector graphics, logos, and icons from text prompts. |
+| `recraft-v4-pro` | recraft-ai | — | Recraft V4 Pro generates high-resolution, art-directed images at 2048px+ with strong composition, text rendering, and design taste. |
+| `recraft-v4-pro-svg` | recraft-ai | — | Generate detailed, production-ready SVG vector graphics from text prompts. |
+| `recraft-v4-svg` | recraft-ai | — | Generate production-ready SVG vector graphics from text prompts. |
+| `2.1-edit` | reve | Image | Edit images from text prompts with strong prompt adherence, layout intelligence, and accurate text rendering using Reve 2.1 |
+| `juggernaut-flux-base` | rundiffusion | Image | Juggernaut Base Flux by RunDiffusion is a drop-in replacement for Flux [Dev] that delivers sharper details, richer colors, and enhanced… |
+| `juggernaut-flux-lightning` | rundiffusion | — | Juggernaut Lightning Flux by RunDiffusion provides blazing-fast, high-quality images rendered at five times the speed of Flux. |
+| `juggernaut-flux-lora` | rundiffusion | — | Juggernaut Base Flux LoRA by RunDiffusion is a drop-in replacement for Flux [Dev] that delivers sharper details, richer colors, and… |
+| `juggernaut-flux-pro` | rundiffusion | Image | Juggernaut Pro Flux by RunDiffusion is the flagship Juggernaut model rivaling some of the most advanced image models available, often… |
+| `rundiffusion-photo-flux` | rundiffusion | — | RunDiffusion Photo Flux provides insane realism. |
+| `sensenova-u1-infographic` | sensenova-u1-infographic | — | Generate Infographic Image with Sensenova U1 |
+| `stable-cascade` | stability-ai | — | Stable Cascade: Image generation on a smaller & cheaper latent space. |
+| `stable-diffusion-3.5-large` | stability-ai | Image | Stable Diffusion 3.5 Large generates high-resolution images with fine details, strong typography, and diverse artistic styles using the… |
+| `stable-diffusion-3.5-large-turbo` | stability-ai | Image | Stable Diffusion 3.5 Large Turbo generates high-resolution images in fewer steps with fine details and diverse artistic styles. |
+| `stable-diffusion-3.5-medium` | stability-ai | Image | Stable Diffusion 3.5 Medium is a 2.5 billion parameter image model with improved MMDiT-X architecture for high-quality, multi-resolution… |
+| `stable-diffusion-v3-medium` | stability-ai | — | Stable Diffusion 3 Medium (Text to Image) is a Multimodal Diffusion Transformer (MMDiT) model that improves image quality, typography… |
+| `stable-diffusion-v35-large` | stability-ai | — | Stable Diffusion 3.5 Large is a Multimodal Diffusion Transformer (MMDiT) text-to-image model that features improved performance in image… |
+| `hunyuan-image-3` | tencent | — | API for Tencent Hunyuan Image-3.0 |
+| `hunyuan-image-v2.1-text-to-image` | tencent | — | Use the amazing capabilities of hunyuan image 2.1 to generate images that express the feelings of your text. |
+| `hunyuan-image-v3-instruct-edit` | tencent | Image | Image editing endpoint for Hunyuan Image 3.0 Instruct. |
+| `hunyuan-image-v3-text-to-image` | tencent | — | Leverage the state-of-the-art capabilities of Hunyuan Image 3.0 to generate visual content that effectively conveys the messaging of your… |
+| `vecglypher` | vecglypher | — | Vector font generation with VecGlypher. |
+| `vidu-q2-text-to-image` | vidu | — | Use vidu Text-to-Image to turn your prompts into reality. |
+| `wan-2.7-image` | wan-video | Image | Generate images from text, edit existing images, and create coherent image sets with Alibaba's Wan 2.7 Image model. |
+| `wan-2.7-image-pro` | wan-video | Image | Generate 4K images from text, edit existing images, and create coherent image sets with Alibaba's Wan 2.7 Image Pro. |
+| `grok-imagine-image` | xai | Image | Grok Imagine Image is xAI&#x27;s fast text-to-image model with strong text rendering and style versatility. |
+| `grok-imagine-image-quality` | xai | Image |  |
+| `cogview4` | zhipu | — | Generate high quality images from text prompts using CogView4. Longer text prompts will result in better quality images. |
+| `glm-image` | zhipu | Image | Create high-quality images with accurate text rendering and rich knowledge details—supports editing, style transfer, and maintaining… |
+
+## Video → image (2)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `ffmpeg-api-extract-frame` | infery | Image | ffmpeg endpoint for first, middle and last frame extraction from videos |
+| `workflow-utilities-extract-nth-frame` | infery | Image | FFMPEG Untility for Extracting nth Frame |
+

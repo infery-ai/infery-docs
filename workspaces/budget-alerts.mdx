@@ -1,0 +1,58 @@
+---
+title: "Budget alerts"
+description: "Know before you run out. Notifications when spend crosses a credit threshold."
+---
+
+A budget alert watches how many credits the workspace has **spent** in a period and
+notifies you when that crosses a threshold you set. It is a tripwire, not a brake:
+nothing is blocked when it fires. What stops a runaway script is the balance itself —
+see [Running out](#running-out) below.
+
+## Setting an alert
+
+Settings → **Budget alerts** → **New alert**.
+
+- **Threshold** — an absolute number of credits spent
+- **Period** — `daily`, `weekly` or `monthly`. Spend is summed from the start of the current period: midnight, Sunday, or the 1st
+- **Channels** — which [notification channels](/workspaces/notifications) get pinged (email, Slack, Telegram, webhook). Leave it empty and the alert falls back to whatever the workspace has subscribed to the `budget.threshold_reached` event — and if that is nothing, to the owner's inbox. A budget alert is one of the few events that will email you without being asked to
+
+Thresholds are credits, not percentages. On a plan with 3 500 monthly credits, "warn me
+at three quarters" is an alert at `2625` credits, `monthly`.
+
+## Example
+
+Team plan, 8 000 monthly credits. Three alerts:
+
+| Threshold | Period | Channels |
+| --- | --- | --- |
+| 4 000 credits | monthly | Slack `#alerts` |
+| 6 000 credits | monthly | Slack `#alerts` + email |
+| 500 credits | daily | Slack `#alerts` — catches a bad loop the same day rather than at month end |
+
+A short-period alert beside a monthly one is the useful pattern: the monthly one tells
+you how the month is going, the daily one tells you something is wrong right now.
+
+## When it fires
+
+A cron checks every ten minutes. When period-to-date spend reaches the threshold the
+alert moves to **triggered**, sends once, and stays quiet — you are not paged every ten
+minutes for the rest of the period. It returns to **pending** on its own when the new
+period starts and spend drops back below the threshold.
+
+The notification names the workspace, the credits spent, the threshold and the period.
+
+## Running out
+
+Two emails are automatic — no alert to configure, and they go to the workspace owner:
+
+- **Low balance** — when the remaining balance falls below 10 % of what the plan allocated. Sent once per cycle, re-armed by a topup.
+- **Balance depleted** — when the balance reaches zero.
+
+With no credits left, requests fail with `403 insufficient_credits` until you top up or
+the monthly allowance renews. That refusal is unconditional — it is not a setting, and
+there is nothing to switch on for it.
+
+## Who can manage
+
+Owner, Admin and **Billing** roles can create, edit and delete alerts. Every member can
+see them; Developers and Viewers cannot modify them.

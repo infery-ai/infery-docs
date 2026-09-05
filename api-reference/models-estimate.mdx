@@ -1,0 +1,9 @@
+---
+title: "Estimate a model request"
+description: "POST /v1/models/{slug}/estimate"
+openapi: "openapi.json POST /v1/models/{slug}/estimate"
+---
+
+What one request to one model would cost, without running it.
+
+<Warning>An estimate is not a reservation. It cannot know how many tokens a model will actually emit, so treat it as an order of magnitude rather than a quote.</Warning>

@@ -1,0 +1,136 @@
+---
+title: "File attachments in chat"
+description: "PDFs, images, audio, video — inline or by file_id."
+---
+
+Chat completions accept rich content blocks: text, images, audio, files. You can pass them inline (URL or base64) or by reference to a [Files API](/api-reference/files) `file_id`.
+
+## When to inline vs. upload
+
+| You... | Use |
+| --- | --- |
+| Send a one-off image/PDF you already have at a URL | Inline `image_url` / `file` (data URI) |
+| Re-use the same document across many calls | Upload once, reference the `file_id` |
+| Need workspace-wide access (multiple keys, members) | Upload — files are workspace-scoped |
+| Care about idempotency on retries | Upload + `Idempotency-Key` |
+| Pass >20 MB | Upload — gateway request body cap is 20 MB |
+
+## Inline content blocks
+
+`messages[i].content` can be an array of typed blocks:
+
+```json
+{
+  "role": "user",
+  "content": [
+    {"type": "text", "text": "What's in this image?"},
+    {"type": "image_url", "image_url": {"url": "https://example.com/cat.jpg"}}
+  ]
+}
+```
+
+### Image (URL or base64)
+
+```json
+{"type": "image_url", "image_url": {"url": "data:image/png;base64,iVBORw0..."}}
+```
+
+`detail` (optional): `"low"` (faster, cheaper, ~85 tokens) or `"high"` (default for most models).
+
+### Audio (inline base64 only)
+
+```json
+{
+  "type": "input_audio",
+  "input_audio": {"data": "<base64>", "format": "wav"}
+}
+```
+
+`format`: `wav`, `mp3`, `pcm16`, `webm`. The model must support audio input — check `supportsAudioInput` on `GET /v1/models`.
+
+### File — inline
+
+```json
+{
+  "type": "file",
+  "file": {"data": "<base64>", "mime_type": "application/pdf", "filename": "report.pdf"}
+}
+```
+
+### File — by `file_id`
+
+```json
+{"type": "file", "file_id": "file_abc123..."}
+```
+
+The gateway resolves the id to bytes server-side, injects them into the provider call, and returns 400 if the id doesn't exist or belongs to another workspace.
+
+## PDFs
+
+Models with `supportsPdf: true` (Anthropic Claude, Google Gemini, OpenAI gpt-4o) read PDFs natively. For others, the gateway transparently converts each page to an image and prepends the extracted text — **you don't change a thing**, you just see a small `pdf_processing` line item on the next invoice.
+
+```json
+{
+  "messages": [{
+    "role": "user",
+    "content": [
+      {"type": "text", "text": "Summarise the financials"},
+      {"type": "file", "file_id": "file_pdf_xyz..."}
+    ]
+  }]
+}
+```
+
+## Vision
+
+Models with `supportsVision: true` accept arbitrary images. URL fetches happen on the gateway with a 10-second timeout — if your URL is slow or behind auth, prefer base64 or upload.
+
+## Quick recipes
+
+### Multi-image diff
+
+```python python
+client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "What's different between these two screenshots?"},
+            {"type": "image_url", "image_url": {"url": "https://app.com/v1.png"}},
+            {"type": "image_url", "image_url": {"url": "https://app.com/v2.png"}},
+        ],
+    }],
+)
+```
+
+### Reusable contract
+
+```python python
+contract = client.files.create(file=open("master_contract.pdf", "rb"), purpose="assistants")
+
+def ask(question: str):
+    return client.chat.completions.create(
+        model="claude-sonnet-4.5",
+        messages=[{
+            "role": "user",
+            "content": [
+                {"type": "text", "text": question},
+                {"type": "file", "file_id": contract.id},
+            ],
+        }],
+    )
+
+ask("What's the termination notice period?")
+ask("List every penalty clause.")
+```
+
+The same `file_id` is referenced from many calls; you upload once.
+
+## Limits
+
+- Per-call inline payload: **20 MB** (sum of all base64 blocks)
+- Per-file upload: plan-based (see [Plans](/billing/subscription-plans))
+- Image dimensions: rescaled by the provider — no need to pre-resize
+- PDF pages: practical cap ~100 (model context window limits dominate)
+
+See [Files API](/api-reference/files) for upload, list, delete, download, and quotas.

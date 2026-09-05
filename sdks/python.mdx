@@ -1,0 +1,529 @@
+---
+title: "Python SDK"
+description: "The official client for Python — every endpoint, typed, sync and async, with the deferred-job and retry behaviour handled for you."
+---
+
+```bash
+pip install infery
+```
+
+```python
+import os
+
+from infery import Infery
+
+client = Infery(api_key=os.environ["INFERY_API_KEY"])
+
+chat = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Say hello in one line."}],
+)
+
+print(chat.choices[0]["message"]["content"])
+```
+
+The async twin is the same call with `await` in front of it:
+
+```python
+import asyncio
+import os
+
+from infery import AsyncInfery
+
+
+async def main() -> None:
+    async with AsyncInfery(api_key=os.environ["INFERY_API_KEY"]) as client:
+        chat = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": "Say hello in one line."}],
+        )
+        print(chat.choices[0]["message"]["content"])
+
+
+asyncio.run(main())
+```
+
+One runtime dependency (`httpx`), Python 3.10 or newer. `Infery` and `AsyncInfery`
+are twins by construction — the same 43 methods, the same parameters, the same
+defaults — and the package's own surface-parity test fails if one grows a method
+the other does not. That is what makes "the same namespaces" checkable rather than
+aspirational, and it is why every example below has an `await` form you do not
+have to look up.
+
+## Why use it instead of the OpenAI SDK
+
+You can point the `openai` package at this gateway, and for chat and embeddings
+that works. Past those, three things it cannot do for you:
+
+**Reach endpoints it has no methods for.** Video, music, 3D, upscaling, workflows
+and capabilities are not in the OpenAI API. Neither is `POST /v1/images/edits` in
+the shape this gateway takes it — that endpoint accepts JSON with the image
+base64-encoded, while the OpenAI SDK posts multipart.
+
+**Collect a deferred result.** A slow media generation answers `504` with a
+`job_id` and keeps working — and keeps billing. An OpenAI SDK caller sees a
+failure and pays for nothing. This SDK collects the finished result from the job
+endpoint for you.
+
+**Retry the right things.** Rate limiting here answers `403`, not `429`, so the
+OpenAI SDK's backoff never fires. And a `500` on a billed `POST` must NOT be
+retried blind, because it may arrive after your balance was already debited.
+
+See [OpenAI SDK compatibility](/sdks/openai-compatibility) for the
+endpoint-by-endpoint answer.
+
+## What it covers
+
+Every published operation. The namespaces:
+
+| Namespace | Covers |
+| --- | --- |
+| `chat.completions` | `create()` and `stream()` |
+| `embeddings` | `create()` |
+| `media` | `generate()`, `wait()` — one call for every media modality, when the modality is a runtime value |
+| `images` | `generate()`, `edit()`, `upscale()` |
+| `videos` | `submit()`, `retrieve()`, `generate()` (submits and polls), `upscale()` |
+| `music` | `generate()`, `stream()` |
+| `audio` | `speech.create()`, `transcriptions.create()`, `transformations.create()` |
+| `three_d` | `generate()` |
+| `files` | `create()`, `list()`, `retrieve()`, `content()`, `delete()` |
+| `models` | `list()`, `estimate()` |
+| `tools` | `list()` |
+| `capabilities` | `run()` |
+| `workflows` | CRUD, `estimate()`, and `runs.create()` / `runs.stream()` / `runs.retrieve()` / `runs.logs()` / `runs.cancel()`, plus `templates.list()` / `templates.retrieve()` |
+| `jobs` | `retrieve()`, `wait()` — the durable media job behind every deferral |
+
+Two names differ from the TypeScript client, and both differ because Python does:
+`three_d` rather than `threeD`, and `files.delete()` rather than `files.del()` —
+`delete` is a reserved word in TypeScript and is not one here, so the workaround
+does not travel.
+
+Every signature and every type is on the
+[method reference](/sdks/python-reference), generated from the package's own
+source.
+
+## Streaming
+
+```python
+for chunk in client.chat.completions.stream(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Write a haiku about the sea."}],
+):
+    if chunk["choices"]:
+        print(chunk["choices"][0]["delta"].get("content", ""), end="")
+```
+
+The three streaming methods — `chat.completions.stream`, `music.stream` and
+`workflows.runs.stream` — are generators. Nothing is requested until you start
+iterating, so an unconsumed one spends nothing, which is the safe direction for a
+call billed per step. On `AsyncInfery` they are async generators: `async for`,
+never `await`.
+
+The last chunk before the stream ends carries `credits_used` and an **empty**
+`choices` list. It is yielded like any other chunk rather than hidden, because it
+is the only place the cost of a streamed call appears — which is also why the
+guard above tests `chunk["choices"]` rather than indexing it.
+
+A stream cut before its `[DONE]` terminator raises `StreamTruncatedError` *after*
+delivering the chunks that did arrive. Catch it if partial output is useful, but
+knowingly: the block most often cut is the trailing usage chunk.
+
+## One call for every media modality
+
+Each media modality also has its own method — `images.generate`,
+`videos.generate`, and the rest below. That is the wrong shape when the modality
+is a **runtime value**: a model picked from the catalogue, a choice in a UI, a row
+in a queue. Then every call site needs an `if` chain, and every one of those has
+to be edited when a modality is added.
+
+`media.generate()` takes the modality as data:
+
+```python
+# `modality` is exactly what GET /v1/models reports as `_infery.modality`,
+# so it can come straight off a model you looked up.
+result = client.media.generate(
+    modality="video",  # "image" | "video" | "audio" | "music" | "object_3d" | "upscale"
+    model="veo-3.1",
+    prompt="a drone shot over a coastline",
+    duration=8,  # model-specific params pass straight through
+)
+
+print(result.artifacts[0].url)
+```
+
+Switch the modality and nothing else changes:
+
+```python
+def make(job: dict[str, str]) -> list[str | bytes | None]:
+    result = client.media.generate(**job)
+    return [a.url or a.b64 or a.data for a in result.artifacts]
+```
+
+It waits by default, which is what lets one code path serve every modality —
+images answer in seconds, video takes minutes, and a caller that had to know
+which is which would be branching again.
+
+### `on_progress` reports for video only
+
+This one is a trap rather than a nuance, so it is here rather than in a footnote.
+`media.generate(on_progress=...)` is accepted for all six modalities and **fires
+for `video` alone**. Video is the only modality whose generation this method polls
+itself; the other five poll inside their per-modality resource — `images.generate`,
+`music.generate`, `three_d.generate`, `videos.upscale`, `audio.speech.create` —
+and none of those takes a callback.
+
+```python
+# Reports.
+client.media.generate(
+    modality="video",
+    model="veo-3.1",
+    prompt="a reef",
+    on_progress=lambda p: print(p.status, p.progress),
+)
+
+# Accepted, never called.
+client.media.generate(
+    modality="image",
+    model="flux-pro",
+    prompt="a reef",
+    on_progress=lambda p: print(p.status, p.progress),
+)
+```
+
+`media.wait(on_progress=...)` reports for **all six**, with the status and the
+percentage the polled job reported — both job endpoints declare `progress` as a
+required field. So when you need progress for something other than video, take
+the handle and collect it:
+
+```python
+started = client.media.generate(modality="image", model="flux-pro", prompt="a topographic map", background=True)
+
+# `modality` is required here too: video jobs and every other modality's jobs
+# live at different endpoints, and a job id does not say which it is.
+done = client.media.wait(modality="image", job_id=started.job_id, on_progress=print)
+```
+
+### The result shape
+
+```python
+@dataclass(frozen=True)
+class MediaResult:
+    modality: MediaModality
+    artifacts: list[MediaArtifact]
+    created: int | None
+    credits_used: float | None
+    job_id: str | None            # background=True only
+    artifacts_expired: bool | None
+    raw: Any                      # the untouched per-modality payload
+```
+
+At most one of `url`, `b64` and `data` is set on an artifact, and which one is a
+property of the endpoint rather than of your request:
+
+| Field | When |
+| --- | --- |
+| `url` | every asynchronous modality, and images unless you asked for base64 |
+| `b64` | images with `response_format="b64_json"`, and inline music tracks |
+| `data` | `audio` only — `POST /v1/audio/speech` answers with an audio body, so there is nothing to link to |
+
+`data`, not `bytes`, because `bytes` is a builtin. "At most", not "exactly", is
+the enforceable half: the SDK refuses to construct an artifact with two of them
+set, because two could only ever be its own mapping bug, while zero is what a
+response with an artifact and no deliverable maps to — and raising there would
+cost you a result you have already been billed for.
+
+`upscale` routes on the source, not the model: pass `image_url` or `video_url`.
+The gateway refuses an image upscaler on the video route and vice versa, and the
+model slug alone does not say which it is, so the SDK cannot guess — it asks.
+
+### What it gives up
+
+Worth seeing before you choose it, because the named methods are still there and
+still better when you know the modality:
+
+- **Named-argument checking beyond `modality` and `model`.** A misspelled
+  `duration_secnods` reaches the wire, where the gateway ignores it and bills the
+  model's default length. `videos.generate()` names `prompt` and `model`, so it
+  refuses a call missing one before it is sent.
+- **Fields with no cross-modality meaning** — `revised_prompt`, `lyrics`,
+  `resolution`. They are on `result.raw`, which holds the untouched per-modality
+  value rather than a re-parse of it.
+
+Full signatures and every field of `MediaResult` are on the
+[reference](/sdks/python-reference#clientmedia).
+
+## Media that takes minutes
+
+Generation is submitted and awaited inside one request. If the gateway's own wait
+runs out it answers `504` with a job id and keeps working — the SDK collects the
+result:
+
+```python
+# Waits, and collects the result if the gateway defers. Either way you get an image.
+image = client.images.generate(model="dall-e-3", prompt="an isometric dashboard")
+print(image.data[0]["url"])
+```
+
+If you would rather manage the job yourself, ask for the handle. `background=True`
+is accepted on ten methods, and on nine of them the handle **arrives as an
+exception rather than as a return value**: `collect_deferred` re-raises the
+gateway's own `JobDeferredError` instead of polling it to completion.
+
+```python
+from infery import JobDeferredError
+
+try:
+    client.images.generate(model="flux-pro", prompt="a topographic map", background=True)
+except JobDeferredError as deferred:
+    job = client.jobs.wait(deferred.job_id, interval=5.0, max_wait=600.0)
+    print(job.data[0]["url"])
+```
+
+`media.generate` is the tenth and the exception: it catches the deferral and
+answers with a `MediaResult` whose `job_id` is set and whose `artifacts` are
+empty, which is what lets one code path serve every modality.
+
+```python
+started = client.media.generate(modality="image", model="flux-pro", prompt="a map", background=True)
+done = client.media.wait(modality="image", job_id=started.job_id)
+```
+
+**This is a divergence from the TypeScript SDK, not a slip.** There,
+`background: true` returns a result object carrying `job_id`; here the exception
+is the carrier. It follows that a `JobStatus` in a return union —
+`ImageResponse | JobStatus` and its siblings — is always a **collected** result:
+the gateway deferred, the SDK polled to completion, and that is what it finished
+with. It is never a handle you still have to poll.
+
+`jobs.wait` raises `JobFailedError` when the job reaches `failed`, and
+`JobTimeoutError` when `max_wait` elapses first. A `JobTimeoutError` is the client
+giving up on watching, not the server giving up on running: the job was never
+cancelled and is still billed, so poll it again later rather than starting a
+second one.
+
+Video generation is asynchronous by design and has its own poll:
+
+```python
+video = client.videos.generate(model="veo-3", prompt="a drone shot over a coastline")
+# A finished video carries its file on `result`, not on `data[]`.
+print(video.result["url"])
+```
+
+Two deliberate divergences from the TypeScript SDK live here, both recorded rather
+than tidied into consistency:
+
+- `audio.transcriptions.create` is the only deferrable method whose return type
+  excludes `JobStatus`. It maps the deferred job's own payload back into a
+  `TranscriptionResult`, because the deliverable is text and the durable path
+  stores it as text rather than as a file artifact — which is what the TypeScript
+  SDK does too.
+- It nonetheless accepts `background=True`, where TypeScript deliberately does
+  not. That is coherent, and it is the same mechanism as above:
+  `JobDeferredError.job_id` carries here what TypeScript had to encode in a
+  return type.
+
+## Workflows
+
+```python
+run = client.workflows.runs.create(
+    workflow_id="wf_abc123",
+    input={"topic": "quarterly summary"},
+)
+print(run.status, run.creditsUsed)
+```
+
+`workflow_id`, not `pipeline_id`. The request body says `pipeline_id` because the
+rename stopped at the HTTP boundary; this SDK translates at its own boundary
+instead of making you type the old name. A raw `pipeline_id` still reaches the
+wire through `**params` — that is what forward compatibility costs — but passing
+both is **refused before the request is built**, because `**params` is spread last
+and the raw one would silently win, starting and billing a workflow other than
+the one you named.
+
+To watch a run as it happens, `runs.stream()` yields one tagged event per step.
+Fourteen shapes, all discriminated on `type`, and the fourteenth is an escape
+hatch so a new gateway event cannot break an existing loop:
+
+```python
+for event in client.workflows.runs.stream(workflow_id="wf_abc123", input={}):
+    if event["type"] == "step.started":
+        print("running", event["stepId"])
+    elif event["type"] == "step.completed":
+        print("done", event["stepId"], event["creditsUsed"])
+    elif event["type"] == "pipeline.completed":
+        print("total", event["creditsUsed"])
+    elif event["type"] == "unknown_event":
+        print("new event", event["name"])
+```
+
+`runs.stream()` fixes `mode="stream"`. A `mode=` arriving through `**params` is
+refused rather than forwarded: the gateway would run and settle the whole
+workflow synchronously, and the SDK would then read that JSON body as SSE and
+report a cut connection about a run you paid for in full.
+
+## Errors
+
+```python
+from infery import APIError, ConflictError, InsufficientCreditsError
+
+try:
+    client.chat.completions.create(model="gpt-4o", messages=messages)
+except InsufficientCreditsError:
+    ...  # 402, or any status with `insufficient_credits`. Top up; do not retry.
+except ConflictError as err:
+    if err.code == "upload_in_progress":
+        ...  # Retry in a moment.
+    raise
+except APIError as err:
+    print(err.status, err.code, err.request_id)
+```
+
+Every error the SDK raises descends from `InferyError`, so one `except` catches
+all of them — including the ones that are not `APIError`: `APIConnectionError`
+and `APITimeoutError` (no response arrived), `StreamTruncatedError` (a stream
+ended without `[DONE]`), and `JobFailedError` / `JobTimeoutError` (a polled job).
+
+Status to class: `AuthenticationError` (401, and a 403 that is not a rate limit),
+`InsufficientCreditsError` (402), `RateLimitError` (403 `rate_limit_exceeded`),
+`NotFoundError` (404), `ConflictError` (409), and `JobDeferredError` for any
+status whose body carries a `job_id` — checked first, because a job id means the
+work exists whatever status carried it. Anything else lands on `APIError` itself,
+which carries `status`, `code`, `message`, `request_id` and the parsed `body`.
+
+`err.request_id` is the handle support uses to attribute a charge — quote it when
+asking about a bill.
+
+Branch on `err.code` when the class is not specific enough. `ConflictError` is the
+clearest case: `upload_in_progress` means retry in a moment, while
+`idempotency_in_progress` means a billed run is already in flight and a retry
+could start a second one.
+
+## Bringing your own httpx client
+
+Pass `http_client` to reuse a connection pool, set proxies or limits, mount a
+custom transport, or hand the SDK the same client the rest of your service
+already uses:
+
+```python
+import httpx
+
+from infery import Infery
+
+pool = httpx.Client(
+    limits=httpx.Limits(max_connections=50, max_keepalive_connections=10),
+    proxy="http://proxy.internal:3128",
+)
+
+client = Infery(api_key=os.environ["INFERY_API_KEY"], http_client=pool)
+```
+
+Three things follow from doing that, and they are the reason it is a documented
+knob rather than an accident:
+
+**A client given an `http_client` never closes it.** The caller owns what the
+caller made, so `close()` on the SDK client leaves your pool open for whatever
+else is using it. A client that made its own closes that one.
+
+**Your timeouts win where they are set.** The SDK passes its per-attempt
+`timeout` on each request, so that still applies; the pool's connect limits,
+retries at the transport layer and proxy configuration are yours.
+
+**The base URL still comes from the SDK.** `base_url` is applied per request, not
+baked into the pool, so one `httpx.Client` can serve this SDK and your own calls
+elsewhere.
+
+For `AsyncInfery`, pass an `httpx.AsyncClient` — the annotation is on the
+constructor, and handing it a synchronous one is a type error rather than a
+runtime surprise.
+
+## What `async with` does to the pool
+
+`AsyncInfery` is an async context manager, and leaving the block calls
+`aclose()`:
+
+```python
+async with AsyncInfery(api_key=key) as client:
+    ...
+# The connection pool is closed here. Reusing `client` now fails.
+```
+
+That closes the `httpx.AsyncClient` the SDK created — every keep-alive connection
+in the pool goes with it. So `async with` belongs around the **lifetime of the
+work**, not around each call: a client per request means a fresh TLS handshake per
+request, and a gateway conversation is mostly TLS setup on short calls.
+
+In a long-lived service, build one client at startup and close it at shutdown:
+
+```python
+client = AsyncInfery(api_key=key)
+try:
+    await serve(client)
+finally:
+    await client.aclose()
+```
+
+`aclose`, not `close`, on the async side: closing an `httpx.AsyncClient` is a
+coroutine, and a method named `close` that has to be awaited is the shape that
+gets called without `await` and silently leaks the pool. `Infery` has `close()`
+and a plain `with` block for the same reasons in reverse.
+
+If you passed your own `http_client`, `async with` still exits cleanly and your
+pool stays open — see above.
+
+## Timeouts, polls and cancellation
+
+Say the numbers rather than infer them from a stack trace:
+
+| Knob | Default | Where you set it |
+| --- | --- | --- |
+| `timeout` | **310.0 s** | client only — one per-attempt HTTP timeout |
+| `max_retries` | **2** | client only — attempts on top of the first |
+| `max_wait` | **600.0 s** | client, and overridable per call on the deferrable methods — the ceiling for collecting a deferred job |
+| `interval` | **5.0 s** | per call on the deferrable methods — the poll period |
+
+`timeout` is 310 seconds deliberately: above the gateway's own 300-second wait for
+a media generation, so a slow one reaches the deferral handoff instead of being
+abandoned while it keeps billing. That is the right ceiling for generation and far
+too long for a catalogue read — construct a second client for short calls, or pass
+your own `httpx` client.
+
+`background=True` hands back **the job, not a result**, and does it by raising:
+`JobDeferredError` with a `job_id` on nine of the ten deferrable methods, or a
+`MediaResult` carrying only `job_id` returned from `media.generate`. Nothing has
+settled at that point, so there is no `credits_used` to report and no artifacts
+to hand over — collect it with `jobs.wait` or `media.wait`.
+
+Cancellation is the one place the two clients genuinely differ, because Python's
+mechanisms differ. On `AsyncInfery`, cancel the task — `asyncio.timeout`,
+`task.cancel()`, or leaving an `async with` block — and the request raises
+`CancelledError` at the next await point. On `Infery` there is no equivalent: the
+call returns when it returns, bounded by `timeout` and `max_wait`.
+
+Either way, cancelling does not cancel work the gateway has already started, and
+does not refund it. An aborted generation is still billed.
+
+## Retries
+
+Connection failures, `408` / `429` / `500` / `502` / `503` and
+`409 upload_in_progress` are retried with a short backoff — 0.5 s then 1 s —
+**but only** on a `GET` or on the two endpoints that honour `Idempotency-Key`
+(`POST /v1/files`, `POST /v1/workflows/runs`). On every other billed `POST`, a
+`500` is not retried: the gateway collapses several distinct upstream failures,
+including ones that happen after your balance was debited, into the same generic
+`500`, and retrying blind risks paying twice.
+
+The backoff is short on purpose. The retryable set is GETs and two idempotent
+POSTs, none of which is worth waiting seconds for.
+
+Two things are never retried, whatever the method. `403 rate_limit_exceeded` is a
+60-second sliding window that counts refused requests too, so retrying inside it
+pushes your own recovery further out. And any response carrying a `job_id` means
+the work exists and is already billed — the SDK collects it rather than paying for
+a second one.
+
+## Reference
+
+- Package: [`infery`](https://pypi.org/project/infery/)
+- [Method reference](/sdks/python-reference) — every signature, every type, generated from the package source
+- Source: [`sdks/python`](https://github.com/infery-ai/infery/tree/main/sdks/python)
+- [Endpoint-by-endpoint OpenAI SDK compatibility](/sdks/openai-compatibility)

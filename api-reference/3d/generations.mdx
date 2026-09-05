@@ -1,0 +1,9 @@
+---
+title: "Generate a 3D model"
+description: "POST /v1/3d/generations"
+openapi: "openapi.json POST /v1/3d/generations"
+---
+
+Produces a mesh from a text prompt, a reference image, or both, and returns it on the same request.
+
+At least one of `prompt` and `image_url` must be present. A prompt longer than 5000 characters is refused.

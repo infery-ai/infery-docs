@@ -1,0 +1,158 @@
+---
+title: "Embeddings & RAG"
+description: "From a folder of documents to a working retrieval-augmented chat — end to end."
+---
+
+Embeddings turn text into vectors so you can search by meaning. Combined with chat, that's RAG: retrieve relevant chunks, stuff them into the prompt, generate the answer.
+
+This guide is opinionated. For the raw endpoint, see [Embeddings API](/api-reference/embeddings).
+
+## The pipeline
+
+```
+documents → chunk → embed → store with vectors
+                                    ↓
+        user question → embed → similarity search → top-k chunks → chat completion → answer
+```
+
+Five components: a chunker, an embedding model, a vector store, a retriever, a chat model.
+
+## 1. Pick an embedding model
+
+| Model | Dim | Strong for | Cost (per 1M tokens) |
+| --- | --- | --- | --- |
+| `text-embedding-3-small` | 1536 (reducible) | Default; cheap, fast | $ |
+| `text-embedding-3-large` | 3072 (reducible) | Highest English quality | $$ |
+| `gemini-embedding-001` | 3072 | 100+ languages | $ |
+| `qwen-text-embedding-v4` | see catalog | Code, multilingual | $ |
+
+Higher dimensions ≠ always better — they cost more memory in your vector store. With OpenAI v3 models you can request a smaller `dimensions` (e.g. 768 or 512) and get most of the quality.
+
+```python python
+emb = client.embeddings.create(
+    model="text-embedding-3-small",
+    input=texts,           # list of strings
+    dimensions=512,        # optional, MRL-truncated
+)
+```
+
+<Tip>
+**Pick once, stick with it.** Vectors from different models live in different spaces and can't be compared. Migrating means re-embedding your entire corpus.
+</Tip>
+
+## 2. Chunk the documents
+
+Don't embed whole documents — embed chunks of ~200–500 tokens with ~50–100 token overlap. Smaller chunks = sharper retrieval; larger = more context per hit.
+
+```python python
+def chunk(text: str, size: int = 400, overlap: int = 80) -> list[str]:
+    words = text.split()
+    out = []
+    i = 0
+    while i < len(words):
+        out.append(" ".join(words[i : i + size]))
+        i += size - overlap
+    return out
+```
+
+For mixed content (markdown, code, PDFs), chunk by structure first (headings, function boundaries), then by size.
+
+## 3. Embed in batches
+
+The endpoint accepts up to **2 048 strings per call**. Batch hard:
+
+```python python
+def embed_all(texts: list[str], batch: int = 256) -> list[list[float]]:
+    out = []
+    for i in range(0, len(texts), batch):
+        resp = client.embeddings.create(
+            model="text-embedding-3-small",
+            input=texts[i : i + batch],
+        )
+        out.extend(d.embedding for d in resp.data)
+    return out
+```
+
+Embedding 100k chunks at 256/batch ≈ 400 requests, well under any plan's RPM.
+
+## 4. Store with metadata
+
+Use a vector store that supports metadata filtering — pgvector, Qdrant, Pinecone, Weaviate, Chroma. Always store:
+
+```json
+{
+  "id": "doc42_chunk7",
+  "vector": [0.014, -0.221, ...],
+  "text": "...the original chunk...",
+  "doc_id": "doc42",
+  "title": "Q3 Financial Report",
+  "url": "https://...",
+  "tokens": 412,
+  "indexed_at": "2026-04-15T10:00:00Z"
+}
+```
+
+The text itself goes into the prompt later — don't lose it.
+
+## 5. Query
+
+Embed the user's question with **the same model**, then pull top-k:
+
+```python python
+def search(question: str, k: int = 6) -> list[dict]:
+    q = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=question,
+    ).data[0].embedding
+    return vector_store.query(vector=q, top_k=k, include_metadata=True)
+```
+
+Tune `k` empirically — usually 4–8. Below 3, you miss relevant chunks; above 10, you push noise into the prompt.
+
+## 6. Generate the answer
+
+Format retrieved chunks into the prompt with clear separators and source citations:
+
+```python python
+def answer(question: str) -> str:
+    hits = search(question, k=6)
+    context = "\n\n---\n\n".join(
+        f"[{i+1}] {h['text']}\n(Source: {h['title']})"
+        for i, h in enumerate(hits)
+    )
+    resp = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content":
+                "Answer using ONLY the provided context. "
+                "Cite sources as [1], [2]. "
+                "If the context doesn't contain the answer, say so."},
+            {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {question}"},
+        ],
+    )
+    return resp.choices[0].message.content
+```
+
+## Improvements that earn their cost
+
+- **Hybrid search** — combine vector similarity with BM25 keyword scores. ~10–15% recall lift on technical content.
+- **Re-ranking** — fetch top-30 by vector, re-rank to top-6 with a cross-encoder (coming soon: dedicated reranker endpoint, see [changelog](/reference/changelog)).
+- **Query rewriting** — for chat, ask the LLM to rewrite the user's follow-up into a standalone search query before embedding.
+- **Multi-query** — generate 3–5 paraphrases of the question, search each, dedupe results. Catches lexical mismatches.
+
+## Common mistakes
+
+- **Mixing embedding models** in the same store — vectors don't compare. Re-embed everything when you switch.
+- **Embedding raw HTML/PDF bytes** — extract clean text first.
+- **Chunks too large** — model only "sees" the centre; edges are wasted.
+- **No metadata filter** — searching all customers' data for one customer's question. Always filter by tenant first.
+- **Forgetting to track `indexed_at`** — when documents update, you need to know what's stale.
+
+## Cost ballpark
+
+For 100 000 chunks × 400 tokens = 40 M tokens:
+
+- Index once with `text-embedding-3-small` (≈ $0.02 / 1 M tokens) → **~$0.80**
+- Query at 1 query / sec (≈ 50 tokens each) → **~$0.005 / day**
+
+Embeddings are the cheapest part of any RAG system. Spend the budget on the chat model.

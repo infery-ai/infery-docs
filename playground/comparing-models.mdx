@@ -1,0 +1,75 @@
+---
+title: "Comparing models"
+description: "Run one prompt across several models side by side, and optionally have a model review the results."
+---
+
+Open the compare panel with the **Compare** icon in the message bar, pick the
+models, then type your prompt and send it as usual. Each model answers
+independently and its result appears as its own card the moment it is ready.
+
+<Frame caption="The compare panel, open above the composer: what you want, which models, and whether a judge should pick a winner — all set before you type the prompt">
+  <img className="block dark:hidden" src="/samples/chat-compare-request-light.webp" alt="The compare panel headed Compare models, with an X to close it. Under I want, Chat is the selected tab alongside Image, Video, Audio (speech) and Music, with a hint reading Chat and text models — respond to a prompt. A Select models field shows 2 of 5, with Claude Opus 5 and Claude Sonnet 5 chosen as removable chips. Review the results is an unchecked checkbox. Along the bottom, an estimated cost of 5.12 credits sits opposite a reminder to type the prompt below, then send." />
+  <img className="hidden dark:block" src="/samples/chat-compare-request-dark.webp" alt="The compare panel headed Compare models, with an X to close it. Under I want, Chat is the selected tab alongside Image, Video, Audio (speech) and Music, with a hint reading Chat and text models — respond to a prompt. A Select models field shows 2 of 5, with Claude Opus 5 and Claude Sonnet 5 chosen as removable chips. Review the results is an unchecked checkbox. Along the bottom, an estimated cost of 5.12 credits sits opposite a reminder to type the prompt below, then send." />
+</Frame>
+
+That panel is the half of a comparison this page had never shown a picture of
+— the request. Fill in what you want and which models before you type the
+prompt; the result it produces is what the next screenshot shows.
+
+<Frame caption="One prompt, three models, and a verdict — each card carries what that model cost and how long it took">
+  <img className="block dark:hidden" src="/samples/chat-comparison-light.webp" alt="A chat comparing three models on a one-line opening-shot description. Three answer cards are labelled GPT-5.5 (0.412 cr, 4.8s), Claude Opus 4.7 (0.688 cr, 6.1s) and GPT-5.4 (0.221 cr, 3.0s), each holding a single generated sentence. Below them a Verdict panel names the second answer best." />
+  <img className="hidden dark:block" src="/samples/chat-comparison-dark.webp" alt="A chat comparing three models on a one-line opening-shot description. Three answer cards are labelled GPT-5.5 (0.412 cr, 4.8s), Claude Opus 4.7 (0.688 cr, 6.1s) and GPT-5.4 (0.221 cr, 3.0s), each holding a single generated sentence. Below them a Verdict panel names the second answer best." />
+</Frame>
+
+Every card shows what that model charged and how long it took, so a comparison
+answers two questions at once: which answer is better, and what the better
+answer costs. The cheapest and the slowest are rarely the same model.
+
+## What you can compare
+
+- Between **2 and 5 models** per comparison.
+- Pick what you want out (**Chat**, **Image**, **Video**, …) and, where it
+  matters, what you are starting from (a prompt, or an image you attach).
+  Changing either one clears the selection — models of one kind cannot be
+  compared against models of another.
+- When the models take an image — editing one, upscaling one, analysing one, or
+  animating one into a video — attach it first. Every model gets the same image,
+  which is the point of the comparison.
+- Some combinations are not offered because we cannot run them honestly: a
+  video-from-video comparison, for instance, would quietly fall back to
+  generating from your prompt instead of using your video.
+
+## Reviewing the results
+
+Turn on **Review the results** to have a model judge the answers and name a
+winner. For a text comparison the judgement arrives as a **Verdict** panel
+right under the cards, as in the screenshot above, where the winner is picked
+for naming what the camera is already doing — so the line and the picture
+agree — rather than for being the strongest sentence in isolation. For a media
+comparison (image, video, audio, …) the verdict arrives as its own message
+below the cards instead, not a panel attached to them.
+
+Leave the selector on *Default* to use the agent's own model, or pick any chat
+model. For an image comparison or image edit, the list is limited to models
+that can see images, since the judge is actually shown the pictures it is
+scoring. For any other kind of media comparison, no chat model can watch or
+listen to the outputs at all, so the judge is told this directly and compares
+by price, speed and reputation instead — its answer says so explicitly rather
+than pretending to have seen or heard anything.
+
+For a media comparison, whatever you choose here is final for that turn: with
+Review on, the judgement runs right away; with Review off, you will not be
+asked again afterwards. This is deliberate — you already answered the question
+in the form.
+
+## Cost
+
+The panel shows an approximate total before you send: every selected model runs,
+so a comparison costs about the sum of its parts. Video comparisons, and any
+comparison over the confirmation threshold, ask you to confirm the price before
+anything runs.
+
+## What a comparison is not
+
+A failed model stays a failed card. Nothing is silently re-run on a different
+model — you picked these models, so these are the ones that answer.

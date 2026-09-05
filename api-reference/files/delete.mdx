@@ -1,0 +1,12 @@
+---
+title: "Delete a file"
+description: "DELETE /v1/files/{fileId} — soft-delete in DB, hard-delete in GCS."
+openapi: "openapi.json DELETE /v1/files/{fileId}"
+---
+
+```bash
+curl -X DELETE https://api.infery.ai/v1/files/file_abc123... \
+  -H "Authorization: Bearer $INFERY_API_KEY"
+```
+
+Delete is **soft in DB + hard in GCS** — bytes are unrecoverable immediately. The id remains in audit logs but `GET /v1/files/{fileId}` will return 404 afterwards.

@@ -1,0 +1,154 @@
+---
+title: "Tool calling"
+description: "Let the model invoke functions, look up data, and act on the world."
+---
+
+Tool calling lets the model decide when to call a function you defined, with arguments it generates from the conversation. You receive the call, run the function, and feed the result back into the chat.
+
+The contract is **identical to OpenAI's** — works with every chat-capable model that supports tools (OpenAI, Anthropic, Google, xAI, OSS).
+
+## The shape
+
+```json
+{
+  "model": "gpt-4o",
+  "messages": [{"role": "user", "content": "Weather in Lisbon?"}],
+  "tools": [{
+    "type": "function",
+    "function": {
+      "name": "get_weather",
+      "description": "Get the current weather in a city",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "city": {"type": "string"},
+          "unit": {"type": "string", "enum": ["c", "f"]}
+        },
+        "required": ["city"]
+      }
+    }
+  }]
+}
+```
+
+If the model decides to call your tool, the response contains:
+
+```json
+{
+  "choices": [{
+    "message": {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [{
+        "id": "call_abc123",
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "arguments": "{\"city\":\"Lisbon\",\"unit\":\"c\"}"
+        }
+      }]
+    },
+    "finish_reason": "tool_calls"
+  }]
+}
+```
+
+## The loop
+
+Tool calling is a loop: model proposes call → you execute → you append the result → model continues.
+
+```python python
+def get_weather(city: str, unit: str = "c") -> dict:
+    return {"city": city, "temp": 18, "unit": unit}
+
+messages = [{"role": "user", "content": "Weather in Lisbon and Paris?"}]
+tools = [...]  # as above
+
+while True:
+    resp = client.chat.completions.create(model="gpt-4o", messages=messages, tools=tools)
+    msg = resp.choices[0].message
+    messages.append(msg.model_dump(exclude_none=True))
+
+    if not msg.tool_calls:
+        print(msg.content)
+        break
+
+    for call in msg.tool_calls:
+        args = json.loads(call.function.arguments)
+        result = get_weather(**args)
+        messages.append({
+            "role": "tool",
+            "tool_call_id": call.id,
+            "content": json.dumps(result),
+        })
+```
+
+The model can request **multiple tool calls in one turn**. Always iterate `tool_calls` and append one `tool` message per `tool_call_id`.
+
+## Forcing or banning tools
+
+`tool_choice` controls the model's freedom:
+
+```json
+"tool_choice": "auto"    // default — model decides
+"tool_choice": "none"    // never call any tool
+"tool_choice": "required"// must call at least one tool
+"tool_choice": {"type":"function","function":{"name":"get_weather"}}  // must call this one
+```
+
+Use `required` for deterministic agents (e.g. "always plan before answering"); use `none` when you want a plain text reply mid-conversation.
+
+## Streaming tool calls
+
+When `stream: true`, tool call arguments arrive as **incremental string fragments** keyed by `tool_calls[i].index`. Concatenate per index:
+
+```typescript node
+const buffers: Record<number, { name?: string; args: string }> = {};
+
+for await (const event of stream) {
+  const calls = event.choices[0]?.delta?.tool_calls ?? [];
+  for (const c of calls) {
+    const slot = (buffers[c.index!] ??= { args: '' });
+    if (c.function?.name) slot.name = c.function.name;
+    if (c.function?.arguments) slot.args += c.function.arguments;
+  }
+  if (event.choices[0]?.finish_reason === 'tool_calls') {
+    // every slot now has full JSON in slot.args — JSON.parse and dispatch
+  }
+}
+```
+
+## Schema tips
+
+- Mark every truly-required arg in `required`. Models honour it.
+- Keep `description` short and action-oriented ("Look up customer by email") — it shows up in the model's reasoning budget.
+- Prefer `enum` over free strings for finite domains. It cuts hallucinated values.
+- Nested objects work, but flatter is faster: less context, fewer formatting errors.
+- Use `additionalProperties: false` if you want strict mode (with `"strict": true` on response_format) to refuse extra keys.
+
+## Cross-provider quirks
+
+We normalise the surface, but a few sharp edges leak through:
+
+- **Anthropic** models charge for the whole tool schema in input tokens — keep schemas small.
+- **Google Gemini** sends each call's `arguments` as ONE complete fragment rather than a stream of partial JSON, so a call can be finished in a single chunk. Accumulate per `index` anyway — the code above handles both.
+- **OSS / smaller models** may invent tool names. Validate `function.name` against your registry before invoking.
+
+`tools`, `tool_choice` and the `tool_calls` you get back are the same on every
+provider: we translate them into each provider's native format (Anthropic's
+`input_schema`, Gemini's `function_declarations`/`toolConfig`) rather than
+prompting the model to fake a call. Nothing here is emulated in the prompt.
+
+## Errors
+
+If your handler throws, return the error as the tool result — don't crash the loop:
+
+```python python
+try:
+    result = get_weather(**args)
+except Exception as e:
+    result = {"error": str(e)}
+messages.append({"role": "tool", "tool_call_id": call.id, "content": json.dumps(result)})
+```
+
+The model will see the error and either retry with different args or apologise to the user.
