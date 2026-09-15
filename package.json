@@ -1,0 +1,15 @@
+{
+  "name": "@infery/docs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Infery.ai user documentation (Mintlify)",
+  "scripts": {
+    "dev": "mint dev --port 3004",
+    "update": "mint update",
+    "build": "mint build",
+    "broken-links": "mint broken-links"
+  },
+  "devDependencies": {
+    "mint": "^4.2.527"
+  }
+}

@@ -1,0 +1,68 @@
+---
+title: "Introduction"
+description: "Infery.ai is an AI Studio for text, images, voice and video — drop-in for the OpenAI SDK where OpenAI has a route, and its own API where it does not."
+---
+
+Infery.ai is a **cloud workspace for working with AI** — chat, image generation, voice,
+video and music — across frontier and open-source models, with a single credit
+balance and one API key.
+
+<CardGroup cols={2}>
+  <Card title="Studio" href="/playground/overview" icon="comments">
+    A full UI for chatting with models, generating images and voice, organising
+    conversations into projects and sharing with teammates.
+  </Card>
+  <Card title="API" href="/api-reference/introduction" icon="code">
+    A REST API on `/v1`. Chat, embeddings, images and files speak the OpenAI wire
+    format; video, music, 3D and the rest are ours.
+  </Card>
+  <Card title="Workflows" href="/workflows/overview" icon="diagram-project">
+    Chain model calls, tools and HTTP requests into one server-side definition —
+    ten steps become one request, priced before you run it.
+  </Card>
+  <Card title="Workspaces" href="/workspaces/members-and-roles" icon="users">
+    Invite your team, assign roles, set per-user and per-API-key quotas, wire up
+    fallback chains, alerts and notifications.
+  </Card>
+  <Card title="Billing" href="/billing/credits" icon="credit-card">
+    One credit balance funds every modality. Subscribe to a plan for monthly
+    credits and top up any time.
+  </Card>
+  <Card title="Models" href="/models/catalog" icon="layer-group">
+    The whole catalogue by modality — text, image, video, audio, music, 3D,
+    embeddings and more — with the capability flags to branch on.
+  </Card>
+  <Card title="Tools" href="/tools/catalog" icon="wrench">
+    Deterministic operations that are not models: trim a video, extract text
+    from a PDF, run a Python snippet. Fixed price, no sampling.
+  </Card>
+  <Card title="SDKs" href="/sdks/overview" icon="cube">
+    Official TypeScript and Python clients, plus the compatibility matrix for
+    reaching us with the OpenAI SDK you already have.
+  </Card>
+  <Card title="Guides" href="/guides/openai-sdk-migration" icon="book-open">
+    Task-shaped walkthroughs — migration, streaming, tool calling, RAG, image
+    and video generation, fallbacks, retries.
+  </Card>
+</CardGroup>
+
+## What makes it different
+
+- **Many models, one credit balance.** Stop juggling OpenAI, Anthropic, Google, xAI, DeepSeek and Alibaba invoices — the whole [catalogue](/models/catalog) meters to a single credit system.
+- **One memory across chats.** The Studio carries what it learned about you from one conversation into the next, and shows you exactly what it recalled.
+- **Whole workflows, not single calls.** [Workflows](/workflows/overview) run a chain of model calls, tools and HTTP steps on our side — one request in, one result out, with a cost estimate before it runs.
+- **Workspace first, API second.** Your team signs in, organises work in projects, shares chats granularly — the API follows the same rules.
+- **OpenAI-compatible where it can be.** Chat, embeddings, images and files work with the OpenAI SDK on a changed `base_url` — 7 operations unchanged, 4 with a documented divergence. The other 24 have no OpenAI equivalent to be compatible with, and are reached over plain HTTP or our own [SDKs](/sdks/overview). The [matrix](/sdks/openai-compatibility) is generated from the shipping operation list, so it cannot flatter us.
+- **Operational safety nets.** Fallback chains run per workspace and per source model. Quotas and rate limits are set per API key. Budget alerts, MIME sniffing on file uploads and CAPTCHA on sign-up and every contact form come as standard.
+
+<Info>
+New here? Jump straight into the **[Quickstart](/quickstart)** — five minutes from sign-up to your first generated image.
+</Info>
+
+## See it for your team
+
+Infery.ai is shaped around how different teams actually use AI. Pick the path that fits:
+
+- **[For creators](https://infery.ai/for/creators)** — one balance across chat, image, video, voice, music and 3D, with the thread intact.
+- **[For developers](https://infery.ai/for/developers)** — a whole workflow as one POST, OpenAI-compatible, with automatic fallback across models.
+- **[For teams](https://infery.ai/for/teams)** — one shared balance, five workspace roles, a quota per person, custom terms.

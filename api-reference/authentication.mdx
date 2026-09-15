@@ -1,0 +1,90 @@
+---
+title: "Authentication"
+description: "Bearer API keys, per-key quotas, and key lifecycle."
+---
+
+## Bearer tokens
+
+All API requests require an `Authorization` header:
+
+```
+Authorization: Bearer inf_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+Keys are issued via **API Keys → Create key** in the dashboard. The plaintext key is shown **exactly once** — copy it immediately. We only store a SHA-256 hash after that.
+
+## Key format
+
+```
+inf_live_<64 hex characters>
+```
+
+Example: `inf_live_9f2c41ab7de05683c1a4bb90e7f35d2c86740aa19be3cd57f082e416b9d3ca75`
+
+The dashboard shows only the first 16 characters of a stored key (`inf_live_` plus
+seven), which is enough to tell two keys apart and not enough to use one.
+
+## Scope
+
+Each key is scoped to **one workspace**. The key itself resolves to a workspaceId on every request — you don't pass it in the URL or body.
+
+
+
+<Frame caption="Keys in the dashboard: what each one is allowed, and when it was last used">
+  <img className="block dark:hidden" src="/samples/api-keys-light.webp" alt="An API Keys page with a Create key button and a table of columns Name, Key, Quota, Status, Last used, Expires and Created. Two active keys show masked prefixes beginning inf_live_ and a blue Active badge: Local dev with a quota of None, last used 9 days ago, and Production with a quota preset also named Production, last used 3 hours ago. A separate Revoked and Expired table below lists two more keys: Zapier (rotated out), quota None, a red Revoked badge, last used Jun 29, 2026; and Launch demo, quota None, an amber Expired badge, last used Jul 20, 2026, expiring Aug 24, 2026." />
+  <img className="hidden dark:block" src="/samples/api-keys-dark.webp" alt="An API Keys page with a Create key button and a table of columns Name, Key, Quota, Status, Last used, Expires and Created. Two active keys show masked prefixes beginning inf_live_ and a blue Active badge: Local dev with a quota of None, last used 9 days ago, and Production with a quota preset also named Production, last used 3 hours ago. A separate Revoked and Expired table below lists two more keys: Zapier (rotated out), quota None, a red Revoked badge, last used Jun 29, 2026; and Launch demo, quota None, an amber Expired badge, last used Jul 20, 2026, expiring Aug 24, 2026." />
+</Frame>
+
+**Last used** is the column to read before revoking anything: a key nobody has
+used in months is safe to remove, and one used minutes ago is load-bearing
+somewhere you may not remember.
+
+Revoked and expired keys stay listed rather than disappearing, so a key that
+stops working can be explained rather than merely missed.
+
+## Quotas on a key
+
+A key inherits quotas from (in cascade):
+1. Platform defaults
+2. Your subscription plan
+3. Your member preset (the person who created the key)
+4. Key-specific preset (optional override)
+
+The tightest wins. See [Quotas](/workspaces/quotas-and-presets).
+
+## Scope-limited keys
+
+You can attach a preset to limit:
+- `allowedModels` — e.g. `['gpt-4o', 'claude-opus-4-6']`
+- `maxRequestsPerMinute` — e.g. 30 for a staging key
+- `maxBudgetCredits` (paired with a `budgetPeriod` of hourly/daily/weekly/monthly) — e.g. 2 000 credits/month for a CI runner
+
+## Revoking a key
+
+API Keys → key row → **Revoke**. Takes effect immediately — the gateway checks key status on every request rather than from a cache. Requests made with the revoked key return:
+
+```json
+{
+  "error": {
+    "message": "Invalid API key",
+    "type": "invalid_request_error",
+    "code": "invalid_api_key"
+  }
+}
+```
+
+## Rotating
+
+Create the new key, update your app, then revoke the old one. We don't support automatic rotation — keys are explicit to make audit trails clean.
+
+## Key health
+
+Each key row shows:
+- **Last used** — timestamp of the last successful request (the IP is recorded server-side but not surfaced in the dashboard)
+- **Status** — active / expired / revoked
+- **Expires at** — if you set an expiry at creation
+- **Quota preset** — the attached preset, if any
+
+## Internal service tokens
+
+Our control plane (apps/api) talks to the gateway with a special **internal token** prefixed `inf_internal_`. You cannot create or use these from client code — they're server-to-server only.

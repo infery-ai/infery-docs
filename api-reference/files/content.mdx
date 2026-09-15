@@ -1,0 +1,13 @@
+---
+title: "Download file contents"
+description: "GET /v1/files/{fileId}/content — stream the raw file bytes."
+openapi: "openapi.json GET /v1/files/{fileId}/content"
+---
+
+```bash
+curl https://api.infery.ai/v1/files/file_abc123.../content \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  --output report.pdf
+```
+
+Streams directly from GCS — no buffering, safe for large files. Served through our signed proxy so GCS URLs never leak to the client.

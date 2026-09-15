@@ -1,0 +1,2114 @@
+---
+title: "Python SDK reference"
+description: "Every method on both clients, its signature, and the shape of every type it takes and returns."
+---
+
+{/* GENERATED — do not edit.
+    Signatures, docstrings, routes and type shapes are parsed out of
+    sdks/python/src/infery with `ast`; route summaries come from
+    apps/docs/openapi.json.
+    Regenerate with `python3 scripts/generate-python-sdk-reference.py`; CI diffs it. */}
+
+Every call both clients make, grouped the way the clients are. Each method shows its
+real signature for `Infery` and for `AsyncInfery`; every type it names is linked to
+its own section below, with each field's type and whether it is required.
+
+The two clients are twins by construction: the same names, the same parameters and
+the same defaults, with `async def` and `Iterator[X]` becoming `AsyncIterator[X]`.
+That is enforced twice — by `tests/test_surface_parity.py` in the package, and by
+this generator, which refuses to write a page where a method's twin is missing or
+its signature differs by anything else.
+
+A method returning `Iterator[X]` is a **generator**: nothing is requested until you
+start iterating, so an unconsumed one spends nothing, and its async twin is consumed
+with `async for` rather than `await`. Everything else is an ordinary call, awaited on
+`AsyncInfery`.
+
+Two things this page cannot tell you. The parameters that belong to a MODEL rather
+than to the endpoint — an image model declares its own sizes, a speech model its
+voices — come from `_infery.allowed_params` on
+[`GET /v1/models`](/api-reference/models) and are rendered per model on the
+[live catalogue](https://infery.ai/models); every method takes `**params` so they
+pass straight through. And the operational limits — retry policy, timeouts, poll
+intervals — are on the [Python SDK page](/sdks/python), because they are decisions
+rather than shapes.
+
+## The two clients
+
+```python
+from infery import AsyncInfery, Infery
+
+Infery(*, api_key: str, base_url: str = "https://api.infery.ai/v1", timeout: float = 310.0, max_retries: int = 2, max_wait: float = 600.0, http_client: httpx.Client | None = None)
+AsyncInfery(*, api_key: str, base_url: str = "https://api.infery.ai/v1", timeout: float = 310.0, max_retries: int = 2, max_wait: float = 600.0, http_client: httpx.AsyncClient | None = None)
+```
+
+`api_key` is required and is never read from the environment: a client built without one raises before it makes a request. A client given an `http_client` never closes it — the caller owns what the caller made. `Infery` closes its own through `close()` or a `with` block; `AsyncInfery` through `await aclose()` or `async with`.
+
+| Namespace | Methods |
+| --- | --- |
+| `client.chat.completions` | [`create()`](#chatcompletionscreate) · [`stream()`](#chatcompletionsstream) |
+| `client.embeddings` | [`create()`](#embeddingscreate) |
+| `client.media` | [`generate()`](#mediagenerate) · [`wait()`](#mediawait) |
+| `client.images` | [`generate()`](#imagesgenerate) · [`edit()`](#imagesedit) · [`upscale()`](#imagesupscale) |
+| `client.videos` | [`submit()`](#videossubmit) · [`retrieve()`](#videosretrieve) · [`generate()`](#videosgenerate) · [`wait()`](#videoswait) · [`upscale()`](#videosupscale) |
+| `client.music` | [`generate()`](#musicgenerate) · [`stream()`](#musicstream) |
+| `client.audio.speech` | [`create()`](#audiospeechcreate) |
+| `client.audio.transcriptions` | [`create()`](#audiotranscriptionscreate) |
+| `client.audio.transformations` | [`create()`](#audiotransformationscreate) |
+| `client.three_d` | [`generate()`](#three_dgenerate) |
+| `client.files` | [`create()`](#filescreate) · [`list()`](#fileslist) · [`retrieve()`](#filesretrieve) · [`content()`](#filescontent) · [`delete()`](#filesdelete) |
+| `client.models` | [`list()`](#modelslist) · [`estimate()`](#modelsestimate) |
+| `client.tools` | [`list()`](#toolslist) |
+| `client.capabilities` | [`run()`](#capabilitiesrun) |
+| `client.workflows` | [`list()`](#workflowslist) · [`create()`](#workflowscreate) · [`retrieve()`](#workflowsretrieve) · [`update()`](#workflowsupdate) · [`delete()`](#workflowsdelete) · [`estimate()`](#workflowsestimate) |
+| `client.workflows.runs` | [`create()`](#workflowsrunscreate) · [`stream()`](#workflowsrunsstream) · [`retrieve()`](#workflowsrunsretrieve) · [`logs()`](#workflowsrunslogs) · [`cancel()`](#workflowsrunscancel) |
+| `client.workflows.templates` | [`list()`](#workflowstemplateslist) · [`retrieve()`](#workflowstemplatesretrieve) |
+| `client.jobs` | [`retrieve()`](#jobsretrieve) · [`wait()`](#jobswait) |
+
+## `client.chat.completions`
+
+### `chat.completions.create()`
+
+```python
+# Infery
+def create(*, model: str, messages: list[dict[str, Any]], **params: Any) -> ChatCompletionResult
+# AsyncInfery
+async def create(*, model: str, messages: list[dict[str, Any]], **params: Any) -> ChatCompletionResult
+```
+
+`POST /v1/chat/completions` — Create chat completion
+
+Request shape: [`ChatCompletionParams`](#chatcompletionparams) — what `**params` accepts beyond the named arguments above.
+
+Types: [`ChatCompletionResult`](#chatcompletionresult)
+
+### `chat.completions.stream()`
+
+```python
+# Infery
+def stream(*, model: str, messages: list[dict[str, Any]], **params: Any) -> Iterator[ChatCompletionChunk]
+# AsyncInfery
+async def stream(*, model: str, messages: list[dict[str, Any]], **params: Any) -> AsyncIterator[ChatCompletionChunk]
+```
+
+`POST /v1/chat/completions` — Create chat completion
+
+Request shape: [`ChatCompletionParams`](#chatcompletionparams) — what `**params` accepts beyond the named arguments above.
+
+A generator: nothing is sent until the first chunk is pulled.
+
+The LAST chunk before `[DONE]` carries `credits_used` and an EMPTY `choices` — it is yielded like any other rather than swallowed, because it is the only place the cost of a streamed call appears. A caller that breaks out early therefore never learns what the call cost; that is the caller's choice to make, not this method's to make for them.
+
+A cut stream raises `StreamTruncatedError` after delivering the chunks that did arrive — see `_core.sse`.
+
+Types: [`ChatCompletionChunk`](#chatcompletionchunk)
+
+## `client.embeddings`
+
+### `embeddings.create()`
+
+```python
+# Infery
+def create(*, model: str, input: str | list[str], **params: Any) -> EmbeddingResult
+# AsyncInfery
+async def create(*, model: str, input: str | list[str], **params: Any) -> EmbeddingResult
+```
+
+`POST /v1/embeddings` — Create embeddings
+
+Request shape: [`EmbeddingParams`](#embeddingparams) — what `**params` accepts beyond the named arguments above.
+
+Types: [`EmbeddingResult`](#embeddingresult)
+
+## `client.media`
+
+### `media.generate()`
+
+```python
+# Infery
+def generate(*, modality: MediaModality, model: str, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, on_progress: Callable[[MediaProgress], None] | None = None, **params: Any) -> MediaResult
+# AsyncInfery
+async def generate(*, modality: MediaModality, model: str, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, on_progress: Callable[[MediaProgress], None] | None = None, **params: Any) -> MediaResult
+```
+
+Produces media of any modality and WAITS for it.
+
+Waiting is the default because it is the behaviour that lets one code path serve every modality: images answer in seconds, video takes minutes, and a caller that had to know which is which would be back to branching. Pass `background=True` to get a `job_id` immediately and collect it with `wait()` — for `video` that is a bare submit, and for everything else it is the gateway's own 504-with-a-job-id, caught here and handed over as a result instead of an exception.
+
+`on_progress` fires for `modality="video"`, which is the only modality whose generation this module polls itself. The other five poll only when the gateway DEFERS, and that poll happens inside the per-modality resource — `images.generate`, `music.generate`, `three_d.generate`, `videos.upscale`, `audio.speech.create` — none of which takes a callback. `wait(on_progress=...)` reports for all six; `generate` does not, and the residue is recorded in the task report rather than left for a caller to discover from silence.
+
+Everything past `modality`/`model` is forwarded as given: `prompt` for most modalities, `input`/`voice` for `audio`, `image_url`/`video_url` for `upscale` and the image-to-* models. What a call accepts is a property of the MODEL, not of this SDK — the authoritative list is `_infery.allowed_params` on `GET /v1/models` — so a parameter a model gained yesterday works today without an SDK release. The per-modality resource still applies its own named-argument checks, so a missing `prompt` is refused here before a request is sent.
+
+Types: [`MediaModality`](#mediamodality) · [`MediaProgress`](#mediaprogress) · [`MediaResult`](#mediaresult)
+
+### `media.wait()`
+
+```python
+# Infery
+def wait(*, modality: MediaModality, job_id: str, interval: float = 5.0, max_wait: float = 600.0, on_progress: Callable[[MediaProgress], None] | None = None) -> MediaResult
+# AsyncInfery
+async def wait(*, modality: MediaModality, job_id: str, interval: float = 5.0, max_wait: float = 600.0, on_progress: Callable[[MediaProgress], None] | None = None) -> MediaResult
+```
+
+Collects a job started with `background=True`.
+
+`modality` is REQUIRED and cannot be inferred: video jobs live at `GET /v1/videos/generations/{id}` and every other modality's at `GET /v1/images/jobs/{id}`, and a job id does not say which it is.
+
+`on_progress` fires for EVERY modality, with the status and the percentage the polled job reported. It did not always: `poll_job` took no callback where `poll_video` had one since Task 12, so this keyword was accepted and then silently dropped for five of the six modalities. The callback was added to `poll_job`/`apoll_job` and forwarded through `Jobs.wait` rather than faked here — one shared loop reporting, not five callers each growing their own.
+
+Types: [`MediaModality`](#mediamodality) · [`MediaProgress`](#mediaprogress) · [`MediaResult`](#mediaresult)
+
+## `client.images`
+
+### `images.generate()`
+
+```python
+# Infery
+def generate(*, model: str, prompt: str, n: int | None = None, size: str | None = None, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> ImageResponse | JobStatus
+# AsyncInfery
+async def generate(*, model: str, prompt: str, n: int | None = None, size: str | None = None, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> ImageResponse | JobStatus
+```
+
+`POST /v1/images/generations` — Create image generation
+
+Request shape: [`ImageGenerateParams`](#imagegenerateparams) — what `**params` accepts beyond the named arguments above.
+
+Generates images, waiting for the result.
+
+A slow model answers 504 with a job id and keeps working, so this polls `GET /v1/images/jobs/{id}` to completion and returns the finished `JobStatus`: that arm of the union is a COLLECTED result, never a handle.
+
+`background=True` does NOT return the handle: the gateway's `JobDeferredError` is re-raised and its `job_id` is what `jobs.wait()` collects. A deliberate divergence from the TypeScript SDK, where `background: true` returns a result carrying `job_id` — here the exception is the carrier.
+
+Types: [`ImageResponse`](#imageresponse) · [`JobStatus`](#jobstatus)
+
+### `images.edit()`
+
+```python
+# Infery
+def edit(*, model: str, prompt: str, image: bytes, mask: bytes | None = None, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> ImageResponse | JobStatus
+# AsyncInfery
+async def edit(*, model: str, prompt: str, image: bytes, mask: bytes | None = None, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> ImageResponse | JobStatus
+```
+
+`POST /v1/images/edits` — Edit an existing image
+
+Request shape: [`ImageEditParams`](#imageeditparams) — what `**params` accepts beyond the named arguments above.
+
+Edits an image, optionally through a mask.
+
+`image`/`mask` are raw bytes; the base64 encoding and the MIME sniff happen here, because this endpoint takes JSON with `image_base64` rather than the multipart the OpenAI SDK posts.
+
+A slow model answers 504 with a job id and keeps working, so this polls `GET /v1/images/jobs/{id}` to completion and returns the finished `JobStatus`: that arm of the union is a COLLECTED result, never a handle.
+
+`background=True` does NOT return the handle: the gateway's `JobDeferredError` is re-raised and its `job_id` is what `jobs.wait()` collects. A deliberate divergence from the TypeScript SDK, where `background: true` returns a result carrying `job_id` — here the exception is the carrier.
+
+Types: [`ImageResponse`](#imageresponse) · [`JobStatus`](#jobstatus)
+
+### `images.upscale()`
+
+```python
+# Infery
+def upscale(*, model: str, image_url: str, scale: float | None = None, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> ImageUpscaleResult | JobStatus
+# AsyncInfery
+async def upscale(*, model: str, image_url: str, scale: float | None = None, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> ImageUpscaleResult | JobStatus
+```
+
+`POST /v1/images/upscale` — Upscale an image
+
+Request shape: [`ImageUpscaleParams`](#imageupscaleparams) — what `**params` accepts beyond the named arguments above.
+
+Upscales an image by URL.
+
+Needs an `upscale`-modality model that accepts an image: a VIDEO upscaler on this route is refused by the gateway with a 400 that points at `videos.upscale`, and the model slug alone does not say which kind it is.
+
+A slow model answers 504 with a job id and keeps working, so this polls `GET /v1/images/jobs/{id}` to completion and returns the finished `JobStatus`: that arm of the union is a COLLECTED result, never a handle.
+
+`background=True` does NOT return the handle: the gateway's `JobDeferredError` is re-raised and its `job_id` is what `jobs.wait()` collects. A deliberate divergence from the TypeScript SDK, where `background: true` returns a result carrying `job_id` — here the exception is the carrier.
+
+Types: [`ImageUpscaleResult`](#imageupscaleresult) · [`JobStatus`](#jobstatus)
+
+## `client.videos`
+
+### `videos.submit()`
+
+```python
+# Infery
+def submit(*, model: str, prompt: str, **params: Any) -> VideoSubmitResult
+# AsyncInfery
+async def submit(*, model: str, prompt: str, **params: Any) -> VideoSubmitResult
+```
+
+`POST /v1/videos/generations` — Create video generation
+
+Request shape: [`VideoSubmitParams`](#videosubmitparams) — what `**params` accepts beyond the named arguments above.
+
+Types: [`VideoSubmitResult`](#videosubmitresult)
+
+### `videos.retrieve()`
+
+```python
+# Infery
+def retrieve(job_id: str) -> VideoJobStatus
+# AsyncInfery
+async def retrieve(job_id: str) -> VideoJobStatus
+```
+
+`GET /v1/videos/generations/{job_id}` — Get video generation status
+
+Types: [`VideoJobStatus`](#videojobstatus)
+
+### `videos.generate()`
+
+```python
+# Infery
+def generate(*, model: str, prompt: str, on_progress: Callable[[VideoSubmitResult | VideoJobStatus], None] | None = None, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> VideoJobStatus
+# AsyncInfery
+async def generate(*, model: str, prompt: str, on_progress: Callable[[VideoSubmitResult | VideoJobStatus], None] | None = None, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> VideoJobStatus
+```
+
+Types: [`VideoSubmitResult`](#videosubmitresult) · [`VideoJobStatus`](#videojobstatus)
+
+### `videos.wait()`
+
+```python
+# Infery
+def wait(job_id: str, *, interval: float = 5.0, max_wait: float = 600.0, on_progress: Callable[[VideoJobStatus], None] | None = None) -> VideoJobStatus
+# AsyncInfery
+async def wait(job_id: str, *, interval: float = 5.0, max_wait: float = 600.0, on_progress: Callable[[VideoJobStatus], None] | None = None) -> VideoJobStatus
+```
+
+Collects a video generation job started with `submit`.
+
+The twin of `Jobs.wait` for the ONE job kind `Jobs.wait` does not serve: video generation lives at `GET /videos/generations/{id}` with its own (disjoint) status shape, and every other modality's job at `GET /images/jobs/{id}`.
+
+A thin passthrough for the same reason `Jobs.wait` is one — `poll_video` owns the deadline, the terminal-state decision and the failure decision, and this must not grow a second copy of any of them. It exists so that `media.wait(modality="video")` can COMPOSE a resource like its five siblings do rather than reach past the resource layer into `_core.poll`.
+
+Types: [`VideoJobStatus`](#videojobstatus)
+
+### `videos.upscale()`
+
+```python
+# Infery
+def upscale(*, model: str, video_url: str, scale: float | None = None, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> VideoUpscaleResult | JobStatus
+# AsyncInfery
+async def upscale(*, model: str, video_url: str, scale: float | None = None, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> VideoUpscaleResult | JobStatus
+```
+
+`POST /v1/video/upscale` — Upscale a video
+
+Request shape: [`VideoUpscaleParams`](#videoupscaleparams) — what `**params` accepts beyond the named arguments above.
+
+Upscales a video by URL.
+
+The one video route that defers through the shared media job endpoint rather than `/videos/generations` — video GENERATION polls its own endpoint, which is why `generate` takes `on_progress` and this does not.
+
+A slow model answers 504 with a job id and keeps working, so this polls `GET /v1/images/jobs/{id}` to completion and returns the finished `JobStatus`: that arm of the union is a COLLECTED result, never a handle.
+
+`background=True` does NOT return the handle: the gateway's `JobDeferredError` is re-raised and its `job_id` is what `jobs.wait()` collects. A deliberate divergence from the TypeScript SDK, where `background: true` returns a result carrying `job_id` — here the exception is the carrier.
+
+Types: [`VideoUpscaleResult`](#videoupscaleresult) · [`JobStatus`](#jobstatus)
+
+## `client.music`
+
+### `music.generate()`
+
+```python
+# Infery
+def generate(*, model: str, prompt: str, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> MusicGenerateResult | JobStatus
+# AsyncInfery
+async def generate(*, model: str, prompt: str, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> MusicGenerateResult | JobStatus
+```
+
+`POST /v1/music/generations` — Generate music from text prompt
+
+Request shape: [`MusicGenerateParams`](#musicgenerateparams) — what `**params` accepts beyond the named arguments above.
+
+Generates a track and waits for it. `stream()` is the same route read as SSE.
+
+A slow model answers 504 with a job id and keeps working, so this polls `GET /v1/images/jobs/{id}` to completion and returns the finished `JobStatus`: that arm of the union is a COLLECTED result, never a handle.
+
+`background=True` does NOT return the handle: the gateway's `JobDeferredError` is re-raised and its `job_id` is what `jobs.wait()` collects. A deliberate divergence from the TypeScript SDK, where `background: true` returns a result carrying `job_id` — here the exception is the carrier.
+
+Types: [`MusicGenerateResult`](#musicgenerateresult) · [`JobStatus`](#jobstatus)
+
+### `music.stream()`
+
+```python
+# Infery
+def stream(*, model: str, prompt: str, **params: Any) -> Iterator[MusicStreamEvent]
+# AsyncInfery
+async def stream(*, model: str, prompt: str, **params: Any) -> AsyncIterator[MusicStreamEvent]
+```
+
+`POST /v1/music/generations` — Generate music from text prompt
+
+Request shape: [`MusicGenerateParams`](#musicgenerateparams) — what `**params` accepts beyond the named arguments above.
+
+Progress events while the track renders, then ONE terminal event.
+
+Three shapes arrive, each tagged with `type`: `progress` repeatedly, then exactly one of `completed` (carrying `credits_used` — the only place a streamed generation's cost appears) or `error`. The `error` frame is a real failure delivered as a frame, because the gateway has already flushed SSE headers by then and cannot answer with an HTTP status; a caller that ignores `type` sees a successful, empty stream. Neither is swallowed here.
+
+No deferral handling, unlike `generate`: a stream cannot hand back a job id, and `music.controller.ts:283` keeps a streaming request on the inline path for exactly that reason.
+
+Types: [`MusicStreamEvent`](#musicstreamevent)
+
+## `client.audio.speech`
+
+### `audio.speech.create()`
+
+```python
+# Infery
+def create(*, model: str, input: str, voice: str | None = None, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> SpeechResult
+# AsyncInfery
+async def create(*, model: str, input: str, voice: str | None = None, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> SpeechResult
+```
+
+`POST /v1/audio/speech` — Text-to-speech
+
+Request shape: [`SpeechParams`](#speechparams) — what `**params` accepts beyond the named arguments above.
+
+Synthesises speech and returns the audio with its `content_type` and `credits_used`.
+
+`POST /v1/audio/speech` answers with an audio body rather than JSON, so there is no envelope and nothing to link to. A deferral is still collected: the worker stores the audio, the finished job carries a signed URL, and that URL is fetched through this client's own transport — so a caller always gets audio and never a job.
+
+Returns `SpeechResult`, not bare `bytes`. The bytes alone dropped the response object, and with it the `Content-Type` a caller needs to save the file and the `x-credits-used` that is the only statement of what the call cost — `.audio` is the same payload the old return value was.
+
+`background=True` does NOT return the handle: the gateway's `JobDeferredError` is re-raised and its `job_id` is what `jobs.wait()` collects. A deliberate divergence from the TypeScript SDK, where `background: true` returns a result carrying `job_id` — here the exception is the carrier.
+
+Types: [`SpeechResult`](#speechresult)
+
+## `client.audio.transcriptions`
+
+### `audio.transcriptions.create()`
+
+```python
+# Infery
+def create(*, model: str, file: bytes, filename: str, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> TranscriptionResult | str
+# AsyncInfery
+async def create(*, model: str, file: bytes, filename: str, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> TranscriptionResult | str
+```
+
+`POST /v1/audio/transcriptions` — Speech-to-text
+
+Request shape: [`TranscriptionParams`](#transcriptionparams) — what `**params` accepts beyond the named arguments above.
+
+Transcribes audio. Sends MULTIPART `file`/`filename`, not the JSON `file_base64` body `TranscriptionParams` documents.
+
+Returns a bare `str` when `response_format` is `text`, `srt` or `vtt` — those formats answer with the document itself — and a `TranscriptionResult` otherwise.
+
+The only deferrable method whose return union omits `JobStatus`, and that is recorded rather than tidied into consistency: a collected job is mapped back into a `TranscriptionResult` from the job's `payload`, because the deliverable is TEXT and the durable path stores it as text rather than as a file artifact. `sdks/typescript/src/resources/audio.ts` reads the same field for the same reason.
+
+`background=True` does NOT return the handle: the gateway's `JobDeferredError` is re-raised and its `job_id` is what `jobs.wait()` collects. A deliberate divergence from the TypeScript SDK, where `background: true` returns a result carrying `job_id` — here the exception is the carrier. Python offers `background=True` here where TypeScript deliberately does not, which is coherent for exactly that reason.
+
+Types: [`TranscriptionResult`](#transcriptionresult)
+
+## `client.audio.transformations`
+
+### `audio.transformations.create()`
+
+```python
+# Infery
+def create(*, model: str, audio_url: str, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> AudioTransformationResult | JobStatus
+# AsyncInfery
+async def create(*, model: str, audio_url: str, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> AudioTransformationResult | JobStatus
+```
+
+`POST /v1/audio/transformations` — Transform audio (voice-changer, stem separation, video→audio extraction, …)
+
+Request shape: [`AudioTransformationParams`](#audiotransformationparams) — what `**params` accepts beyond the named arguments above.
+
+Voice changing, stem separation and video-to-audio extraction, all on one route.
+
+`audio_url` is named because most models on this route take audio; a video-input model wants `video_url` through `**params` instead.
+
+A slow model answers 504 with a job id and keeps working, so this polls `GET /v1/images/jobs/{id}` to completion and returns the finished `JobStatus`: that arm of the union is a COLLECTED result, never a handle.
+
+`background=True` does NOT return the handle: the gateway's `JobDeferredError` is re-raised and its `job_id` is what `jobs.wait()` collects. A deliberate divergence from the TypeScript SDK, where `background: true` returns a result carrying `job_id` — here the exception is the carrier.
+
+Types: [`AudioTransformationResult`](#audiotransformationresult) · [`JobStatus`](#jobstatus)
+
+## `client.three_d`
+
+### `three_d.generate()`
+
+```python
+# Infery
+def generate(*, model: str, prompt: str | None = None, image_url: str | None = None, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> ThreeDGenerateResult | JobStatus
+# AsyncInfery
+async def generate(*, model: str, prompt: str | None = None, image_url: str | None = None, background: bool = False, interval: float = 5.0, max_wait: float = 600.0, **params: Any) -> ThreeDGenerateResult | JobStatus
+```
+
+`POST /v1/3d/generations` — Generate a 3D model from text or an image
+
+Request shape: [`ThreeDGenerateParams`](#threedgenerateparams) — what `**params` accepts beyond the named arguments above.
+
+Generates a 3D asset from a prompt, an image, or both.
+
+At least one of `prompt`/`image_url` is required and the check happens BEFORE the request is built, so a call missing both costs nothing.
+
+A slow model answers 504 with a job id and keeps working, so this polls `GET /v1/images/jobs/{id}` to completion and returns the finished `JobStatus`: that arm of the union is a COLLECTED result, never a handle.
+
+`background=True` does NOT return the handle: the gateway's `JobDeferredError` is re-raised and its `job_id` is what `jobs.wait()` collects. A deliberate divergence from the TypeScript SDK, where `background: true` returns a result carrying `job_id` — here the exception is the carrier.
+
+Types: [`ThreeDGenerateResult`](#threedgenerateresult) · [`JobStatus`](#jobstatus)
+
+## `client.files`
+
+### `files.create()`
+
+```python
+# Infery
+def create(*, file: bytes, filename: str, purpose: str, **params: Any) -> FileObject
+# AsyncInfery
+async def create(*, file: bytes, filename: str, purpose: str, **params: Any) -> FileObject
+```
+
+`POST /v1/files` — Upload a file
+
+Request shape: [`FileCreateParams`](#filecreateparams) — what `**params` accepts beyond the named arguments above.
+
+Types: [`FileObject`](#fileobject)
+
+### `files.list()`
+
+```python
+# Infery
+def list(*, limit: int | None = None, after: str | None = None, **params: Any) -> FileListResult
+# AsyncInfery
+async def list(*, limit: int | None = None, after: str | None = None, **params: Any) -> FileListResult
+```
+
+`GET /v1/files` — List uploaded files
+
+Request shape: [`FileListParams`](#filelistparams) — what `**params` accepts beyond the named arguments above.
+
+Types: [`FileListResult`](#filelistresult)
+
+### `files.retrieve()`
+
+```python
+# Infery
+def retrieve(file_id: str) -> FileObject
+# AsyncInfery
+async def retrieve(file_id: str) -> FileObject
+```
+
+`GET /v1/files/{file_id}` — Retrieve file metadata
+
+Types: [`FileObject`](#fileobject)
+
+### `files.content()`
+
+```python
+# Infery
+def content(file_id: str) -> FileContentResult
+# AsyncInfery
+async def content(file_id: str) -> FileContentResult
+```
+
+`GET /v1/files/{file_id}/content` — Download file contents
+
+The bytes and their `content_type`, not JSON. A caller wanting a stream uses the transport.
+
+`.content` is the payload the bare-`bytes` return used to be; the type exists because dropping the response also dropped the `Content-Type` of a file this SDK just handed the caller to save.
+
+Types: [`FileContentResult`](#filecontentresult)
+
+### `files.delete()`
+
+```python
+# Infery
+def delete(file_id: str) -> FileDeleteResult
+# AsyncInfery
+async def delete(file_id: str) -> FileDeleteResult
+```
+
+`DELETE /v1/files/{file_id}` — Delete a file
+
+Types: [`FileDeleteResult`](#filedeleteresult)
+
+## `client.models`
+
+### `models.list()`
+
+```python
+# Infery
+def list(**params: Any) -> ModelListResult
+# AsyncInfery
+async def list(**params: Any) -> ModelListResult
+```
+
+`GET /v1/models` — List available models
+
+Request shape: [`ModelListParams`](#modellistparams) — what `**params` accepts beyond the named arguments above.
+
+Types: [`ModelListResult`](#modellistresult)
+
+### `models.estimate()`
+
+```python
+# Infery
+def estimate(slug: str, **params: Any) -> ModelEstimateResult
+# AsyncInfery
+async def estimate(slug: str, **params: Any) -> ModelEstimateResult
+```
+
+`POST /v1/models/{slug}/estimate` — Estimate credits for a model request
+
+Request shape: [`ModelEstimateParams`](#modelestimateparams) — what `**params` accepts beyond the named arguments above.
+
+Types: [`ModelEstimateResult`](#modelestimateresult)
+
+## `client.tools`
+
+### `tools.list()`
+
+```python
+# Infery
+def list() -> ToolListResult
+# AsyncInfery
+async def list() -> ToolListResult
+```
+
+`GET /v1/tools` — List available workflow capabilities
+
+Types: [`ToolListResult`](#toollistresult)
+
+## `client.capabilities`
+
+### `capabilities.run()`
+
+```python
+# Infery
+def run(capability_id: str, *, input: dict[str, Any], params: dict[str, Any] | None = None, **rest: Any) -> CapabilityRunResult
+# AsyncInfery
+async def run(capability_id: str, *, input: dict[str, Any], params: dict[str, Any] | None = None, **rest: Any) -> CapabilityRunResult
+```
+
+`POST /v1/capabilities/{capability_id}/run` — Run a single capability synchronously
+
+Request shape: [`CapabilityRunParams`](#capabilityrunparams) — what `**params` accepts beyond the named arguments above.
+
+Types: [`CapabilityRunResult`](#capabilityrunresult)
+
+## `client.workflows`
+
+`workflows`, with `runs` and `templates` hanging off it.
+
+### `workflows.list()`
+
+```python
+# Infery
+def list(*, limit: int | None = None, offset: int | None = None, **params: Any) -> WorkflowListResult
+# AsyncInfery
+async def list(*, limit: int | None = None, offset: int | None = None, **params: Any) -> WorkflowListResult
+```
+
+`GET /v1/workflows` — List workflows
+
+Request shape: [`WorkflowListParams`](#workflowlistparams) — what `**params` accepts beyond the named arguments above.
+
+`offset`, not `after`: this route pages by offset, and its response carries `total`/`limit`/`offset`. An earlier draft of the plan said `after` — that is the Files convention, and the two routes really do differ.
+
+Types: [`WorkflowListResult`](#workflowlistresult)
+
+### `workflows.create()`
+
+```python
+# Infery
+def create(*, name: str, definition: dict[str, Any], **params: Any) -> WorkflowWriteResult
+# AsyncInfery
+async def create(*, name: str, definition: dict[str, Any], **params: Any) -> WorkflowWriteResult
+```
+
+`POST /v1/workflows` — Create a reusable workflow
+
+Request shape: [`WorkflowCreateParams`](#workflowcreateparams) — what `**params` accepts beyond the named arguments above.
+
+Types: [`WorkflowWriteResult`](#workflowwriteresult)
+
+### `workflows.retrieve()`
+
+```python
+# Infery
+def retrieve(workflow_id: str, *, version: int | None = None, **params: Any) -> WorkflowResult
+# AsyncInfery
+async def retrieve(workflow_id: str, *, version: int | None = None, **params: Any) -> WorkflowResult
+```
+
+`GET /v1/workflows/{workflow_id}` — Get workflow (latest or specific version)
+
+Request shape: [`WorkflowRetrieveParams`](#workflowretrieveparams) — what `**params` accepts beyond the named arguments above.
+
+`version` is a QUERY parameter here, not a body field — and it is spelled `version`, not `pipeline_version`: the run/estimate BODIES carry the un-renamed spelling, the query does not.
+
+Types: [`WorkflowResult`](#workflowresult)
+
+### `workflows.update()`
+
+```python
+# Infery
+def update(workflow_id: str, *, name: str | None = None, description: str | None = None, definition: dict[str, Any] | None = None, **params: Any) -> WorkflowWriteResult
+# AsyncInfery
+async def update(workflow_id: str, *, name: str | None = None, description: str | None = None, definition: dict[str, Any] | None = None, **params: Any) -> WorkflowWriteResult
+```
+
+`PUT /v1/workflows/{workflow_id}` — Update workflow (creates new version if definition changed)
+
+Request shape: [`WorkflowUpdateParams`](#workflowupdateparams) — what `**params` accepts beyond the named arguments above.
+
+A PARTIAL update — `UpdatePipelineDto` declares no required array — so an argument left at `None` is not sent rather than sent as null.
+
+Answers the SAME `WorkflowWriteResult` as `create`: both operations resolve to `PipelineWriteResultDto` on the spec side, so there is one type and not a `Create`/`Update` pair implying two shapes.
+
+Types: [`WorkflowWriteResult`](#workflowwriteresult)
+
+### `workflows.delete()`
+
+```python
+# Infery
+def delete(workflow_id: str) -> WorkflowDeleteResult
+# AsyncInfery
+async def delete(workflow_id: str) -> WorkflowDeleteResult
+```
+
+`DELETE /v1/workflows/{workflow_id}` — Soft-delete workflow
+
+`delete`, not `del`: TypeScript needed `del` because `delete` is reserved there.
+
+Types: [`WorkflowDeleteResult`](#workflowdeleteresult)
+
+### `workflows.estimate()`
+
+```python
+# Infery
+def estimate(*, workflow_id: str | None = None, version: int | None = None, definition: dict[str, Any] | None = None, input: dict[str, Any] | None = None, **params: Any) -> WorkflowEstimateResult
+# AsyncInfery
+async def estimate(*, workflow_id: str | None = None, version: int | None = None, definition: dict[str, Any] | None = None, input: dict[str, Any] | None = None, **params: Any) -> WorkflowEstimateResult
+```
+
+`POST /v1/workflows/estimate` — Dry-run cost estimate for a workflow definition (no execution)
+
+Request shape: [`WorkflowEstimateParams`](#workflowestimateparams) — what `**params` accepts beyond the named arguments above.
+
+A QUOTE, not a hold. Nothing is reserved and no run is capped by it — `runs.create` settles per step regardless of what this returned.
+
+Types: [`WorkflowEstimateResult`](#workflowestimateresult)
+
+## `client.workflows.runs`
+
+### `workflows.runs.create()`
+
+```python
+# Infery
+def create(*, input: dict[str, Any], workflow_id: str | None = None, version: int | None = None, definition: dict[str, Any] | None = None, mode: str | None = None, idempotency_key: str | None = None, **params: Any) -> WorkflowRunCreateResult
+# AsyncInfery
+async def create(*, input: dict[str, Any], workflow_id: str | None = None, version: int | None = None, definition: dict[str, Any] | None = None, mode: str | None = None, idempotency_key: str | None = None, **params: Any) -> WorkflowRunCreateResult
+```
+
+`POST /v1/workflows/runs` — Run a workflow (sync default; mode=async returns job id; mode=stream returns SSE)
+
+Request shape: [`WorkflowRunCreateParams`](#workflowruncreateparams) — what `**params` accepts beyond the named arguments above.
+
+Start a run and wait for it (`mode="sync"`, the default), or queue it (`mode="async"`).
+
+THIS SPENDS CREDITS. Every step settles against the wallet as it dispatches; there is no pre-flight balance gate and no cap derived from `estimate()`, which is a quote. A run that fails half way has still paid for the steps that ran — send its id as `resume_from_run_id` to continue from the step that failed rather than re-billing what already ran.
+
+Supply exactly one of `workflow_id` or `definition`: both is a 400 (`ambiguous_definition`), neither is a 400 (`missing_definition`). The SDK does not pre-empt either — the gateway's refusal names which one it was, and a client-side copy of that rule is a second place for it to rot.
+
+A run that FAILS still answers 201 with `status="failed"`; only a refusal before the run starts is a 4xx.
+
+Types: [`WorkflowRunCreateResult`](#workflowruncreateresult)
+
+### `workflows.runs.stream()`
+
+```python
+# Infery
+def stream(*, input: dict[str, Any], workflow_id: str | None = None, version: int | None = None, definition: dict[str, Any] | None = None, idempotency_key: str | None = None, **params: Any) -> Iterator[WorkflowRunEvent]
+# AsyncInfery
+async def stream(*, input: dict[str, Any], workflow_id: str | None = None, version: int | None = None, definition: dict[str, Any] | None = None, idempotency_key: str | None = None, **params: Any) -> AsyncIterator[WorkflowRunEvent]
+```
+
+`POST /v1/workflows/runs` — Run a workflow (sync default; mode=async returns job id; mode=stream returns SSE)
+
+Request shape: [`WorkflowRunCreateParams`](#workflowruncreateparams) — what `**params` accepts beyond the named arguments above.
+
+The same route as `create`, read as the fourteen-member event union.
+
+`mode` is forced to `"stream"` — there is no other value this method makes sense for, and taking it as a parameter would let a caller ask a streaming method for JSON. Forced means forced: a `mode=` arriving through `**params` is REFUSED before the request, because `**params` is spread last and would otherwise win. That is not a hypothetical — the gateway would run and settle the whole workflow synchronously, and this method would then read the JSON body as SSE and raise `StreamTruncatedError`, telling the caller the connection was cut about a run they paid for in full.
+
+LAZY, like every other `stream` in this package: nothing is requested until the caller starts iterating, so an unconsumed generator spends nothing. That is the safe direction for a call billed per step.
+
+A completed run under a reused `Idempotency-Key` replays as a synthetic event sequence; a run still IN FLIGHT under that key is refused with 409 (`idempotency_in_progress`), which surfaces as a raised error before the first event rather than as an event.
+
+Types: [`WorkflowRunEvent`](#workflowrunevent)
+
+### `workflows.runs.retrieve()`
+
+```python
+# Infery
+def retrieve(run_id: str) -> WorkflowRunResult
+# AsyncInfery
+async def retrieve(run_id: str) -> WorkflowRunResult
+```
+
+`GET /v1/workflows/runs/{run_id}` — Get workflow run by id
+
+Types: [`WorkflowRunResult`](#workflowrunresult)
+
+### `workflows.runs.logs()`
+
+```python
+# Infery
+def logs(run_id: str) -> WorkflowRunLogsResult
+# AsyncInfery
+async def logs(run_id: str) -> WorkflowRunLogsResult
+```
+
+`GET /v1/workflows/runs/{run_id}/logs` — Get per-step model_call_logs for a workflow run
+
+Types: [`WorkflowRunLogsResult`](#workflowrunlogsresult)
+
+### `workflows.runs.cancel()`
+
+```python
+# Infery
+def cancel(run_id: str) -> WorkflowRunCancelResult
+# AsyncInfery
+async def cancel(run_id: str) -> WorkflowRunCancelResult
+```
+
+`POST /v1/workflows/runs/{run_id}/cancel` — Best-effort cancel of a running or queued workflow run
+
+Types: [`WorkflowRunCancelResult`](#workflowruncancelresult)
+
+## `client.workflows.templates`
+
+### `workflows.templates.list()`
+
+```python
+# Infery
+def list(*, category: str | None = None, tag: str | None = None, limit: int | None = None, offset: int | None = None, **params: Any) -> WorkflowTemplateListResult
+# AsyncInfery
+async def list(*, category: str | None = None, tag: str | None = None, limit: int | None = None, offset: int | None = None, **params: Any) -> WorkflowTemplateListResult
+```
+
+`GET /v1/workflows/templates` — List workflow templates (paginate + filter)
+
+Request shape: [`WorkflowTemplateListParams`](#workflowtemplatelistparams) — what `**params` accepts beyond the named arguments above.
+
+Types: [`WorkflowTemplateListResult`](#workflowtemplatelistresult)
+
+### `workflows.templates.retrieve()`
+
+```python
+# Infery
+def retrieve(slug: str) -> WorkflowTemplateResult
+# AsyncInfery
+async def retrieve(slug: str) -> WorkflowTemplateResult
+```
+
+`GET /v1/workflows/templates/{slug}` — Get a single workflow template (full, with definition + sample_input)
+
+Types: [`WorkflowTemplateResult`](#workflowtemplateresult)
+
+## `client.jobs`
+
+### `jobs.retrieve()`
+
+```python
+# Infery
+def retrieve(job_id: str) -> JobStatus
+# AsyncInfery
+async def retrieve(job_id: str) -> JobStatus
+```
+
+`GET /v1/images/jobs/{job_id}` — Poll an image generation job
+
+Types: [`JobStatus`](#jobstatus)
+
+### `jobs.wait()`
+
+```python
+# Infery
+def wait(job_id: str, *, interval: float = 5.0, max_wait: float = 600.0, on_progress: Callable[[JobStatus], None] | None = None) -> JobStatus
+# AsyncInfery
+async def wait(job_id: str, *, interval: float = 5.0, max_wait: float = 600.0, on_progress: Callable[[JobStatus], None] | None = None) -> JobStatus
+```
+
+`on_progress` is forwarded, not implemented here: `poll_job` owns the loop, and this stays the thin passthrough it has always been. It is what lets `media.wait` report progress for every modality by COMPOSING this resource instead of calling the loop behind it.
+
+Types: [`JobStatus`](#jobstatus)
+
+## Types
+
+Every type the signatures above name, plus every request shape they link to, alphabetically. A field marked required must be present; the rest are optional. Notes are the type's own documentation, so they say what a field means rather than restating its name.
+
+A `Result` is a frozen dataclass and carries the untouched response body on `raw`, so a field the wire adds tomorrow is reachable today, just not by name. A `Params` is a `TypedDict` — documentation and call-site typing only, never enforced at runtime, because every method also takes `**params`.
+
+### `AudioTransformationParams`
+
+`POST /v1/audio/transformations`'s body. `model` required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `str` | **yes** |  |
+| `audio_url` | `str` | no |  |
+| `video_url` | `str` | no |  |
+| `response_format` | `str` | no |  |
+
+### `AudioTransformationResult`
+
+`POST /v1/audio/transformations`'s 200. No `required` array declared.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `created` | `int \| None` | no |  |
+| `credits_used` | `float \| None` | no |  |
+| `data` | `list[dict[str, Any]]` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `CapabilityRunParams`
+
+`POST /v1/capabilities/{id}/run`'s body. Entirely optional — shape depends on the capability.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `input` | `dict[str, Any]` | no |  |
+| `params` | `dict[str, Any]` | no |  |
+
+### `CapabilityRunResult`
+
+`POST /v1/capabilities/{id}/run`'s 200 — `id`, `capability`, and `credits_used` are required; the shape of the payload itself varies per capability, so `file_id`/`url`/`mime`/`size_bytes`/`result` are all optional.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `str` | **yes** |  |
+| `capability` | `str` | **yes** |  |
+| `credits_used` | `float` | **yes** |  |
+| `file_id` | `str \| None` | no |  |
+| `url` | `str \| None` | no |  |
+| `mime` | `str \| None` | no |  |
+| `size_bytes` | `int \| None` | no |  |
+| `result` | `dict[str, Any] \| None` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `ChatAnnotation`
+
+`ChatAnnotationDto`. A web-search `url_citation` annotation — every field optional because the translator fills in only what the upstream provider returned.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['url_citation']` | no |  |
+| `url` | `str` | no |  |
+| `title` | `str` | no |  |
+| `start_index` | `int` | no |  |
+| `end_index` | `int` | no |  |
+
+### `ChatCompletionChunk`
+
+One `data:` payload of `POST /v1/chat/completions`'s SSE response.
+
+The document models a SINGLE payload because OpenAPI 3.0 has no vocabulary for "this schema, repeated, terminated by a literal `data: [DONE]`" — so `text/event-stream`'s schema on that operation is `ChatCompletionChunkDto`, and this type is bound to it.
+
+`created` and `model` are absent on the gateway's own trailing chunk, which is why they are optional here rather than because a provider omits them on a content chunk.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `str` | **yes** |  |
+| `object` | `Literal['chat.completion.chunk']` | **yes** |  |
+| `choices` | [`list[ChatCompletionChunkChoice]`](#chatcompletionchunkchoice) | **yes** | Empty on the usage-only and final `credits_used` chunks; one entry otherwise (the gateway is single-choice throughout). |
+| `created` | `int` | no |  |
+| `model` | `str` | no |  |
+| `usage` | [`ChatUsage`](#chatusage) | no |  |
+| `credits_used` | `float` | no | Set only on the LAST chunk before `data: [DONE]`, alongside `usage` and an EMPTY `choices`. That chunk is yielded like any other, because it is the only place the cost of a streamed call appears. |
+| `web_search_credits` | `float` | no | Charged for the grounded web search, SEPARATE from `credits_used`, which covers the model call. Same final chunk, present only when a web-search provider actually ran. |
+| `infery_web_search` | [`ChatWebSearch`](#chatwebsearch) | no |  |
+
+### `ChatCompletionChunkChoice`
+
+`ChatCompletionChunkChoiceDto`. `finish_reason` is `null` on every chunk but the last one for this choice — nullable, so `None` is a value it takes rather than a key that is missing.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `index` | `int` | **yes** |  |
+| `delta` | [`ChatCompletionChunkDelta`](#chatcompletionchunkdelta) | **yes** | Partial by nature — never a whole message. |
+| `finish_reason` | `Literal['stop', 'length', 'tool_calls', 'content_filter'] \| None` | no |  |
+
+### `ChatCompletionChunkDelta`
+
+`ChatCompletionChunkDeltaDto`. Every field optional: which ones appear depends on the chunk's position in the turn and on the provider path.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `role` | `Literal['assistant']` | no | Only ever `"assistant"`, and only on the first chunk of a turn. |
+| `content` | `str` | no | A FRAGMENT of assistant text. Concatenate across chunks. |
+| `refusal` | `str` | no | A fragment of a model refusal, in place of `content`. |
+| `annotations` | [`list[ChatAnnotation]`](#chatannotation) | no | Flushed once, non-empty, on the FINAL content delta of a turn — not incrementally on every chunk. |
+| `tool_calls` | [`list[ChatToolCallDelta]`](#chattoolcalldelta) | no |  |
+
+### `ChatCompletionParams`
+
+`POST /v1/chat/completions`'s body. `model`/`messages` required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `str` | **yes** |  |
+| `messages` | `list[dict[str, Any]]` | **yes** |  |
+| `temperature` | `float` | no |  |
+| `top_p` | `float` | no |  |
+| `top_k` | `int` | no |  |
+| `max_tokens` | `int` | no |  |
+| `stop` | `str \| list[str]` | no |  |
+| `stream` | `bool` | no |  |
+| `seed` | `int` | no |  |
+| `frequency_penalty` | `float` | no |  |
+| `presence_penalty` | `float` | no |  |
+| `response_format` | `dict[str, Any]` | no |  |
+| `tool_choice` | `str \| dict[str, Any]` | no |  |
+| `tools` | `list[dict[str, Any]]` | no |  |
+| `prompt_cache_key` | `str` | no |  |
+| `web_search` | `dict[str, Any]` | no |  |
+
+### `ChatCompletionResult`
+
+`POST /v1/chat/completions`'s 200. The spec's schema for this operation declares no `required` array at all, so every named field here is optional — a request that somehow got back an empty `{}` is still a valid instance.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `str \| None` | no |  |
+| `object` | `str \| None` | no |  |
+| `created` | `int \| None` | no |  |
+| `model` | `str \| None` | no |  |
+| `choices` | `list[dict[str, Any]]` | no |  |
+| `usage` | `dict[str, Any] \| None` | no |  |
+| `credits_used` | `float \| None` | no |  |
+| `web_search_credits` | `float \| None` | no | Present only when a web-search provider actually ran, separate from `credits_used` (which covers the model call alone). |
+| `infery_web_search` | `dict[str, Any] \| None` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `ChatCompletionTokensDetails`
+
+`ChatCompletionChunkCompletionTokensDetailsDto`. Both optional — no single provider path sets both at once.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `reasoning_tokens` | `int` | no |  |
+| `audio_tokens` | `int` | no |  |
+
+### `ChatPromptTokensDetails`
+
+`ChatCompletionChunkPromptTokensDetailsDto`. Omitted entirely when nothing was cached, so a non-caching stream is byte-wise unchanged from before caching support existed. `cache_write_1h_tokens` is this gateway's own extension, carrying Anthropic's 1-hour TTL cache writes — OpenAI's shape has no field for it.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `cached_tokens` | `int` | no |  |
+| `cache_write_tokens` | `int` | no |  |
+| `cache_write_1h_tokens` | `int` | no |  |
+| `audio_tokens` | `int` | no |  |
+
+### `ChatToolCallDelta`
+
+`ChatCompletionChunkToolCallDeltaDto` — a tool call as it appears on a STREAMING chunk, which is NOT the completed `ChatToolCall` shape. `id` and `type` arrive only on the chunk that starts the call.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `index` | `int` | **yes** | How a caller DEMULTIPLEXES calls that may be CONCURRENT, not merely how it reassembles one call's pieces: the native OpenAI Responses-API path assigns it from the upstream `output_index`, so a `web_search_call` at position 0 pushes a genuine function call to index 1+. Group by this, never by array position. |
+| `id` | `str` | no |  |
+| `type` | `Literal['function']` | no |  |
+| `function` | [`ChatToolCallFunctionDelta`](#chattoolcallfunctiondelta) | no |  |
+
+### `ChatToolCallFunctionDelta`
+
+`ChatCompletionChunkFunctionCallDeltaDto`. `arguments` is a FRAGMENT of the JSON-encoded arguments string — concatenate across chunks, per `tool_calls[].index`, before parsing it.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `name` | `str` | no |  |
+| `arguments` | `str` | no |  |
+
+### `ChatUsage`
+
+`ChatCompletionChunkUsageDto`, with the three base counters OPTIONAL where the DTO types them required.
+
+Not a weakening to make a check pass. The gateway authors its own usage chunk with all three, but a pass-through provider forwards an UPSTREAM usage chunk this gateway never wrote, and nothing guarantees what that one carries. Promising them here would raise a `KeyError` in caller code on a stream that is perfectly valid. `ChatUsage` in `chat.ts:332-339` makes the same call for the same reason, and `types.spec.ts:818-842` binds the three counters individually instead — `tests/test_spec_conformance.py` excludes exactly these three from the REQUIREDNESS direction and keeps them bound as properties.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `prompt_tokens` | `int` | no |  |
+| `completion_tokens` | `int` | no |  |
+| `total_tokens` | `int` | no |  |
+| `prompt_tokens_details` | [`ChatPromptTokensDetails`](#chatprompttokensdetails) | no |  |
+| `completion_tokens_details` | [`ChatCompletionTokensDetails`](#chatcompletiontokensdetails) | no |  |
+
+### `ChatWebSearch`
+
+`ChatWebSearchDto` — what the grounded search actually did. Rides the final chunk only, and only when a web-search provider ran.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `provider` | `str` | **yes** |  |
+| `searches` | `int` | **yes** |  |
+| `citations` | [`list[ChatWebSearchCitation]`](#chatwebsearchcitation) | **yes** |  |
+
+### `ChatWebSearchCitation`
+
+`ChatWebSearchCitationDto`. `title` is an empty string, never absent, when the provider reported none.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `url` | `str` | **yes** |  |
+| `title` | `str` | **yes** |  |
+
+### `EmbeddingParams`
+
+`POST /v1/embeddings`'s body. `model`/`input` required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `str` | **yes** |  |
+| `input` | `str \| list[str]` | **yes** |  |
+| `encoding_format` | `str` | no |  |
+| `dimensions` | `int` | no |  |
+
+### `EmbeddingResult`
+
+`POST /v1/embeddings`'s 200. No `required` array on the spec side — every field here is optional for the same reason as `ChatCompletionResult`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `object` | `str \| None` | no |  |
+| `data` | `list[dict[str, Any]]` | no |  |
+| `model` | `str \| None` | no |  |
+| `usage` | `dict[str, Any] \| None` | no |  |
+| `credits_used` | `float \| None` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `FileContentResult`
+
+`GET /v1/files/{fileId}/content`'s 200 is `application/octet-stream` bytes — no JSON envelope, so (like `SpeechResult`) there is no wire schema to bind and no `from_body`/`raw` here.
+
+`content_type` is the response's actual `Content-Type`: a download whose type the caller has to guess from the filename is a download this SDK made worse than the wire. The default is the fallback for a response that omits the header.
+
+`credits_used` reads `x-credits-used`. A content download is not itself billed today, so it is normally `None` — carried anyway because the header is the only statement of that and `Files.content` returning bare `bytes` made even a non-zero figure unreadable.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `content` | `bytes` | **yes** |  |
+| `content_type` | `str` | no |  |
+| `credits_used` | `float \| None` | no |  |
+
+### `FileCreateParams`
+
+`POST /v1/files`'s multipart body. Both parts required — no optional part exists on this route, so this is `total=True` (the default).
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `file` | `bytes` | **yes** |  |
+| `purpose` | [`FilePurpose`](#filepurpose) | **yes** |  |
+
+### `FileDeleteResult`
+
+`DELETE /v1/files/{fileId}`'s 200. No `required` array declared.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `str \| None` | no |  |
+| `object` | `str \| None` | no |  |
+| `deleted` | `bool \| None` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `FileListParams`
+
+`GET /v1/files`'s query. Entirely optional.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `purpose` | [`FilePurpose`](#filepurpose) | no |  |
+| `limit` | `int` | no |  |
+| `after` | `str` | no |  |
+
+### `FileListResult`
+
+`GET /v1/files`'s 200. No `required` array declared.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `object` | `str \| None` | no |  |
+| `data` | `list[dict[str, Any]]` | no |  |
+| `has_more` | `bool \| None` | no |  |
+| `last_id` | `str \| None` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `FileObject`
+
+`POST /v1/files`'s 201 AND `GET /v1/files/{fileId}`'s 200 — the same inline schema on both routes. Neither declares a `required` array, so every field is optional here, `id` included — a fact worth distrusting in a resource method even though the gateway always sends it in practice; the spec is what this binds to, not what a fixture happens to return.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `str \| None` | no |  |
+| `object` | `str \| None` | no |  |
+| `bytes` | `int \| None` | no |  |
+| `created_at` | `int \| None` | no |  |
+| `filename` | `str \| None` | no |  |
+| `purpose` | [`FilePurpose \| None`](#filepurpose) | no |  |
+| `status` | `str \| None` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `FilePurpose`
+
+The six stored purposes, straight off `POST /v1/files`'s schema. This is the field TypeScript's own binding caught typed as a bare `string` before the fix at `sdks/typescript/src/resources/files.ts:4` — kept here as the same six-member literal so a typo in either SDK is a type error, not a silent 400 from the gateway.
+
+```python
+FilePurpose = Literal['assistants', 'vision', 'user_data', 'batch', 'pipeline_artifact', 'media_artifact']
+```
+
+### `ImageEditParams`
+
+`POST /v1/images/edits`'s body. `model`/`prompt`/`image_base64` required — the OpenAI SDK posts multipart for this call; this endpoint takes JSON instead.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `str` | **yes** |  |
+| `prompt` | `str` | **yes** |  |
+| `image_base64` | `str` | **yes** |  |
+| `image_mime_type` | `str` | no |  |
+| `mask_base64` | `str` | no |  |
+| `mask_mime_type` | `str` | no |  |
+| `n` | `int` | no |  |
+| `response_format` | `str` | no |  |
+| `size` | `str` | no |  |
+| `aspect_ratio` | `str` | no |  |
+| `strength` | `float` | no |  |
+| `person_generation` | `str` | no |  |
+| `quality` | `str` | no |  |
+| `image_size` | `str` | no |  |
+| `style` | `str` | no |  |
+| `background` | `str` | no |  |
+| `steps` | `int` | no |  |
+| `prompt_extend` | `bool` | no |  |
+
+### `ImageGenerateParams`
+
+`POST /v1/images/generations`'s body. `model`/`prompt` required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `str` | **yes** |  |
+| `prompt` | `str` | **yes** |  |
+| `n` | `int` | no |  |
+| `size` | `str` | no |  |
+| `quality` | `str` | no |  |
+| `style` | `str` | no |  |
+| `response_format` | `str` | no |  |
+| `aspect_ratio` | `str` | no |  |
+| `image_size` | `str` | no |  |
+| `negative_prompt` | `str` | no |  |
+| `seed` | `int` | no |  |
+| `person_generation` | `str` | no |  |
+| `background` | `str` | no |  |
+| `output_format` | `str` | no |  |
+| `output_compression` | `int` | no |  |
+| `input_fidelity` | `str` | no |  |
+| `moderation` | `str` | no |  |
+| `strength` | `float` | no |  |
+| `steps` | `int` | no |  |
+| `prompt_extend` | `bool` | no |  |
+
+### `ImageResponse`
+
+`POST /v1/images/generations`'s AND `POST /v1/images/edits`'s 200 — the same schema (`ImageGenerationResponseDto`) on both routes, whose `required` names all three fields, so all three are required here.
+
+All three were optional until #817, when the routes still hand-wrote their response schema inline: an inline schema carries no `required` unless somebody types one, and nobody had — so the SAME payload was published as required on `/v1/images/upscale` and optional here, and this type encoded that inconsistency rather than the wire.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `created` | `int` | **yes** |  |
+| `data` | `list[dict[str, Any]]` | **yes** |  |
+| `credits_used` | `float` | **yes** |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `ImageUpscaleParams`
+
+`POST /v1/images/upscale`'s body. `model`/`image_url` required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `str` | **yes** |  |
+| `image_url` | `str` | **yes** |  |
+| `scale` | `float` | no |  |
+
+### `ImageUpscaleResult`
+
+`POST /v1/images/upscale`'s 200 — same three properties as `ImageResponse`, but here the spec's `required` array names all three.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `created` | `int` | **yes** |  |
+| `data` | `list[dict[str, Any]]` | **yes** |  |
+| `credits_used` | `float` | **yes** |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `JobStatus`
+
+The cross-modality media job — served by `GET /images/jobs/{id}` for EVERY durable media job despite the `/images` path: image, video (only when deferred), 3D, upscale, speech and transcription alike.
+
+Disjoint from `VideoJobStatus`: this has no `created`, no `model`.
+
+Field defaults mirror the wire exactly, per `GET /v1/images/jobs/{id}` in `apps/docs/openapi.json`: only `id`/`status`/`progress` are in that schema's `required`, so those three are the only fields without a default — `tests/test_spec_conformance.py` binds this both ways and would fail with "type requires [...], the spec does not" if any of the rest lost theirs.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `str` | **yes** |  |
+| `status` | `str` | **yes** |  |
+| `progress` | `float` | **yes** |  |
+| `data` | `list[dict[str, Any]]` | no | Present (non-empty) only once `status` is `"completed"`. May be shorter than the job produced — see `artifacts_expired`. |
+| `payload` | `dict[str, Any] \| None` | no | The non-file deliverable, for modalities that have one — e.g. `{"text": ..., "language": ...}` for a transcription. |
+| `credits_used` | `float \| None` | no |  |
+| `artifacts_expired` | `bool \| None` | no | `None` means "nothing known to be missing", never "nothing missing" — it is absent from the wire whenever the gateway has no opinion, and collapsing that to `False` would assert a fact nobody checked. |
+| `error` | `str \| None` | no |  |
+| `raw` | `dict[str, Any]` | no | The untouched response body, for a caller that needs a field this type does not name yet. |
+
+### `MediaArtifact`
+
+One produced artifact, normalised across modalities.
+
+AT MOST ONE of `url`, `b64` and `data` is set, and which one is a property of the ENDPOINT rather than of the request:
+
+- `url` — every asynchronous modality, and images unless base64 was asked for.
+- `b64` — images with `response_format="b64_json"`, and music tracks that came back inline.
+- `data` — `audio` only. `POST /v1/audio/speech` answers with an audio body, not JSON, so there is nothing to link to. (`bytes` in the TypeScript SDK; renamed here because `bytes` is a builtin.)
+
+"At most", not "exactly", is the enforceable half and so it is the half stated: `__post_init__` refuses TWO, because two could only ever be this SDK's own mapping bug. Zero is left reachable, because it is what a gateway response with an artifact but no deliverable maps to, and raising there would cost a caller a result they have already been billed for — the same reason `MediaResult.artifacts` is empty rather than fabricated for a video job with no `result` yet.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `url` | `str \| None` | no |  |
+| `b64` | `str \| None` | no |  |
+| `data` | `bytes \| None` | no |  |
+| `mime_type` | `str \| None` | no |  |
+| `file_id` | `str \| None` | no | The durable `ApiFile` this artifact was registered as, when one was. |
+| `duration_seconds` | `float \| None` | no |  |
+
+### `MediaModality`
+
+The modalities `generate()` can produce.
+
+Deliberately the SAME vocabulary the catalogue reports on `GET /v1/models` as `_infery.modality`, so a caller can take the value straight off a model they picked and pass it through without a translation table. That is the whole point: the modality becomes DATA rather than a choice of method.
+
+`text`, `stt`, `vision`, `embedding` and `rerank` are catalogue modalities too and are absent here on purpose — none of them produces a media artifact. `chat`, `audio.transcriptions` and `embeddings` remain their own calls.
+
+```python
+MediaModality = Literal['image', 'video', 'audio', 'music', 'object_3d', 'upscale']
+```
+
+### `MediaProgress`
+
+Progress across modalities.
+
+Both endpoints behind `wait` report a percentage — `progress` is a required field on `GET /images/jobs/{id}` and on `GET /videos/generations/{id}` alike — so `progress` is populated for every modality. The claim that only video had one described what this SDK forwarded, not the wire.
+
+`status` is optional, unlike the TypeScript `MediaProgress.status`: Python's `Videos.generate` calls its `on_progress` with the SUBMIT result before the first poll, and `POST /v1/videos/generations` declares no `required` array, so `VideoSubmitResult.status` is legitimately absent. Claiming `str` here would mean inventing a status nobody reported.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `status` | `str \| None` | no |  |
+| `progress` | `float \| None` | no | 0-100. Populated for every modality behind `wait`; on `generate` only `video` reports at all — see `generate`. |
+| `job_id` | `str \| None` | no |  |
+
+### `MediaResult`
+
+What every modality answers with.
+
+The `from_*` constructors below are the only mapping in this module; the per-modality resources have already turned the wire into their own dataclasses, and these turn those into this one shape.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `modality` | [`MediaModality`](#mediamodality) | **yes** | Echoed back, so a result can be handled without keeping the request around. |
+| `artifacts` | [`list[MediaArtifact]`](#mediaartifact) | no |  |
+| `created` | `int \| None` | no |  |
+| `credits_used` | `float \| None` | no |  |
+| `job_id` | `str \| None` | no | Set only for `background=True` — pass it to `wait()`. |
+| `artifacts_expired` | `bool \| None` | no | `True` only on a result collected from a deferred job whose artifacts are no longer all retrievable: `artifacts` is then SHORTER than the job produced. `None` means "nothing known to be missing", not "nothing missing". |
+| `raw` | `Any` | no | The untouched per-modality value — an `ImageResponse`, a `VideoJobStatus`, the raw `bytes` for audio. Normalising is lossy by design (`revised_prompt`, `lyrics`, `resolution` have no cross-modality home), and this is the escape hatch rather than a reason to fall back to the per-modality method. |
+
+### `ModelEstimateParams`
+
+`POST /v1/models/{slug}/estimate`'s body. Entirely optional — the spec declares no `required` array; which fields matter depends on the model's modality.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `n` | `int` | no |  |
+| `size` | `str` | no |  |
+| `quality` | `str` | no |  |
+| `steps` | `int` | no |  |
+| `imageInputCount` | `int` | no |  |
+| `characters` | `int` | no |  |
+| `durationSeconds` | `float` | no |  |
+| `resolution` | `str` | no |  |
+| `maxOutputTokens` | `int` | no |  |
+| `totalTokens` | `int` | no |  |
+
+### `ModelEstimateResult`
+
+`POST /v1/models/{slug}/estimate`'s 200 — a single, nullable `credits` field (null means "no active price", not "free"). No `required` array declared.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `credits` | `float \| None` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `ModelListParams`
+
+`GET /v1/models`'s query. Entirely optional.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `include_tools` | `bool` | no |  |
+
+### `ModelListResult`
+
+`GET /v1/models`'s 200. No `required` array declared.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `object` | `str \| None` | no |  |
+| `data` | `list[dict[str, Any]]` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `MusicCompletedEvent`
+
+The terminal success frame, immediately before `data: [DONE]`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['completed']` | **yes** |  |
+| `created` | `int` | **yes** |  |
+| `data` | `list[dict[str, Any]]` | **yes** |  |
+| `credits_used` | `float` | **yes** | The only place a streamed music generation's cost appears — the non-streaming route returns it in the JSON body instead. |
+| `model` | `str` | **yes** |  |
+| `fallback_from` | `str` | no |  |
+
+### `MusicErrorEvent`
+
+The terminal failure frame. Once SSE headers are sent the gateway cannot fall back to an HTTP error, so a failure arrives as a frame and the stream still ends with `data: [DONE]` — a caller that ignores `type` sees a successful, empty stream.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['error']` | **yes** |  |
+| `error` | [`MusicStreamError`](#musicstreamerror) | **yes** |  |
+
+### `MusicGenerateParams`
+
+`POST /v1/music/generations`'s body. `model`/`prompt` required; the rest is Suno/Lyria-specific and provider-dependent.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `str` | **yes** |  |
+| `prompt` | `str` | **yes** |  |
+| `audio_id` | `str` | no |  |
+| `audio_weight` | `float` | no |  |
+| `continue_at` | `float` | no |  |
+| `custom_mode` | `bool` | no |  |
+| `default_param_flag` | `bool` | no |  |
+| `images` | `list[str]` | no |  |
+| `instrumental` | `bool` | no |  |
+| `lyrics` | `str` | no |  |
+| `negative_tags` | `str` | no |  |
+| `operation` | `str` | no |  |
+| `persona_id` | `str` | no |  |
+| `persona_model` | `str` | no |  |
+| `response_format` | `str` | no |  |
+| `separation_type` | `str` | no |  |
+| `sound_key` | `str` | no |  |
+| `sound_loop` | `bool` | no |  |
+| `sound_tempo` | `str` | no |  |
+| `style` | `str` | no |  |
+| `style_weight` | `float` | no |  |
+| `tags` | `str` | no |  |
+| `task_id` | `str` | no |  |
+| `title` | `str` | no |  |
+| `upload_url` | `str` | no |  |
+| `vocal_gender` | `str` | no |  |
+| `weirdness_constraint` | `float` | no |  |
+
+### `MusicGenerateResult`
+
+`POST /v1/music/generations`'s 200. No `required` array declared.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `created` | `int \| None` | no |  |
+| `credits_used` | `float \| None` | no |  |
+| `data` | `list[dict[str, Any]]` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `MusicProgressEvent`
+
+Emitted while the track renders. `error` here is a provider-reported string on a still-open stream — the terminal failure is `MusicErrorEvent`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['progress']` | **yes** |  |
+| `status` | `str` | **yes** |  |
+| `progress` | `float` | **yes** |  |
+| `provider_status` | `str` | no |  |
+| `message` | `str` | no |  |
+| `error` | `str` | no |  |
+| `data` | `list[dict[str, Any]]` | no |  |
+
+### `MusicStreamError`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `message` | `str` | **yes** |  |
+| `type` | `str` | **yes** |  |
+| `status` | `int` | **yes** |  |
+
+### `MusicStreamEvent`
+
+Discriminated on `type`, which is required on all three members so a type-checker can narrow `event["type"]`.
+
+```python
+MusicStreamEvent = MusicProgressEvent | MusicCompletedEvent | MusicErrorEvent
+```
+
+Members: [`MusicProgressEvent`](#musicprogressevent) · [`MusicCompletedEvent`](#musiccompletedevent) · [`MusicErrorEvent`](#musicerrorevent)
+
+### `SpeechParams`
+
+`POST /v1/audio/speech`'s body. `model`/`input` required.
+
+`voice` is NOT required and never was enforced as such — the operation declared it `required` while no handler rejected a request that omitted it, which is #869. Omit it and the routed provider supplies a default.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `str` | **yes** |  |
+| `input` | `str` | **yes** |  |
+| `voice` | `str` | no |  |
+| `response_format` | `str` | no |  |
+| `speed` | `float` | no |  |
+
+### `SpeechResult`
+
+`POST /v1/audio/speech`'s 200 is `audio/wav` bytes — no JSON envelope at all, so there is no wire schema to bind and no `from_body`/`raw` here, and `tests/test_spec_conformance.py` skips this operation for that reason (`BINARY_OPERATIONS`).
+
+`content_type` is the response's actual `Content-Type`, for a caller that wants to save the bytes with the right extension; the default is the fallback for a response that omits the header, not a claim about the body.
+
+`credits_used` is the ONLY place the cost of a speech call is readable — the header on a synchronous answer, and the job's settled figure when the call deferred. `Speech.create` returned bare `bytes` until 0.1.0 and both of those were unreachable: `x-credits-used` was on a response object the method dropped, and the deferral's figure was on a `JobStatus` it discarded after taking the url out of it.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `audio` | `bytes` | **yes** |  |
+| `content_type` | `str` | no |  |
+| `credits_used` | `float \| None` | no |  |
+
+### `ThreeDGenerateParams`
+
+`POST /v1/3d/generations`'s body. `model` required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `str` | **yes** |  |
+| `prompt` | `str` | no |  |
+| `image_url` | `str` | no |  |
+| `mesh_url` | `str` | no |  |
+| `seed` | `int` | no |  |
+
+### `ThreeDGenerateResult`
+
+`POST /v1/3d/generations`'s 200 — all three properties required, same as `ImageUpscaleResult`/`VideoUpscaleResult`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `created` | `int` | **yes** |  |
+| `data` | `list[dict[str, Any]]` | **yes** |  |
+| `credits_used` | `float` | **yes** |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `ToolListResult`
+
+`GET /v1/tools`'s 200 — both `object` and `data` are in the spec's `required` array, unlike `GET /v1/models`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `object` | `str` | **yes** |  |
+| `data` | `list[dict[str, Any]]` | **yes** |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `TranscriptionParams`
+
+`POST /v1/audio/transcriptions`'s JSON body variant. `model`/ `file_base64` required.
+
+NOT what `audio.transcriptions.create` sends. That method posts the multipart form the same route also accepts — `file` as bytes plus `filename` — because a caller holding a file should not have to base64 it first. The optional keys below are the ones both variants share and are what `**params` accepts there; `file_base64` is not one of them.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `str` | **yes** |  |
+| `file_base64` | `str` | **yes** |  |
+| `filename` | `str` | no |  |
+| `language` | `str` | no |  |
+| `prompt` | `str` | no |  |
+| `response_format` | `str` | no |  |
+| `temperature` | `float` | no |  |
+
+### `TranscriptionResult`
+
+`POST /v1/audio/transcriptions`'s 200 is a `oneOf` of two INLINE schemas — one full (`credits_used, duration, language, segments, text`), one minimal (`credits_used, text`) for the plain-text response formats.
+
+Rule applied here and in `tests/test_spec_conformance.py`: the Python type is the UNION of every `oneOf` member's properties (so a field only one member has is still reachable), and a field counts as required only if EVERY member requires it. Neither member declares a `required` array here, so every field below is optional under that rule.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `credits_used` | `float \| None` | no |  |
+| `duration` | `float \| None` | no |  |
+| `language` | `str \| None` | no |  |
+| `segments` | `list[dict[str, Any]]` | no |  |
+| `text` | `str \| None` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `VideoJobStatus`
+
+A video generation job — served by `GET /videos/generations/{id}`.
+
+Disjoint from `JobStatus`: no `data`, no `payload`, no `artifacts_expired`; carries `created`/`model` instead.
+
+Same requiredness rule as `JobStatus`: `apps/docs/openapi.json` requires `id`/`status`/`progress`/`created`/`model` on this response and nothing else, so those five are the only fields without a default.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `str` | **yes** |  |
+| `status` | `str` | **yes** |  |
+| `progress` | `float` | **yes** |  |
+| `created` | `int` | **yes** |  |
+| `model` | `str` | **yes** |  |
+| `result` | `dict[str, Any] \| None` | no | Present only once `status` is `"completed"`. |
+| `credits_used` | `float \| None` | no |  |
+| `error` | `str \| None` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `VideoSubmitParams`
+
+`POST /v1/videos/generations`'s body. `model`/`prompt` required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `str` | **yes** |  |
+| `prompt` | `str` | **yes** |  |
+| `duration` | `float` | no |  |
+| `resolution` | `str` | no |  |
+| `aspect_ratio` | `str` | no |  |
+| `n` | `int` | no |  |
+| `image_url` | `str` | no |  |
+| `video_url` | `str` | no |  |
+| `audio_url` | `str` | no |  |
+| `person_generation` | `str` | no |  |
+| `fps` | `int` | no |  |
+| `style` | `str` | no |  |
+
+### `VideoSubmitResult`
+
+`POST /v1/videos/generations`'s 200 — the job's own identity, NOT a completed result. Disjoint from `VideoJobStatus`: no `result`, `credits_used`, or `error`, ever, per this operation's schema. No `required` array declared, so every field is optional.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `str \| None` | no |  |
+| `status` | `str \| None` | no |  |
+| `progress` | `int \| None` | no |  |
+| `created` | `int \| None` | no |  |
+| `model` | `str \| None` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `VideoUpscaleParams`
+
+`POST /v1/video/upscale`'s body. `model`/`video_url` required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `model` | `str` | **yes** |  |
+| `video_url` | `str` | **yes** |  |
+| `scale` | `float` | no |  |
+
+### `VideoUpscaleResult`
+
+`POST /v1/video/upscale`'s 200 — all three properties required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `created` | `int` | **yes** |  |
+| `data` | `list[dict[str, Any]]` | **yes** |  |
+| `credits_used` | `float` | **yes** |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `WorkflowCreateParams`
+
+`POST /v1/workflows`'s body. `name`/`definition` required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `name` | `str` | **yes** |  |
+| `definition` | `dict[str, Any]` | **yes** |  |
+| `description` | `str` | no |  |
+
+### `WorkflowDeleteResult`
+
+`DELETE /v1/workflows/{id}`'s 200 — both properties required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `str` | **yes** |  |
+| `deleted` | `bool` | **yes** |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `WorkflowEstimateParams`
+
+`POST /v1/workflows/estimate`'s body. Entirely optional — either `definition` (inline) or `pipeline_id`/`pipeline_version` (saved) names the workflow to estimate.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `definition` | `dict[str, Any]` | no |  |
+| `input` | `dict[str, Any]` | no |  |
+| `pipeline_id` | `str` | no |  |
+| `pipeline_version` | `int` | no |  |
+
+### `WorkflowEstimateResult`
+
+`POST /v1/workflows/estimate`'s 201 — every property required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `min_credits` | `float` | **yes** |  |
+| `max_credits` | `float` | **yes** |  |
+| `currency` | `str` | **yes** |  |
+| `breakdown` | `list[dict[str, Any]]` | **yes** |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `WorkflowForeachCompletedEvent`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['foreach.completed']` | **yes** |  |
+| `stepId` | `str` | **yes** |  |
+| `successCount` | `int` | **yes** |  |
+| `failureCount` | `int` | **yes** |  |
+| `durationMs` | `float` | **yes** |  |
+
+### `WorkflowForeachStartedEvent`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['foreach.started']` | **yes** |  |
+| `stepId` | `str` | **yes** |  |
+| `totalIterations` | `int` | **yes** |  |
+
+### `WorkflowIterationFailedEvent`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['iteration.failed']` | **yes** |  |
+| `stepId` | `str` | **yes** |  |
+| `iterationIndex` | `int` | **yes** |  |
+| `error` | [`WorkflowStepError`](#workflowsteperror) | **yes** |  |
+
+### `WorkflowIterationStartedEvent`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['iteration.started']` | **yes** |  |
+| `stepId` | `str` | **yes** |  |
+| `iterationIndex` | `int` | **yes** |  |
+| `childRunId` | `str` | no | Present only when this iteration spawns a `sub_pipeline` — the spawned child's run id. |
+
+### `WorkflowIterationSucceededEvent`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['iteration.succeeded']` | **yes** |  |
+| `stepId` | `str` | **yes** |  |
+| `iterationIndex` | `int` | **yes** |  |
+| `creditsUsed` | `float` | **yes** |  |
+| `durationMs` | `float` | **yes** |  |
+
+### `WorkflowListParams`
+
+`GET /v1/workflows`'s query. Entirely optional. The wire types `limit`/`offset` as `string` (an HTTP query value always is, before parsing) — this is the ergonomic `int` a caller actually passes.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `limit` | `int` | no |  |
+| `offset` | `int` | no |  |
+
+### `WorkflowListResult`
+
+`GET /v1/workflows`'s 200 — every property required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `items` | `list[dict[str, Any]]` | **yes** |  |
+| `total` | `int` | **yes** |  |
+| `limit` | `int` | **yes** |  |
+| `offset` | `int` | **yes** |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `WorkflowResult`
+
+`GET /v1/workflows/{id}`'s 200 — every one of its 15 properties is in the spec's `required` array, `deletedAt`/`createdByUserId` (nullable) included: the KEY must be present even when the value is `null`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `str` | **yes** |  |
+| `workspaceId` | `str` | **yes** |  |
+| `name` | `str` | **yes** |  |
+| `description` | `str \| None` | **yes** |  |
+| `latestVersion` | `int` | **yes** |  |
+| `isActive` | `bool` | **yes** |  |
+| `createdAt` | `str` | **yes** |  |
+| `updatedAt` | `str` | **yes** |  |
+| `deletedAt` | `str \| None` | **yes** |  |
+| `createdByUserId` | `str \| None` | **yes** |  |
+| `sharingScope` | `str` | **yes** |  |
+| `sharePermission` | `str` | **yes** |  |
+| `definition` | `dict[str, Any]` | **yes** |  |
+| `version` | `int` | **yes** |  |
+| `inputs` | `list[dict[str, Any]]` | **yes** |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `WorkflowRetrieveParams`
+
+`GET /v1/workflows/{id}`'s query. Entirely optional.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `version` | `int` | no |  |
+
+### `WorkflowRunCancelResult`
+
+`POST /v1/workflows/runs/{id}/cancel`'s 201 — both properties required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `str` | **yes** |  |
+| `status` | `str` | **yes** |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `WorkflowRunCompletedEvent`
+
+`pipeline.completed` — one of the two terminal events, immediately before `data: [DONE]`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['pipeline.completed']` | **yes** |  |
+| `output` | `dict[str, Any]` | **yes** |  |
+| `creditsUsed` | `float` | **yes** |  |
+| `durationMs` | `float` | **yes** |  |
+| `stepRuns` | [`list[WorkflowStreamStepResult]`](#workflowstreamstepresult) | **yes** |  |
+
+### `WorkflowRunCreateParams`
+
+`POST /v1/workflows/runs`'s body. `input` required; exactly one of `definition` or `pipeline_id` names the workflow to run.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `input` | `dict[str, Any]` | **yes** |  |
+| `definition` | `dict[str, Any]` | no |  |
+| `mode` | `str` | no |  |
+| `only_step_id` | `str` | no |  |
+| `pipeline_id` | `str` | no |  |
+| `pipeline_version` | `int` | no |  |
+| `rerun_from_step_id` | `str` | no |  |
+| `resume_from_run_id` | `str` | no |  |
+
+### `WorkflowRunCreateResult`
+
+`POST /v1/workflows/runs`'s 201 is a `oneOf` of the full run result (sync mode) and a queued-run stub carrying only `id`/`status`/ `createdAt` (async mode) — see the module docstring for the union rule. Applied here: properties are the union of both members (11, all from the full-result member since the stub's 3 are a subset); required is the INTERSECTION, `{id, status, createdAt}` — the only three the stub also declares required.
+
+Disjoint from `WorkflowRunResult` even though the field NAMES match: `attempt`/`maxAttempts`/`creditsUsed`/`stepRuns`/`durationMs` are required when reading a run back, but NOT on this operation's own response, precisely because that response might be the async stub.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `str` | **yes** |  |
+| `status` | `str` | **yes** |  |
+| `createdAt` | `str` | **yes** |  |
+| `attempt` | `int \| None` | no |  |
+| `maxAttempts` | `int \| None` | no |  |
+| `creditsUsed` | `float \| None` | no |  |
+| `stepRuns` | `list[dict[str, Any]]` | no |  |
+| `durationMs` | `float \| None` | no |  |
+| `input` | `dict[str, Any] \| None` | no |  |
+| `output` | `dict[str, Any] \| None` | no |  |
+| `error` | `dict[str, Any] \| None` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `WorkflowRunError`
+
+The failure on `pipeline.failed`. `stepId` is the extra field a RUN-level error carries and a step-level one does not: which step took the run down.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `code` | `str` | **yes** |  |
+| `message` | `str` | **yes** |  |
+| `stepId` | `str` | no |  |
+
+### `WorkflowRunEvent`
+
+Discriminated on `type`, required on all fourteen members so a type-checker can narrow `event["type"]`.
+
+```python
+WorkflowRunEvent = WorkflowRunStartedEvent | WorkflowStepStartedEvent | WorkflowStepDeltaEvent | WorkflowStepCompletedEvent | WorkflowStepFailedEvent | WorkflowStepSkippedEvent | WorkflowRunCompletedEvent | WorkflowRunFailedEvent | WorkflowForeachStartedEvent | WorkflowIterationStartedEvent | WorkflowIterationSucceededEvent | WorkflowIterationFailedEvent | WorkflowForeachCompletedEvent | WorkflowUnknownEvent
+```
+
+Members: [`WorkflowRunStartedEvent`](#workflowrunstartedevent) · [`WorkflowStepStartedEvent`](#workflowstepstartedevent) · [`WorkflowStepDeltaEvent`](#workflowstepdeltaevent) · [`WorkflowStepCompletedEvent`](#workflowstepcompletedevent) · [`WorkflowStepFailedEvent`](#workflowstepfailedevent) · [`WorkflowStepSkippedEvent`](#workflowstepskippedevent) · [`WorkflowRunCompletedEvent`](#workflowruncompletedevent) · [`WorkflowRunFailedEvent`](#workflowrunfailedevent) · [`WorkflowForeachStartedEvent`](#workflowforeachstartedevent) · [`WorkflowIterationStartedEvent`](#workflowiterationstartedevent) · [`WorkflowIterationSucceededEvent`](#workflowiterationsucceededevent) · [`WorkflowIterationFailedEvent`](#workflowiterationfailedevent) · [`WorkflowForeachCompletedEvent`](#workflowforeachcompletedevent) · [`WorkflowUnknownEvent`](#workflowunknownevent)
+
+### `WorkflowRunFailedEvent`
+
+`pipeline.failed` — the other terminal event. A run that fails half way has still paid for the steps that ran, so `creditsUsed` is meaningful here and not zero.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['pipeline.failed']` | **yes** |  |
+| `error` | [`WorkflowRunError`](#workflowrunerror) | **yes** |  |
+| `creditsUsed` | `float` | **yes** |  |
+| `durationMs` | `float` | **yes** |  |
+| `stepRuns` | [`list[WorkflowStreamStepResult]`](#workflowstreamstepresult) | **yes** |  |
+
+### `WorkflowRunLogsResult`
+
+`GET /v1/workflows/runs/{id}/logs`'s 200 — `data` is required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `data` | `list[dict[str, Any]]` | **yes** |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `WorkflowRunResult`
+
+`GET /v1/workflows/runs/{id}`'s 200 — the full run, whatever its mode. `id`/`status`/`attempt`/`maxAttempts`/`creditsUsed`/`stepRuns`/ `durationMs`/`createdAt` are required; `input`/`output`/`error` are not (`input`/`output` are absent for a run that hasn't produced them yet, `error` only for a failed run).
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `str` | **yes** |  |
+| `status` | `str` | **yes** |  |
+| `attempt` | `int` | **yes** |  |
+| `maxAttempts` | `int` | **yes** |  |
+| `creditsUsed` | `float` | **yes** |  |
+| `stepRuns` | `list[dict[str, Any]]` | **yes** |  |
+| `durationMs` | `float` | **yes** |  |
+| `createdAt` | `str` | **yes** |  |
+| `input` | `dict[str, Any] \| None` | no |  |
+| `output` | `dict[str, Any] \| None` | no |  |
+| `error` | `dict[str, Any] \| None` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `WorkflowRunStartedEvent`
+
+`pipeline.started` — the wire name, not `run.started`.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['pipeline.started']` | **yes** |  |
+| `runId` | `str` | **yes** |  |
+| `totalSteps` | `int` | **yes** |  |
+| `createdAt` | `str` | **yes** |  |
+
+### `WorkflowStepCompletedEvent`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['step.completed']` | **yes** |  |
+| `stepId` | `str` | **yes** |  |
+| `output` | `Any` | **yes** | Whatever the step produced. `Any`, not a narrower union: the gateway types this event's field as `unknown` too. |
+| `creditsUsed` | `float` | **yes** |  |
+| `durationMs` | `float` | **yes** |  |
+| `outputRef` | `str` | no |  |
+| `attempt` | `int` | no |  |
+
+### `WorkflowStepDelta`
+
+`step.delta`'s payload — the gateway's OWN `ChatCompletionChunkDelta` (`runner/pipeline-event.types.ts:4-15`), deliberately NOT this SDK's `ChatCompletionChunk` graph above.
+
+The two diverged: PR #780's chat chunk requires `id`, `object` and `choices`, and each choice requires `index` and `delta` — none of which a step-local delta promises, because it comes from inside a pipeline `model` step rather than from a top-level chat completion. Reusing `ChatCompletionChunk` here would claim fields a step delta does not carry, and a caller reading `chunk["object"]` off one would raise `KeyError` on a perfectly valid frame.
+
+Note also that the gateway's interface is a WHOLE-CHUNK shape (its own `choices`, `id`, `usage`) while this SDK's same-named `ChatCompletionChunkDelta` is a PER-CHOICE delta. Same name upstream, unrelated shape.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `choices` | [`list[WorkflowStepDeltaChoice]`](#workflowstepdeltachoice) | no |  |
+| `usage` | [`WorkflowStepDeltaUsage`](#workflowstepdeltausage) | no |  |
+| `id` | `str` | no |  |
+| `object` | `str` | no |  |
+| `created` | `int` | no |  |
+| `model` | `str` | no |  |
+
+### `WorkflowStepDeltaChoice`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `delta` | [`WorkflowStepDeltaChoiceDelta`](#workflowstepdeltachoicedelta) | no |  |
+| `finish_reason` | `str \| None` | no |  |
+| `index` | `int` | no |  |
+
+### `WorkflowStepDeltaChoiceDelta`
+
+The innermost delta of a `model` step's streamed chunk.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `content` | `str` | no |  |
+| `role` | `str` | no |  |
+| `tool_calls` | `Any` | no | `unknown` on the gateway side too — a step delta forwards whatever the provider sent without reshaping it, so this is deliberately not `list[ChatToolCallDelta]`. |
+
+### `WorkflowStepDeltaEvent`
+
+`step.delta` — token-level output of a `model` step, while it runs.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['step.delta']` | **yes** |  |
+| `stepId` | `str` | **yes** |  |
+| `delta` | [`WorkflowStepDelta`](#workflowstepdelta) | **yes** |  |
+
+### `WorkflowStepDeltaUsage`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `prompt_tokens` | `int` | no |  |
+| `completion_tokens` | `int` | no |  |
+| `total_tokens` | `int` | no |  |
+
+### `WorkflowStepError`
+
+The failure on `step.failed` and `iteration.failed`, and on a step run's own `error`. Both keys required — the runner authors this object itself (`pipeline-event.types.ts`), so neither half is ever missing.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `code` | `str` | **yes** |  |
+| `message` | `str` | **yes** |  |
+
+### `WorkflowStepFailedEvent`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['step.failed']` | **yes** |  |
+| `stepId` | `str` | **yes** |  |
+| `error` | [`WorkflowStepError`](#workflowsteperror) | **yes** |  |
+| `attempt` | `int` | no |  |
+
+### `WorkflowStepSkippedEvent`
+
+`step.skipped`, and its three reasons are NOT interchangeable.
+
+`not_selected` is an `only_step_id` run's other steps: they did not run at all this time. `resumed_from_prior_attempt` is a step whose result was carried over from an earlier attempt of this same run — it DID run, just not now. `condition_false` is the unambiguous third case: the step's `condition` evaluated false. Showing one for another tells the caller a step succeeded when nothing touched it.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['step.skipped']` | **yes** |  |
+| `stepId` | `str` | **yes** |  |
+| `reason` | `Literal['resumed_from_prior_attempt', 'condition_false', 'not_selected']` | **yes** |  |
+
+### `WorkflowStepStartedEvent`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['step.started']` | **yes** |  |
+| `stepId` | `str` | **yes** |  |
+| `stepType` | `str` | **yes** |  |
+| `startedAt` | `str` | **yes** |  |
+| `attempt` | `int` | no |  |
+
+### `WorkflowStreamStepResult`
+
+One entry of a terminal event's `stepRuns` — one per step ATTEMPT, not one per step.
+
+`childRunIds` is OPTIONAL here, unlike on the JSON routes where the gateway's own comment calls its presence a "stable contract". That population happens in the JSON-response enrichment layer (`pipeline-run-persistence.service.ts`, `pipeline-runs.service.ts`), which the streaming path never runs through — the runner yields `r.stepRuns` straight into the terminal SSE events, and the gateway's own `StepRunResult.childRunIds` is optional for exactly this reason (`types/pipeline-run.types.ts:20`). Reading `len(step["childRunIds"])` off a real stream payload raises `KeyError`; promising it here would hide that.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `str` | **yes** | The step id from the definition, not a database row id. |
+| `type` | `str` | **yes** | The step type from the definition (`model`, `media`, `http`, `foreach`, `parallel`, `sub_pipeline`, or a capability id). A plain `str`, not a closed union: the gateway's `StepType` is a Zod-inferred literal union this SDK does not otherwise mirror. |
+| `status` | `Literal['pending', 'running', 'succeeded', 'failed', 'skipped', 'cancelled']` | **yes** |  |
+| `creditsUsed` | `float` | **yes** |  |
+| `durationMs` | `float` | **yes** |  |
+| `attempt` | `int` | **yes** | 1-based attempt counter for this step within the run. |
+| `output` | `Any` | no | `None` when the step was skipped; absent when it produced nothing. |
+| `outputRef` | `str` | no | Internal handle (`gs://...`) for the artifact this step wrote, not a fetchable URL. |
+| `error` | [`WorkflowStepError`](#workflowsteperror) | no |  |
+| `skippedReason` | `Literal['resumed_from_prior_attempt', 'condition_false', 'not_selected']` | no |  |
+| `childRunIds` | `list[str]` | no | Child runs this step spawned (`foreach` iterations, or a `sub_pipeline` invocation). |
+
+### `WorkflowTemplateListParams`
+
+`GET /v1/workflows/templates`'s query. Entirely optional.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `category` | `str` | no |  |
+| `tag` | `str` | no |  |
+| `limit` | `int` | no |  |
+| `offset` | `int` | no |  |
+
+### `WorkflowTemplateListResult`
+
+`GET /v1/workflows/templates`'s 200 — every property required. Same shape as `WorkflowListResult` but a DIFFERENT spec component (`TemplateListResponseDto` vs `PipelineListResponseDto`), kept as a separate type for that reason.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `items` | `list[dict[str, Any]]` | **yes** |  |
+| `total` | `int` | **yes** |  |
+| `limit` | `int` | **yes** |  |
+| `offset` | `int` | **yes** |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `WorkflowTemplateResult`
+
+`GET /v1/workflows/templates/{slug}`'s 200 — 8 of its 12 properties are required (`slug, title, description, category, tags, step_types_used, thumbnail_url, created_at`); `definition`, `sample_input`, and `inputs` are absent when `unavailable` is present, and `unavailable` itself is absent otherwise.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `slug` | `str` | **yes** |  |
+| `title` | `str` | **yes** |  |
+| `description` | `str` | **yes** |  |
+| `category` | `str \| None` | **yes** |  |
+| `tags` | `list[str]` | **yes** |  |
+| `step_types_used` | `list[str]` | **yes** |  |
+| `thumbnail_url` | `str \| None` | **yes** |  |
+| `created_at` | `str` | **yes** |  |
+| `definition` | `dict[str, Any] \| None` | no |  |
+| `sample_input` | `dict[str, Any] \| None` | no |  |
+| `inputs` | `list[dict[str, Any]] \| None` | no |  |
+| `unavailable` | `dict[str, Any] \| None` | no |  |
+| `raw` | `dict[str, Any]` | no |  |
+
+### `WorkflowUnknownEvent`
+
+The fourteenth member: the escape hatch for an `event:` name outside the thirteen above.
+
+A gateway that adds a fourteenth real event must not break every existing caller's loop, so an unrecognised name is yielded as this rather than dropped or raised. `name` carries the raw `event:` line — possibly `''`, for a block that had no `event:` field at all — and `data` the raw parsed payload, so a caller who wants to handle the new event can, before this SDK has shipped a type for it.
+
+`unknown_event` is also the one `type` literal in this union with NO DOT in it, which is what lets `WORKFLOW_RUN_EVENT_NAMES` below tell the escape hatch apart from a real gateway event name without a hand-maintained exclusion list. `sdks/typescript/src/resources/workflows.ts:634-640` uses the same rule.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `type` | `Literal['unknown_event']` | **yes** |  |
+| `name` | `str` | **yes** |  |
+| `data` | `Any` | **yes** |  |
+
+### `WorkflowUpdateParams`
+
+`PUT /v1/workflows/{id}`'s body — a partial update, so the spec declares no `required` array at all.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `name` | `str` | no |  |
+| `description` | `str` | no |  |
+| `definition` | `dict[str, Any]` | no |  |
+
+### `WorkflowWriteResult`
+
+`POST /v1/workflows`'s 201 AND `PUT /v1/workflows/{id}`'s 200 — both resolve to the SAME `PipelineWriteResultDto` component on the spec side, so one type serves both operations. Every property required.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | `str` | **yes** |  |
+| `version` | `int` | **yes** |  |
+| `name` | `str` | **yes** |  |
+| `raw` | `dict[str, Any]` | no |  |

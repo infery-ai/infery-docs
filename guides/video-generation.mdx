@@ -1,0 +1,165 @@
+---
+title: "Video generation"
+description: "Async submission, polling, image-to-video, and persistence."
+---
+
+Video generation is **asynchronous** — you submit a job, then poll until it finishes. For the raw endpoint see [Create video generation](/api-reference/videos/generations). This guide covers the patterns you'll actually write.
+
+## Pick a model
+
+| Model | Strong for | Max duration | Notes |
+| --- | --- | --- | --- |
+| `veo-3.1` (Google) | Photorealism, motion coherence | 8 s | Slower, higher cost |
+| `veo-3.1-fast` | Iteration | 4 s | Default for prototyping |
+| `sora-2` (OpenAI) | Long, narrative scenes | 20 s | Limited availability |
+| `wan-2.1-t2v-720p` (Alibaba) | Text-to-video | 6 s | PRC opt-in required |
+| `grok-imagine-video` | Realistic, low refusal | 6 s | xAI |
+
+List the catalog with `GET /v1/models` and keep the entries whose `_infery.modality` is `video`. Each entry's `_infery.allowed_params` carries the supported `resolutions`, `aspect_ratios` and `durations`.
+
+## Sample output
+
+<video controls src="/samples/video.mp4" style={{ width: '100%', maxWidth: 640 }} />
+
+*4-second clip from `veo-3-fast`, 16:9, prompt: "A vibrant tropical coral reef in crystal-clear turquoise water, colorful fish darting between coral, soft golden sunlight streaming down, slow cinematic dolly-in, rich saturated colors."*
+
+## Submit + poll pattern
+
+Video has no OpenAI-SDK surface — the OpenAI SDK models no video endpoint, so call this one over plain HTTP. The minimum viable client:
+
+```python python
+import os, time, httpx
+
+http = httpx.Client(
+    base_url="https://api.infery.ai/v1",
+    headers={"Authorization": f"Bearer {os.environ['INFERY_API_KEY']}"},
+    timeout=60,
+)
+
+def generate_video(prompt: str, model: str = "veo-3.1-fast") -> dict:
+    job = http.post(
+        "/videos/generations",
+        json={
+            "model": model,
+            "prompt": prompt,
+            "duration": 4,
+            "resolution": "720p",
+            "aspect_ratio": "16:9",
+        },
+    ).json()
+    job_id = job["id"]
+
+    while True:
+        status = http.get(f"/videos/generations/{job_id}").json()
+        if status["status"] == "completed":
+            return status["result"]
+        if status["status"] == "failed":
+            raise RuntimeError(status.get("error", "video generation failed"))
+        time.sleep(5)
+```
+
+Two field names to get right, because both fail quietly:
+
+- The submit response returns the job under **`id`**, not `job_id`. It is a UUID.
+- The duration field is **`duration`**, not `duration_seconds`. An unknown key is ignored rather than rejected, so asking for `duration_seconds: 4` renders — and bills — the model's default duration instead.
+
+**Poll every 5 seconds** — more often wastes calls and may hit your RPM. Most videos finish in 30–90 s; the hard timeout is 1 hour.
+
+**Publishing to a platform?** Each placement carries its own shape *and* its own
+duration ceiling, and they are not close to each other — a Reel allows 900
+seconds, TikTok and YouTube Shorts 180, an X video 140.
+[Publishing formats](/guides/publishing-formats) lists every one, so you can name
+the placement and let the ceiling be applied for you instead of looking it up.
+
+## Async with progress
+
+In a UI, surface `progress` (0–100) so users see motion:
+
+```typescript node
+async function* watchJob(jobId: string) {
+  while (true) {
+    const r = await fetch(`https://api.infery.ai/v1/videos/generations/${jobId}`, {
+      headers: { Authorization: `Bearer ${process.env.INFERY_API_KEY}` },
+    }).then((r) => r.json());
+
+    yield r;
+
+    if (r.status === 'completed' || r.status === 'failed') return;
+    await new Promise((res) => setTimeout(res, 5000));
+  }
+}
+
+for await (const update of watchJob(jobId)) {
+  ui.setProgress(update.progress ?? 0);
+  if (update.status === 'completed') ui.showVideo(update.result.url);
+}
+```
+
+For server-side workflows, push the job `id` onto a queue and let a worker poll. **Never block an HTTP request handler waiting for a video** — the request will time out long before the video is ready.
+
+## Image-to-video
+
+Animate a still image. The source is passed by URL — this endpoint takes `image_url` only, and has no inline-base64 field:
+
+```python python
+job = http.post("/videos/generations", json={
+    "model": "veo-3.1",
+    "prompt": "Slow camera dolly-in, gentle wind in the leaves",
+    "image_url": "https://cdn.example.com/forest.jpg",
+    "duration": 8,
+    "aspect_ratio": "16:9",
+}).json()
+```
+
+The URL is fetched anonymously — by us for Veo and Sora, by the aggregator for everything else — so it has to be publicly reachable. A URL that needs an `Authorization` header, including `GET /v1/files/{fileId}/content`, will not work. It is also SSRF-checked before anything is billed: private, loopback and link-local addresses are refused.
+
+Image-to-video typically gives better physical coherence than text-to-video for tricky subjects (faces, hands, complex props) — start with the still you want and let the model only produce motion.
+
+## Persistence
+
+`result.url` is the **upstream provider's URL, and it is ephemeral** — typically an hour, sometimes less. Unlike image generation, a video job writes no copy into your workspace storage and returns no `file_id`. Download it as soon as the job completes:
+
+```python python
+import httpx
+from openai import OpenAI
+
+oai = OpenAI(api_key=os.environ["INFERY_API_KEY"], base_url="https://api.infery.ai/v1")
+
+result = generate_video("A vibrant coral reef, slow cinematic dolly-in")
+mp4 = httpx.get(result["url"], follow_redirects=True).content
+
+f = oai.files.create(file=("hero.mp4", mp4), purpose="user_data")
+# f.id is now a stable handle in your workspace storage
+```
+
+Storing it back through the Files API is the only way to get a durable handle. Those bytes then count against your workspace storage quota like any other upload.
+
+## Prompting
+
+Video models reward physical coherence over visual fidelity:
+
+- **Describe motion**, not just appearance: "camera tracks left as the cyclist rides past" beats "a cyclist".
+- **Specify subject continuity**: "the same red car remains in frame throughout".
+- **Limit complexity**: 1–2 subjects, 1 camera move, 1 lighting condition.
+- **For people**: shorter clips and specific actions ("nodding", "turning to look at camera") avoid the "wandering eyes" failure mode.
+
+## Cost ballpark
+
+Per 4-second 720p clip:
+
+- Veo 3.1 fast: ~80 credits
+- Veo 3.1: ~180 credits
+- Sora 2: ~200 credits
+- Wan 2.1: ~40 credits
+
+Your invoice line shows model + duration + resolution. Use Veo fast or Wan for iteration; promote to Veo 3.1 / Sora for finals.
+
+## When jobs fail
+
+Common reasons:
+
+- **Safety refusal** from the provider — 400-class, won't be retried by fallback. Reword and resubmit.
+- **Provider quota** — 429 on the upstream. Configure a [fallback chain](/workspaces/fallback-chains) and let a different model take it.
+- **Upstream timeout** — rare; your job is auto-cancelled at 1 hour with `status: "failed"` and `error: "timeout"`. Resubmit.
+
+The job `id` is logged in **Usage → Recent requests** for traceability.

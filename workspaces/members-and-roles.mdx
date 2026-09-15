@@ -1,0 +1,68 @@
+---
+title: "Members and roles"
+description: "Invite teammates, assign roles, and keep each person on a need-to-know basis."
+---
+
+## Roles
+
+| Role | Studio | API keys | Billing | Admin settings |
+| --- | --- | --- | --- | --- |
+| **Owner** | full | full | full | full |
+| **Admin** | full | full | view only | full |
+| **Developer** | full | create & manage **own** keys | — | — |
+| **Billing** | full | — | full | — |
+| **Viewer** | read-only | — | — | — |
+
+Only **one owner** per workspace (workspace creator). Transfer ownership via Settings → Members → `⋯` menu.
+
+## Inviting
+
+<Frame caption="The members list: names, roles, each member's quota preset — and the invitation still waiting">
+  <img className="block dark:hidden" src="/samples/settings-members-light.webp" alt="The Members tab under Settings, with an Invite member button in the top right. Seven rows below it. First studio@infery.ai, carrying a you badge and a crown-marked Owner label, with no role or quota dropdown of its own. Then five members, each showing a Quota dropdown, a Role dropdown and a trash icon to remove them — Maya Lindqvist (maya@infery.ai), Quota None, Admin; Tomas Reyes (tomas@infery.ai), Quota Production, Developer; Priya Raman (priya@infery.ai), Quota None, Developer; Helen Okafor (helen@infery.ai), Quota None, Billing; and Ivo Bergmann (ivo@infery.ai), Quota None, Viewer. Last, on an amber clock icon rather than an initial, a pending invitation to noor@infery.ai beside an amber Invited badge, its second line reading Developer, Expires Sep 4 2026, by studio@infery.ai, with an X on the right to cancel it." />
+  <img className="hidden dark:block" src="/samples/settings-members-dark.webp" alt="The Members tab under Settings, with an Invite member button in the top right. Seven rows below it. First studio@infery.ai, carrying a you badge and a crown-marked Owner label, with no role or quota dropdown of its own. Then five members, each showing a Quota dropdown, a Role dropdown and a trash icon to remove them — Maya Lindqvist (maya@infery.ai), Quota None, Admin; Tomas Reyes (tomas@infery.ai), Quota Production, Developer; Priya Raman (priya@infery.ai), Quota None, Developer; Helen Okafor (helen@infery.ai), Quota None, Billing; and Ivo Bergmann (ivo@infery.ai), Quota None, Viewer. Last, on an amber clock icon rather than an initial, a pending invitation to noor@infery.ai beside an amber Invited badge, its second line reading Developer, Expires Sep 4 2026, by studio@infery.ai, with an X on the right to cancel it." />
+</Frame>
+
+An invitation sits in the list as its own row until it is accepted, carrying the
+role it will grant and the date it expires. Cancelling it is the X on that row.
+
+<Frame caption="Inviting someone: the role decides what they can reach, the quota decides how much">
+  <img className="block dark:hidden" src="/samples/settings-invite-light.webp" alt="A dialog headed Invite team member with a close X in the top right. An Email address field with placeholder text colleague@company.com. A Role section with four radio choices: Admin, described Full access, can manage members; Developer, selected and highlighted, described Can use API and the Studio; Billing, described Invoices, plans and payment methods; no API access; and Viewer, described Read-only dashboard, but can use the Studio (uses credits). Below the roles a Quota (optional) dropdown set to None, with the helper text Apply rate limits and usage quotas to this member. A full-width Send invitation button in blue at the bottom." />
+  <img className="hidden dark:block" src="/samples/settings-invite-dark.webp" alt="A dialog headed Invite team member with a close X in the top right. An Email address field with placeholder text colleague@company.com. A Role section with four radio choices: Admin, described Full access, can manage members; Developer, selected and highlighted, described Can use API and the Studio; Billing, described Invoices, plans and payment methods; no API access; and Viewer, described Read-only dashboard, but can use the Studio (uses credits). Below the roles a Quota (optional) dropdown set to None, with the helper text Apply rate limits and usage quotas to this member. A full-width Send invitation button in blue at the bottom." />
+</Frame>
+
+The **Quota** dropdown on that dialog is the same preset list as
+[Quotas and presets](/workspaces/quotas-and-presets) — you can cap someone at the
+moment you invite them rather than remembering to do it afterwards.
+
+
+Settings → **Members** → **Invite** → enter email + pick role. The invitee gets an email with a secure link to accept. It expires seven days after it is sent, and the row on the members list carries that date.
+
+Accepted invitations become active immediately.
+
+## Billing role
+
+The Billing role combines **financial access with basic product use**:
+
+- Can view and change the plan, purchase topups, update payment methods
+- Can manage budget alerts and view usage
+- Can use Studio (own chats only)
+- **Cannot** manage API keys or Files
+- **Cannot** see other members' chat content
+
+Useful for finance / ops teammates who need to manage credits and also evaluate the product.
+
+## Developer role
+
+Developers manage **their own** API keys. They can't see or revoke keys owned by Admins or other Developers. Quotas set at the plan and member levels still apply.
+
+## Changing roles
+
+Owner and Admins can change roles via the member row `⋯` menu. Role changes take effect immediately (their current session refreshes).
+
+## Removing a member
+
+Settings → Members → `⋯` → **Remove**. Removed members:
+
+- Lose access to the workspace immediately
+- Their API keys are revoked
+- Their chats remain (owned by the removed user for attribution) — Admins can fork or delete
