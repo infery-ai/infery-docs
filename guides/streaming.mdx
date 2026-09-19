@@ -1,0 +1,108 @@
+---
+title: "Streaming"
+description: "Server-Sent Events the OpenAI way, plus the Infery cost chunk."
+---
+
+Streaming gives the user the first token in 100–400 ms instead of waiting for the full response. Use it for any interactive UI.
+
+## Turning it on
+
+Set `"stream": true`. The response is `text/event-stream` — a sequence of `data: {...}\n\n` chunks ending in `data: [DONE]\n\n`.
+
+<CodeGroup>
+```python python
+stream = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Write a haiku about TCP"}],
+    stream=True,
+)
+
+for event in stream:
+    delta = event.choices[0].delta if event.choices else None
+    if delta and delta.content:
+        print(delta.content, end="", flush=True)
+```
+
+```typescript node
+const stream = await client.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Write a haiku about TCP' }],
+  stream: true,
+});
+
+for await (const event of stream) {
+  process.stdout.write(event.choices[0]?.delta?.content ?? '');
+}
+```
+
+```bash curl
+curl https://api.infery.ai/v1/chat/completions \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -N \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [{"role": "user", "content": "Hi"}],
+    "stream": true
+  }'
+```
+</CodeGroup>
+
+## Chunk anatomy
+
+A typical stream looks like this:
+
+```
+data: {"id":"...","choices":[{"delta":{"role":"assistant"}}]}
+data: {"id":"...","choices":[{"delta":{"content":"Hello"}}]}
+data: {"id":"...","choices":[{"delta":{"content":" world"}}]}
+data: {"id":"...","choices":[{"delta":{},"finish_reason":"stop"}]}
+data: {"choices":[],"usage":{"prompt_tokens":12,"completion_tokens":2}}
+data: {"choices":[],"usage":{...},"credits_used":1}
+data: [DONE]
+```
+
+The order is **content chunks → finish chunk → provider usage → gateway usage → `[DONE]`**. The OpenAI SDK ignores chunks with empty `choices`, so the two usage chunks pass through harmlessly; only your raw parser sees them.
+
+## Reading `credits_used`
+
+The chunk that contains `credits_used` is always the **second-to-last** event. If you want per-call cost on the client without polling Usage:
+
+```typescript node
+let creditsUsed = 0;
+for await (const event of stream) {
+  if ((event as any).credits_used !== undefined) {
+    creditsUsed = (event as any).credits_used;
+    continue;
+  }
+  process.stdout.write(event.choices[0]?.delta?.content ?? '');
+}
+console.log(`\nCost: ${creditsUsed} credits`);
+```
+
+The OpenAI Python and Node SDKs don't expose this field on their typed objects — read it via `extra_body` / cast.
+
+## Tool calls in a stream
+
+Tool call deltas arrive in the same `delta` channel:
+
+```json
+{"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{\"loc"}}]}}]}
+{"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"ation\":"}}]}}]}
+```
+
+Concatenate `function.arguments` strings by `tool_calls[i].index` until you see `finish_reason: "tool_calls"`, then parse the assembled JSON. See [Tool calling](/guides/tool-calling).
+
+## Cancellation
+
+Drop the connection. The gateway notices the client is gone, cancels the upstream call within ~250 ms, and **only meters tokens already produced**. Useful for "stop" buttons in chat UIs.
+
+## Errors mid-stream
+
+If the upstream provider errors after we've already streamed some tokens, you receive a `data: {"error": {...}}` chunk before the connection closes. Always handle this branch — it's rare, but it does happen.
+
+## Buffering pitfalls
+
+- Don't put a buffering proxy (Cloudflare cache, nginx with default buffering) between client and Infery. SSE needs to flush per chunk.
+- Browser `fetch()` with `await response.text()` swallows the stream — use `response.body.getReader()` or the OpenAI SDK.
+- `curl` needs `-N` to disable output buffering.

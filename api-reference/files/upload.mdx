@@ -1,0 +1,105 @@
+---
+title: "Upload a file"
+description: "POST /v1/files — upload a file and get back a reusable file_id."
+openapi: "openapi.json POST /v1/files"
+---
+
+Infery's Files API mirrors OpenAI's Files API exactly. Upload a file, get back a `file_id`, reference it in chat completions.
+
+## Upload
+
+<CodeGroup>
+```bash curl
+curl https://api.infery.ai/v1/files \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -F purpose=assistants \
+  -F file=@./report.pdf
+```
+
+```python python
+from openai import OpenAI
+client = OpenAI(api_key=API_KEY, base_url="https://api.infery.ai/v1")
+f = client.files.create(file=open("report.pdf", "rb"), purpose="assistants")
+print(f.id)  # file_abc123...
+```
+
+```typescript node
+const f = await client.files.create({
+  file: fs.createReadStream('./report.pdf'),
+  purpose: 'assistants',
+});
+console.log(f.id);
+```
+</CodeGroup>
+
+Response:
+
+```json
+{
+  "id": "file_1hR9xTPZqK4mVLc2nJ7fY5wB",
+  "object": "file",
+  "bytes": 245192,
+  "created_at": 1713204900,
+  "filename": "report.pdf",
+  "purpose": "assistants",
+  "status": "processed"
+}
+```
+
+## Purposes
+
+| purpose | Used for |
+| --- | --- |
+| `assistants` | General-purpose attachment (most common) |
+| `vision` | Image inputs |
+| `user_data` | Per-user documents (RAG, analysis) |
+| `batch` | Batch inference inputs (coming soon) |
+
+## Reference in chat
+
+```json
+{
+  "messages": [{
+    "role": "user",
+    "content": [
+      {"type": "text", "text": "Summarise this"},
+      {"type": "file", "file_id": "file_abc123..."}
+    ]
+  }]
+}
+```
+
+The gateway resolves the id, fetches bytes from our storage, and injects them into the provider call as inline content. **Workspace-scoped**: you only see files uploaded to your own workspace.
+
+## Idempotency
+
+```
+Idempotency-Key: my-unique-request-2026-04-15
+```
+
+Same key within 24 h returns the original `file_id` instead of uploading twice. Key format: `[A-Za-z0-9_.-:]{1,255}`.
+
+## Security
+
+- **MIME sniffing** via magic bytes — we don't trust `Content-Type`. Mismatch → 400.
+- **Workspace isolation** — cross-workspace lookup returns 404 (we don't leak existence).
+- **Private storage** — GCS objects have `Cache-Control: private, max-age=0`. Download only via our signed proxy.
+- **Size and count caps** — plan-based, see [Plans](/billing/subscription-plans).
+- **Filename sanitisation** — basename stripped, control chars removed, max 255 chars.
+
+## Quotas
+
+Your plan caps:
+- `max_file_size_bytes` — single upload
+- `max_files_per_workspace` — total count
+- `max_storage_bytes_per_workspace` — total size
+
+Response headers show your current usage: `X-Storage-Used-Bytes`, `X-Storage-Limit-Bytes`, `X-Files-Used`, `X-Files-Limit`.
+
+{/* Deliberately no number here — the figure lives once, on chat-completions. */}
+
+<Note>
+`max_file_size_bytes` caps one upload. **Using** several uploaded files in a
+single chat request has its own, separate cap on their combined size — see
+[Total attachment size per request](/api-reference/chat-completions#total-attachment-size-per-request).
+</Note>

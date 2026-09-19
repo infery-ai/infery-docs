@@ -1,0 +1,99 @@
+---
+title: "Migrating from OpenAI"
+description: "Point your existing code at Infery in two lines. No SDK swap."
+---
+
+Infery's gateway speaks the OpenAI API on the wire for most routes. For chat, embeddings and the Files API you keep the OpenAI SDK unchanged and just swap the **base URL** and **API key**. A handful of routes diverge in a way that matters in production — this page names every one, so nothing surprises you after you've shipped.
+
+## The change
+
+<CodeGroup>
+```python python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key=os.environ["INFERY_API_KEY"],   # was OPENAI_API_KEY
+    base_url="https://api.infery.ai/v1",     # added
+)
+```
+
+```typescript node
+import OpenAI from 'openai';
+
+const client = new OpenAI({
+  apiKey: process.env.INFERY_API_KEY,         // was OPENAI_API_KEY
+  baseURL: 'https://api.infery.ai/v1',         // added
+});
+```
+
+```bash curl
+# Before
+curl https://api.openai.com/v1/chat/completions ...
+
+# After
+curl https://api.infery.ai/v1/chat/completions ...
+```
+</CodeGroup>
+
+For chat, embeddings and the Files API, that's it — every existing call site keeps working. The full per-operation picture (35 routes) is the [compatibility matrix](/sdks/openai-compatibility); this section covers what it's actually safe to assume.
+
+## What stays identical
+
+- Endpoint paths: `/v1/chat/completions`, `/v1/embeddings`, `/v1/images/generations`, `/v1/audio/speech`, `/v1/audio/transcriptions`, `/v1/files`
+- Request bodies (messages, tools, response_format, streaming)
+- Response shapes (`id`, `choices`, `usage`, `system_fingerprint`) for chat and embeddings
+- SSE streaming format including the final `data: [DONE]` — our chat stream adds one extra chunk just before it (`choices: []`, carrying `usage` and `credits_used`); the OpenAI SDK's stream parser and the plain `for await` pattern both ignore an empty `choices` array, so this rides through without special-casing
+- Tool calling, JSON mode, structured outputs, vision, PDF
+- Error envelope shape (`{ "error": { "type", "code", "message" } }`) — the SDK's own error parsing reads this fine. Statuses and codes are not universally identical to OpenAI's own; see **Rate limits** below for the one that bites
+
+## What's not a blanket "yes"
+
+- **`/v1/images/generations` and `/v1/audio/speech` can defer.** For a fal/replicate-routed model, either route can answer **504 with a `job_id`** in the error body instead of the expected result, when generation outruns the gateway's wait budget. The request is still running and still billed — poll `GET /v1/images/jobs/{job_id}` for the finished artifact. No OpenAI SDK method does this polling for you; treat both routes as "usually synchronous, occasionally a job," not as unconditionally synchronous. See the [image generation guide](/guides/image-generation#persistence) for the poll pattern.
+- **Idempotency keys are honored on two routes, not generally.** `Idempotency-Key` is read and deduplicated on `POST /v1/files` and on the Infery-only `POST /v1/pipelines/runs` — nowhere else. Sending it on `/v1/chat/completions` or any other route is accepted but silently does nothing; don't rely on it as a general safety net the way you might with OpenAI's own API.
+
+## What's added
+
+| Feature | How |
+| --- | --- |
+| Cost per request | A `credits_used` field on the response body, and an SSE chunk carrying it before `[DONE]` when streaming. (`/v1/audio/speech` returns bytes rather than JSON, so there it rides the `x-credits-used` response header instead.) |
+| Multi-provider models | Use any model slug from `GET /v1/models` — Anthropic, Google, xAI, OSS — with the OpenAI SDK |
+| Fallback routing | Configure in dashboard, headers `x-model-used` / `x-fallback-from` tell you what served |
+| Usage analytics | Per-key, per-model, per-member breakdowns |
+
+## What changes
+
+**Model slugs.** OpenAI models keep their names (`gpt-4o`, `gpt-4o-mini`, `text-embedding-3-large`). For every other vendor, take the slug verbatim from `GET /v1/models` — for example `claude-sonnet-4.5`, `gemini-2.5-flash`, `grok-4.1-fast`. Our slugs use dots where the vendor's own model id uses dashes, and the lookup is exact: `gemini-2-5-flash` is a 404, not a near-miss.
+
+**Auth.** Use an Infery API key (`inf_live_...`) — your OpenAI key is not valid here. Create one in API Keys.
+
+**Rate limits.** Per-workspace, not per-OpenAI-org. And the status code differs: exceeding your per-workspace requests-per-minute limit answers **403** with `code: "rate_limit_exceeded"`, not OpenAI's `429`, and carries no `Retry-After` header. The OpenAI SDK's built-in retry logic only backs off on 429 (and 5xx) — a 403 is treated as a hard client error and is not retried, so a caller that leans on the SDK's automatic retry to ride out bursts will instead get an immediate, unretried failure here. See [Rate limits](/api-reference/rate-limits).
+
+**Billing.** Single Infery invoice covers every provider. Your OpenAI billing relationship ends.
+
+## Checklist
+
+- [ ] Create an Infery API key
+- [ ] Replace `OPENAI_API_KEY` with `INFERY_API_KEY` in env config
+- [ ] Set `base_url` / `baseURL` to `https://api.infery.ai/v1`
+- [ ] Run your test suite — nothing else should change
+- [ ] (Optional) Set up a [fallback chain](/workspaces/fallback-chains) for production resilience
+- [ ] (Optional) Log `credits_used` from the response body (`x-credits-used` header on `/v1/audio/speech`)
+
+## Where the SDK stops working
+
+Four surfaces get no useful response from the SDK at all — not a wrong shape, a dead end. (For the two routes that mostly work but can defer to a job, see **What's not a blanket "yes"** above; those aren't in this table because the common case genuinely is drop-in.)
+
+| Call | What happens | Use instead |
+| --- | --- | --- |
+| `client.images.edit(...)` | The SDK posts multipart; `/v1/images/edits` takes JSON with `image_base64` | Plain HTTP — see [Image edits](/guides/image-generation#image-edits) |
+| `client.audio.translations.create(...)` | `/v1/audio/translations` does not exist — 404 | Transcribe, then translate with a chat completion — see [Audio](/guides/audio-tts-stt#translation) |
+| `timestamp_granularities=["word"]` | Accepted by the SDK, dropped before the provider; `words` comes back empty | Segment timestamps from `verbose_json` |
+| `response_format="srt" \| "vtt" \| "text"` on transcriptions | The body is a JSON envelope, not a bare document | Read `["text"]` out of it — see [Subtitle export](/guides/audio-tts-stt#subtitle-export) |
+
+Video and music have no OpenAI-SDK equivalent at all — the SDK models no such endpoint, so call `/v1/videos/generations` and `/v1/music/generations` over plain HTTP. Note that `client.post(...)` on the OpenAI client is not a general-purpose HTTP escape hatch: it requires a `cast_to` type and takes no `json=` argument. Use `httpx` or `fetch`.
+
+## Things to watch
+
+- **Org-level OpenAI features** (project keys, fine-tunes, batch API) aren't 1:1 yet — `batch` is on the [roadmap](/reference/changelog).
+- **System fingerprints** are passed through from upstream when present, so determinism guarantees match the underlying provider.
+- If your code parses error messages by string, switch to `error.code` — it's stable; messages are not.

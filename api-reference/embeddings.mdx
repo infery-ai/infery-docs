@@ -1,0 +1,35 @@
+---
+title: "Embeddings"
+description: "POST /v1/embeddings — dense vector embeddings for text."
+openapi: "openapi.json POST /v1/embeddings"
+---
+
+OpenAI-compatible embeddings endpoint.
+
+```bash
+curl https://api.infery.ai/v1/embeddings \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "text-embedding-3-small",
+    "input": "Dense vector, please"
+  }'
+```
+
+Returns standard `{ data: [{ embedding: [...], index: 0 }], usage: {...} }`.
+
+## Supported models
+
+Browse with `GET /v1/models`, keeping the entries whose `_infery.modality` is `embedding`, or see [Models](/models/catalog). OpenAI, Google, Alibaba and open-source embedding models available.
+
+## Batching
+
+`input` can be an array of up to 2 048 strings. Each string is a separate embedding; all share the same pricing.
+
+## Dimensionality reduction
+
+On supported models (e.g. `text-embedding-3-small`, `text-embedding-3-large`):
+
+```json
+{"model": "text-embedding-3-small", "input": "...", "dimensions": 512}
+```

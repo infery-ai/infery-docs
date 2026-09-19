@@ -1,0 +1,40 @@
+---
+title: "Tool catalog"
+description: "The deterministic operations workflows and /v1/capabilities can invoke."
+---
+
+{/* GENERATED from the public catalogue — do not edit. */}
+
+**31 tools.** These are not models. A tool does exactly one thing, deterministically,
+for a fixed price: trim a video, extract text from a PDF, pack an archive, run a Python snippet.
+No prompt, no sampling, no variance between two identical calls.
+
+`GET /v1/tools` lists them at runtime — see [the API reference](/api-reference/tools).
+
+They exist because most real work around a model is not inference. A pipeline that captions a
+video needs the audio extracted before a speech model ever sees it, and paying inference prices
+for `ffmpeg` would be absurd.
+
+| Kind | Tools | Page |
+| --- | --- | --- |
+| Image | 9 | [Image tools](/tools/image) |
+| Video | 10 | [Video tools](/tools/video) |
+| Audio | 4 | [Audio tools](/tools/audio) |
+| Document | 3 | [Document tools](/tools/document) |
+| Archive | 2 | [Archive tools](/tools/archive) |
+| Web | 1 | [Web tools](/tools/web) |
+| Code | 2 | [Code tools](/tools/code) |
+
+## Calling one
+
+Every tool takes the same envelope — an `id`, and the `input` and `params` that tool declares:
+
+```bash
+curl https://api.infery.ai/v1/capabilities/video.trim/run \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"video_url": "https://example.com/in.mp4"}, "params": {"start": 0, "end": 15}}'
+```
+
+Each tool page lists that tool's parameters and gives runnable examples.
+

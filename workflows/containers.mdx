@@ -1,0 +1,243 @@
+---
+title: "Containers: foreach and parallel"
+description: "Loop over a list or fan out across branches — body ordering, scope, output shapes and limits."
+---
+
+Two step types hold other steps: `foreach` runs its body once per item, and `parallel` runs
+its branches at the same time. Both are ordinary steps otherwise — they take an `id`, a
+`condition` and a `retry` block like anything else.
+
+<Warning>
+**A `condition` belongs on the container, not on a step inside it.** A `condition` on any
+step within a `foreach` body or a `parallel` branch — at any depth — is refused at save
+time with `condition_in_container_body`. Gate the whole container instead, or filter the
+`items` list you feed it.
+
+The container's own `condition` is fine while the container is top-level. A container
+nested inside another container's body is itself a body step, so it cannot carry one
+either.
+</Warning>
+
+## `foreach`
+
+```json
+{
+  "id": "captions",
+  "type": "foreach",
+  "items": "${steps.search.output.results}",
+  "concurrency": 5,
+  "failure_mode": "continue",
+  "steps": [
+    {
+      "id": "caption",
+      "type": "model",
+      "model": "gpt-5",
+      "input": {
+        "messages": [{ "role": "user", "content": "Write a caption for: ${item.title}" }]
+      }
+    }
+  ]
+}
+```
+
+| Field | Default | Notes |
+| --- | --- | --- |
+| `items` | — | Required. A binding that resolves to an array at run time, or an inline literal array of at most **100** elements. |
+| `steps` | — | The body, as a sequence of **1 to 20** steps. |
+| `step` | — | Older spelling for a body of exactly one step. Sugar for `steps: [x]`. |
+| `concurrency` | `5` | 1–20 iterations in flight at once. |
+| `failure_mode` | `fail_fast` | `fail_fast` or `continue`. |
+| `max_iterations` | `100` | 1–100. More items than this fails the step with `foreach_too_many_items`. |
+
+A definition carries **exactly one** of `step` and `steps`. Both, or neither, is refused.
+
+Inside the body, `${item}` is the current element (`${item.title}` walks into it) and
+`${index}` is its 0-based position. Both are legal anywhere in the body subtree and
+**illegal in `items`**, which is evaluated before there is an iteration.
+
+**Output:** an array in **items order**, whatever order the iterations actually finished in.
+Under `failure_mode: "continue"` a failed slot holds `{"_error": {"code": …, "message": …}}`
+instead of a result. An empty `items` array produces `[]` and costs nothing.
+
+Read one iteration with `${steps.captions.output.0.…}` and all of them with
+`${steps.captions.output.*.…}`.
+
+## `parallel`
+
+A `parallel` is a **race**: its branches are *alternatives*, they run at the same time, and
+the **first one to succeed** is the step's result. A branch that fails is not a problem —
+surviving a failing alternative is the whole point.
+
+```json
+{
+  "id": "portrait",
+  "type": "parallel",
+  "branches": [
+    [
+      { "id": "primary", "type": "media", "model": "gpt-image-2", "input": { "prompt": "${input.brief}" } }
+    ],
+    [
+      { "id": "backup", "type": "media", "model": "nano-banana", "input": { "prompt": "${input.brief}" } }
+    ]
+  ]
+}
+```
+
+| Field | Notes |
+| --- | --- |
+| `branches` | At least one. Each branch is a sequence of **1 to 20** steps, or — the older spelling — a single bare step. The **number of branches is not capped**. |
+
+**Output:** a single-key object, keyed by **the winning branch's first step id**, whose value
+is **that branch's last step's output**. For a branch of one — the common case — those are
+the same step, which is why the older bare-branch spelling reads identically.
+
+```
+${steps.portrait.output.primary.url}
+${steps.portrait.output.backup.outputRef}
+```
+
+Only the winner appears, so a downstream binding has to tolerate either key. The usual
+spelling for that is a [fallback chain](/workflows/bindings):
+
+```
+${steps.portrait.output.primary.url | steps.portrait.output.backup.url}
+```
+
+<Warning>
+**A losing branch is stopped, but not instantly, and what it already started is billed.**
+
+There is no cancellation: a step that has already been dispatched runs to completion at the
+provider and settles its own credits, whatever the race decides afterwards. What stops is
+the *next* step. So a losing branch costs the steps it had already dispatched when the
+winner returned — typically the one it was in the middle of — and never the rest of its
+sequence. A three-way race over 20-step branches bills roughly three steps, not sixty.
+
+Cost estimates and the credit hold reserve the **worst case: every branch, every step**. The
+hold is released down to what was really spent when the run settles.
+</Warning>
+
+<Note>
+**You do not need a `parallel` to get concurrency.** Independent top-level steps already run
+at the same time, because the engine reads the dependency graph — see
+[overview](/workflows/overview). Reach for `parallel` when you want *alternatives*, not when
+you want speed.
+</Note>
+
+There is **no projection form** for a `parallel`: it publishes an object, and `*` only
+projects over arrays. Name each branch explicitly.
+
+### `join` — deprecated
+
+`join` used to be required and had two values.
+
+| Value | Meaning |
+| --- | --- |
+| `"first_success"` | The race. Identical to omitting `join` entirely — write nothing instead. |
+| `"all"` | **Deprecated.** Every branch must succeed and every branch appears in the output, keyed by its first step id. A branch failure stops the siblings dispatching anything further. |
+
+`join: "all"` says what the dependency graph already says. Three sibling steps that read the
+same input and nothing of each other are independent, so the engine runs them together
+without being told to — and as ordinary top-level steps they publish under their own ids
+(`${steps.wide.output.url}`) instead of under a fan-out (`${steps.variants.output.wide.url}`),
+which is the shape everything else in a definition already uses.
+
+Definitions that already carry `join: "all"` keep working exactly as they do today; nothing
+stored is rewritten and nothing is silently reinterpreted. New definitions should omit
+`join` and hoist an all-branches fan-out to top-level steps.
+
+## Scope
+
+A container body is its own scope. The rules are short and they are enforced when the
+definition is saved:
+
+| Written here | Can name |
+| --- | --- |
+| a top-level step | every **other** top-level id, in any document order — top-level steps are ordered by their dependencies |
+| a body step | everything its **enclosing** scopes offer (the top level, and any outer body it sits in), **plus the earlier steps of its own body** |
+| anywhere outside a container | the **container's** id — never a body step's id |
+
+Three consequences worth stating outright:
+
+- **A body step publishes nothing under its own id.** A `foreach`'s results land under
+  `steps.<foreachId>.output.<i>` and a `parallel`'s under
+  `steps.<parallelId>.output.<branchId>`. Naming the inner step from outside is refused with
+  `binding_out_of_scope`.
+- **A container's own id is unreadable from inside its own body** — the aggregate is
+  published only after the whole body has finished.
+- **One `parallel` branch cannot read another's steps.** Every branch starts from its own
+  copy of the caller's scope. Refused with `binding_out_of_scope`; read the fan-out instead,
+  as `${steps.<par>.output.<branchId>…}`.
+
+The container **publishes its last body step's output** — per iteration for a `foreach`, and
+for the winning branch of a `parallel` (for every branch, under the deprecated
+`join: "all"`) — with credits and duration summed over the body. There is no selector for
+"which body step is the result": **put the step whose output you want last**.
+
+## A body runs in array order
+
+<Warning>
+There is **no reordering pass inside a container**. A body is walked exactly as written, and
+the scope grows by one entry per finished step. A body step may bind an **earlier** sibling
+and may not bind a **later** one.
+</Warning>
+
+This matters because the failure is silent and expensive. A reference to a later sibling
+resolves to `undefined` at run time with no error raised — and the step is dispatched and
+billed anyway, with a missing input. It therefore has a refusal code of its own,
+`forward_step_ref`, separate from `binding_out_of_scope`, because the fix is to **reorder**,
+not to rename or re-scope.
+
+```json
+{
+  "id": "loop",
+  "type": "foreach",
+  "items": "${input.urls}",
+  "steps": [
+    { "id": "fetch",   "type": "http",  "input": { "url": "${item}" } },
+    { "id": "explain", "type": "model", "model": "gpt-5",
+      "input": { "messages": [{ "role": "user", "content": "${steps.fetch.output.body}" }] } }
+  ]
+}
+```
+
+`explain` binds `fetch`, which runs before it — legal. Swap the two and the save is refused.
+
+The top level is the one exception, and it stays one: a top-level step may reference a
+top-level step declared after it, because the runner sorts them by dependency.
+
+## Which nesting is legal
+
+| Shape | |
+| --- | --- |
+| a container inside a **`parallel` branch** | **Legal**, and it runs. |
+| a container inside a **`foreach` body** | **Refused.** Wrap the inner iteration in a [`sub_pipeline`](/workflows/step-types) and call that from the body. |
+
+The refusal arrives as `invalid_pipeline_definition` whose message begins
+`forbidden_nested_foreach`, with the JSON path of the offending step.
+
+## Limits
+
+| Limit | Value |
+| --- | --- |
+| Steps in one container body — a `foreach` body, or one `parallel` branch | **20** |
+| Branches in one `parallel` | **uncapped** |
+| Iterations of one `foreach` (`max_iterations`) | 1–100, default **100** |
+| Inline literal `items` array | **100** elements |
+| `foreach` concurrency | 1–20, default **5** |
+| `operations` in one `image.pipeline` / `video.pipeline` / `audio.pipeline` step | **10** |
+| `sub_pipeline` chain depth | **3** |
+
+## What a container refuses at run time
+
+These four are raised **before any step of the body is dispatched**, so they cost nothing —
+but they are run-time errors, not write-time ones, so a stored definition can carry them:
+
+| Code | Meaning |
+| --- | --- |
+| `foreach_empty_body` | The `foreach` body reads back empty. |
+| `foreach_unknown_step_type` | A body step's `type` has no executor. |
+| `parallel_empty_branch` | Some branch reads back empty. |
+| `parallel_unknown_step_type` | A branch step's `type` has no executor. |
+
+None of them is retryable in a useful sense — listing one in `retryable_errors` buys retries
+that cannot succeed.

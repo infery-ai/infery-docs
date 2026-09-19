@@ -1,0 +1,60 @@
+---
+title: "Files and attachments"
+description: "Drop files into a chat. Reuse generated images across messages. Download and share."
+---
+
+## Attaching a file
+
+Click the paperclip icon or drag-and-drop into the message input. Supported types:
+
+{/*
+  SOURCE OF TRUTH for the sizes below: `PlaygroundService.MAX_FILE_SIZE` (20 MB,
+  images/docs/audio) and `MAX_VIDEO_FILE_SIZE` (100 MB) in
+  apps/api/src/modules/playground/playground.service.ts, mirrored in
+  apps/web/src/components/playground/file-upload.helpers.ts.
+
+  These are the PLAYGROUND path only. Two other numbers exist and are NOT these:
+  the `/v1/files` per-plan `max_file_size_bytes` (25 MB by default) and the
+  `/v1/chat/completions` 64 MB total-attachment cap. Neither governs this page —
+  the composer sends URL-backed blocks, not `file_id` references. Do not copy
+  them here.
+
+  Audio said "up to 25 MB" until #516; it was never true on this path — 25 MB is
+  the `/v1/audio/transcriptions` API limit. The composer has always capped audio
+  at the same 20 MB as everything else.
+*/}
+
+- **Images** — PNG, JPEG, WebP, GIF, SVG (up to 20 MB)
+- **PDFs** — up to 20 MB; auto-converted to text + page images if the model doesn't support PDF natively
+- **Audio** — MP3, WAV, WebM, OGG (up to 20 MB)
+- **Video** — MP4, WebM, MOV (up to 100 MB; upscale input)
+- **Text & code** — `.txt`, `.md`, `.csv`, `.json`, `.py`, `.ts`, `.sql`, `.yaml`, `.html`…
+- **MS Office & OpenDocument** — `.doc[x]`, `.xls[x]`, `.ppt[x]`, `.odt`, `.ods`, `.odp`
+
+<Tip>
+File type is detected via magic bytes, not the filename extension. If a model doesn't support the file type, you'll get a clear error before the call is billed.
+</Tip>
+
+## Reusing a generated image
+
+Generated images carry a **paperclip** icon in the corner. Click it to attach the image to your next message — no re-upload, no lost quality.
+
+The file appears as a small chip above the input zone with a thumbnail and filename. Hover to see a larger preview, download it, or re-attach it with one click.
+
+## File cards in the chat
+
+User-attached images show as compact chips with a hover preview (larger image + download + re-attach icons). Model-generated images render full-size inline so you can judge the output.
+
+## Downloading
+
+Every file in a chat — attached or generated — has a **Download** button that appears on hover. Downloads go through our signed-URL proxy, so the link is safe to share temporarily but not publicly.
+
+## Access and sharing
+
+Files cascade access from the chat they're attached to:
+
+- If you can see the chat, you can see its files (cascade via message references)
+- If you uploaded the file, you can always see it (even if it's orphaned — not yet attached anywhere)
+- API keys inherit workspace-level access to files uploaded via `/v1/files`; Studio files are separate and follow chat sharing
+
+See [Sharing](/playground/sharing) for details and [Files API](/api-reference/files) for API-side file management.

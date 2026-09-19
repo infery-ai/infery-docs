@@ -1,0 +1,9 @@
+---
+title: "Retrieve a run"
+description: "GET /v1/workflows/runs/{id}"
+openapi: "openapi.json GET /v1/workflows/runs/{id}"
+---
+
+The run and every step it recorded — status, output, credits, duration.
+
+This is the polling half of `mode: "async"`. A run that is still going reports `queued` or `running`; the step list fills in as it goes, so this doubles as progress.
