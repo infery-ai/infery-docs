@@ -1,0 +1,130 @@
+---
+title: "Setting up fallbacks"
+description: "Survive provider outages and rate limits without changing client code."
+---
+
+A fallback chain says: "if this model fails or rate-limits, try this one next, then this one." The gateway handles it transparently — your code just sees a successful response.
+
+For the conceptual overview see [Fallback chains](/workspaces/fallback-chains). This guide walks through configuring one end-to-end.
+
+## 1. Pick a source model
+
+The **source** is the model your application calls. Common choices:
+
+- `gpt-4o` — your primary high-quality model
+- `text-embedding-3-large` — your primary embeddings model
+- `gemini-2.5-flash` — your latency-sensitive model
+
+You can attach one chain per source slug per workspace.
+
+## 2. Pick fallback targets
+
+Order them by your preference — typically **same family / same tier first, then a different provider, then a cheaper model**. Three to four levels is the sweet spot; deeper chains rarely fire and add latency to debug.
+
+Examples:
+
+```
+Source: gpt-4o
+├─ Priority 1: gpt-4o-mini             (same provider, cheaper — covers OpenAI rate limits)
+├─ Priority 2: claude-sonnet-4.5       (different provider — covers OpenAI outage)
+└─ Priority 3: gemini-2.5-flash        (last resort — always different region)
+```
+
+```
+Source: text-embedding-3-large
+└─ Priority 1: text-embedding-3-small  (same provider — cheaper, lower-dim, but graceful degradation)
+```
+
+<Tip>
+For embeddings, mixing providers in a fallback breaks vector compatibility — the dimensions and embedding spaces differ. Keep fallbacks within the same model family or downgrade to a smaller model from the same provider.
+</Tip>
+
+## 3. Create the chain
+
+Settings → **Fallbacks** → **Add Override**, once for each fallback model you want in
+the chain:
+
+1. Pick the source model
+2. Pick a fallback model and give it a priority
+3. Repeat for each additional fallback model
+
+Each override is created immediately — there's no separate save step. There's also no
+in-place edit: to change a fallback's priority, delete the override and add it again.
+
+## 4. Test it
+
+Force the primary to fail to confirm the chain works:
+
+```bash
+# Set the primary's rate limit to 0 in dashboard → save
+curl https://api.infery.ai/v1/chat/completions \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -d '{"model": "gpt-4o", "messages": [{"role": "user", "content": "hi"}]}' -i
+```
+
+Look at the response headers:
+
+```
+x-fallback-from: gpt-4o
+x-model-used: gpt-4o-mini
+```
+
+`x-fallback-from` is present only when a fallback fired, naming the model you
+requested; `x-model-used` always names whichever model actually answered. There's no
+header reporting how many levels deep the chain went — only whether it moved at all.
+
+Then restore the rate limit.
+
+## 5. Observe in production
+
+**Usage** has no fallback-specific view — no per-chain rate, no depth
+distribution, no added-latency metric. What it does give you: the **By model** panel
+shows spend shifting toward a fallback target if one starts absorbing traffic, and
+clicking a row in **Recent requests** shows whether a fallback fired and which model
+actually served that call. See [Usage & invoices](/billing/usage).
+
+[Budget alerts](/workspaces/budget-alerts) trigger on total credits spent per period —
+there's no way to key one on fallback activity.
+
+## What does *not* fall back
+
+The gateway **only** retries on transient/upstream errors:
+
+- `429` rate limit, `502/503/504` upstream gateway, network timeout
+- Provider-specific transient codes we map to retryable
+
+It does **not** retry on:
+
+- `4xx` from your code (`400 invalid_request_error`, `401`, `403`, `422`)
+- `403 insufficient_credits`
+- Validation failures
+
+These are caller errors — fallback wouldn't help.
+
+## Disabling for a test
+
+There is no per-request header to force primary-only — fallback is a workspace-wide
+setting, in Settings → **Fallbacks**:
+
+- Turn **Enable Fallback** off to stop the gateway from ever substituting a different
+  model.
+- Pick the **Retry Only** strategy to keep retrying the primary's own source — useful
+  when you want to confirm "is the primary actually up right now" rather than "did
+  anything succeed" — without ever falling through to a different model.
+
+Both are also on the API: `PATCH /workspaces/{id}/fallback-config` with
+`{ "enabled": false }` or `{ "strategy": "retry_only" }`.
+
+## Cost
+
+You pay for the model that **served** the request, not the attempts. Failed primary attempts are free; the cheaper fallback shows up on your invoice.
+
+## Patterns
+
+**Cost-tier descent**: every step cheaper than the last. Best when quality differences are tolerable for the small fraction of fallback traffic.
+
+**Provider diversification**: every step a different provider. Best for resilience; quality may drift but availability is preserved.
+
+**Region failover (Enterprise)**: every step a different region. Best for data-residency-aware deployments.
+
+You can mix these — chain `gpt-4o` → `gpt-4o-mini` (cheaper, same provider) → `claude-sonnet-4.5` (different provider, similar quality) → `gemini-2.5-flash` (different provider, faster, last resort).

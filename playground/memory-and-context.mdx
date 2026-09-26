@@ -1,0 +1,98 @@
+---
+title: "Memory and context"
+description: "How the assistant draws on your earlier chats, and how to see and control what it used."
+---
+
+A new chat does not start from nothing. Before answering, the assistant looks
+through what you have already discussed and pulls in the few pieces that relate
+to your message.
+
+Three different things get pulled in, and it is worth knowing which is which:
+
+- **Memory** — durable facts learned about you. "Prefers TypeScript", "works in
+  Central European Time". A handful of short statements, not transcripts.
+- **Excerpts** — actual passages from earlier chats, quoted back because they
+  resemble what you just asked.
+- **Knowledge-base documents** — passages from the files you added to a
+  project's **Knowledge base**, pulled in when they relate to your message.
+  These are read inside that project's chats and nowhere else: a knowledge base
+  never reaches a chat outside the project it belongs to.
+
+All three are scoped to you. Nobody else's chats are ever read, whatever their
+sharing settings say, and no project's knowledge base is ever read from outside
+that project.
+
+## Seeing what was used
+
+Above the assistant's reply you will find a line like:
+
+> Recalled 3 items
+
+Open it and every item is listed with where it came from. An excerpt carries the
+chat's title, the date, and a relevance score; a knowledge-base document carries
+the filename it was read from, and a score; a memory is shown as the fact itself,
+with its score. If a reply surprises you, this is the first place to look: it
+shows exactly what the assistant had in front of it.
+
+The line only appears when something was actually recalled. No line means the
+answer came from the current conversation alone.
+
+<Note>
+  Recall costs nothing extra. Finding the excerpts uses one small embedding
+  request per message, which is already part of what you pay for the message.
+</Note>
+
+## Your memory list
+
+**Settings → Profile → Memory** lists everything the assistant has learned
+about you, with the chat each fact came from and whether it applies everywhere
+or is sealed inside one project. Delete any single fact, or **Clear all**.
+Deletion takes effect immediately — the next message will not see it.
+
+An empty list usually means exactly what it says: nothing durable has come up
+yet. Memory is deliberately conservative — it records standing facts, not what
+you happened to ask about last Tuesday. Short chats, one-off questions and
+purely technical back-and-forth often produce nothing at all, and that is
+normal rather than a fault.
+
+## Keeping a project to itself
+
+Some work should not draw on the rest of your account, and should not leak into
+it either. Every project carries a **memory scope** for that, on the project
+menu in the sidebar:
+
+| Scope | What the project can read | Who can read the project |
+|---|---|---|
+| **Default** | Memory and chat transcripts from your other chats | Chats outside the project can use what it learns and what was said in it |
+| **Project only** | Only its own memory and its own transcripts | Both are hidden from every chat outside the project |
+
+`Project only` isolates in **both** directions. A project set that way neither
+reads from the outside nor contributes to it.
+
+A project's **Knowledge base** does not depend on this setting. Its documents
+are always confined to the project they were added to — readable by that
+project's chats, invisible to every other chat, on either scope.
+
+<Warning>
+  Changing the scope does not move memories that already exist, and moving a
+  chat into or out of a project does not move its memories either — each keeps
+  the scope that was in force when it was learned.
+
+  Chat transcripts behave differently on purpose: they follow the chat. Move a
+  chat into an isolated project and what can be quoted from it moves
+  immediately.
+</Warning>
+
+## Searching your chats
+
+The **Search chats** box in the sidebar looks at both the words you type and
+what your chats are *about*, so a search for "rate limiting" also finds a chat
+that only ever said "throttling". Results respect sharing — you only see chats
+you have access to.
+
+## Steering recall deliberately
+
+Recall follows resemblance, which is not always what you want. When you know a
+past thread matters to the conversation you are in — even though nothing you
+type will resemble it — pin its topic to the chat. See
+[Topics and the graph](/playground/topics-and-graph).

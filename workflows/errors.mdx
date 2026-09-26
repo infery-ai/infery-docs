@@ -1,0 +1,117 @@
+---
+title: "Workflow errors"
+description: "The refusals you are most likely to hit when authoring or running a workflow, and what to do about each one."
+---
+
+Workflow errors use the standard [error envelope](/api-reference/errors): a `type`, a
+`code` and a human-readable `message`.
+
+Refusals fall into three groups, and knowing which one you are looking at tells you where
+to fix it:
+
+- **Shape** — the definition failed the schema. Always `invalid_pipeline_definition`; the
+  `message` names the JSON path and the rule.
+- **Graph** — the definition parsed but its steps or references do not hang together. Each
+  has its own code.
+- **Run time** — the definition is fine but something failed while it executed.
+
+Shape refusals are raised wherever a definition is written or sent inline — creating,
+updating, and running or estimating an inline `definition`. Graph refusals are raised there
+**and again on every run**, including a run of a stored workflow. A definition you cannot
+save is a definition you cannot run.
+
+## Shape refusals
+
+All of these come back as `code: "invalid_pipeline_definition"`, with the detail in the
+message.
+
+| Message begins | Meaning | What to do |
+| --- | --- | --- |
+| `forbidden_nested_foreach` | A `foreach` or `parallel` sits inside a `foreach` body. | Move the inner iteration into a [`sub_pipeline`](/workflows/step-types) and call that from the body. |
+| `forbidden_item_reference` | `${item}` or `${index}` outside a `foreach` body, or inside `foreach.items`. | `items` is evaluated before there is an iteration. Bind the list itself, not an element of it. |
+| `forbidden_secret_reference` | `${secrets.X}` outside an `http` step's `input`. | Secrets resolve only in `http` steps. |
+| `malformed binding` | A `${…}` token that cannot be parsed — an unclosed quote, an empty alternative, a literal that is not last. | Fix the token. The message names it and its JSON path. |
+| `a foreach needs exactly one of` | The `foreach` carries both `step` and `steps`, or neither. | Use `steps`. |
+| `referenced but not declared in inputs` | A `${input.X}` with no matching entry in `inputs`. | Add the declaration. The message lists every missing name. |
+| an id message | A step id outside `A–Z a–z 0–9 _ -`. | An id is a binding path segment — see [Bindings](/workflows/bindings#step-ids-are-path-segments). |
+| `ui.inputs was replaced` | An old definition still declaring inputs under `ui`. | Move them to the top-level `inputs`. |
+
+A binding in a numeric or enum field lands here too: the value is validated with its tokens
+masked to a placeholder string, and no string satisfies a number or an enum.
+
+## Graph refusals
+
+| Code | Meaning | What to do |
+| --- | --- | --- |
+| `empty_steps` | `steps` is missing or empty. | A workflow needs at least one step. |
+| `unsupported_step_type` | A step's `type` is neither a flow-control type nor a capability id — at any depth. | Check the spelling against `GET /v1/tools`. |
+| `invalid_step_id` | A step has no non-empty string `id`. | Give it one. |
+| `duplicate_step_id` | Two steps share an id **anywhere in the tree**, nesting included. | Rename one. Ids are globally unique because they are binding path segments. |
+| `invalid_key` | A `${…}` token appears in a property **name**. | Bindings resolve in values only; in a key it would reach the provider as literal text. |
+| `forward_step_ref` | A body step references a step that runs **later** in the same body, or later in an enclosing body. | **Reorder.** A container body runs in array order with no reordering pass — see [Containers](/workflows/containers#a-body-runs-in-array-order). |
+| `condition_in_container_body` | A step inside a `foreach` body or a `parallel` branch carries a `condition`. Any depth. | **Move the gate.** Put the `condition` on the container itself, or filter the `items` list. A body step's `condition` is not evaluated at run time, so refusing it is the only signal you get — see [Containers](/workflows/containers). |
+| `binding_out_of_scope` | A reference the resolver cannot reach: to the step itself, to the container it sits inside, to a step inside a container from outside it, or to a sibling **branch** of a `parallel`. | Read the container instead — `${steps.<container>.output…}`. A step inside a container publishes nothing under its own id. |
+| `unknown_step_ref` | The id is in no scope at all. | Usually a typo. |
+| `pipeline_cycle` | Steps depend on each other in a loop. | The message prints the cycle. |
+| `timeout_too_large` | **Legacy only.** A workflow saved before `pipeline_timeout_seconds` was refused outright still carries a value above 120, and running or re-validating it hits this. Unreachable on anything saved today — the field itself is rejected at write time. | Remove `pipeline_timeout_seconds` from the definition and bound the run with per-step `timeout_seconds` instead. |
+| `invalid_estimate_request` | `/v1/workflows/estimate` got both or neither of `definition` and `pipeline_id`, or a `pipeline_id` with no `pipeline_version`. | Send exactly one, and the version alongside an id. |
+
+<Warning>
+`forward_step_ref` and `binding_out_of_scope` exist because the alternative is worse than
+an error. A reference the resolver cannot reach becomes `undefined` at run time **with no
+error raised** — and the step is dispatched and billed with a missing input. That is why a
+fallback such as `${steps.late.output.text | "n/a"}` does **not** excuse an out-of-scope
+first alternative: every alternative of a token is checked.
+</Warning>
+
+## Run-time failures
+
+These appear as the failing step's `error` in `stepRuns`, and as the run's own `error` when
+`failure_mode` is `fail_fast`.
+
+| Code | Raised by | What to do |
+| --- | --- | --- |
+| `invalid_pipeline_input` | the run request | A required input is missing or has the wrong type. Every problem is reported at once. |
+| `invalid_condition` | any step with a `condition` | An operand had the wrong type once bindings resolved — `gt` on a string, `in` without an array. |
+| `foreach_items_not_array` | `foreach` | `items` resolved to something other than an array. |
+| `foreach_too_many_items` | `foreach` | More items than `max_iterations`. Raise the limit, up to 100, or shorten the list. |
+| `foreach_empty_body` | `foreach` | The body reads back empty. Raised before any dispatch. |
+| `foreach_unknown_step_type` | `foreach` | A body step's type has no executor. Resolved in one pass before any dispatch. |
+| `parallel_empty_branch` | `parallel` | Some branch reads back empty. Checked over every branch before anything runs. |
+| `parallel_unknown_step_type` | `parallel` | A branch step's type has no executor. |
+| `invalid_join` | `parallel` | `join` is present and is neither `all` nor `first_success`. Omitting `join` is correct and means a race — see [containers](/workflows/containers). |
+| `sub_pipeline_failed` | `sub_pipeline` | The child run did not succeed; the message names the child run id and its code. |
+| `ssrf_blocked` | `http` | The URL — or a redirect hop — resolves to a private or otherwise restricted address. |
+| `response_too_large` | `http` | The response exceeded 5 MB. |
+| `invalid_response_json` | `http` | A JSON content type whose body would not parse. |
+| `unsupported_response_type` | `http` | The content type is neither JSON, `text/*` nor form-encoded. |
+| `context_length_exceeded` | `model` | The bound prompt is longer than the model's window. Trim it with the `http` step's `extract_text` and `max_chars`, or a smaller projection. |
+| `single_step_async_unsupported` | the run request | `only_step_id` with `mode: "async"`. Use `sync` or `stream`. |
+| `resume_run_not_failed` | the run request | `resume_from_run_id` names a run that did not fail. Only a failed run can be resumed. |
+| `resume_upstream_definition_changed` | the run request | The resume edits a step that already produced a result; everything below it would have to run again. Run the workflow fresh. |
+| `resume_input_changed` | the run request | `input` differs from the input the resumed run used. |
+| `resume_artifact_expired` | the run request | A reused step's artifact no longer exists, so its `outputRef` would bind to nothing. |
+| `resume_source_definition_unknown` | the run request | The resumed run did not record which workflow version it executed and the workflow has been saved since, so what an edit invalidates cannot be decided. |
+| `resume_async_unsupported` / `resume_with_only_step` | the run request | `resume_from_run_id` with `mode: "async"`, or together with `only_step_id`. |
+| `rerun_from_step_without_run` | the run request | `rerun_from_step_id` without `resume_from_run_id`. It re-runs part of a run you already have, so it needs that run. |
+| `rerun_run_not_finished` | the run request | `rerun_from_step_id` names a step of a run that is still queued or running. Only a finished run has settled results to reuse. |
+| `rerun_from_step_unknown` | the run request | No step of the definition being run has that id — it may have been renamed or removed since. |
+| `rerun_async_unsupported` | the run request | `rerun_from_step_id` with `mode: "async"`. Use `sync` or `stream`. |
+| `pipeline_run_not_found` / `pipeline_version_not_found` | the read endpoints | Wrong id, wrong version, or a workspace you cannot see it from. |
+
+## Retries
+
+A step failure is retried only if a `retry` block asks for it and the code is on the allowed
+list. See [Step types](/workflows/step-types#retry) for the default list and the codes that
+are never retried.
+
+`foreach_empty_body`, `foreach_unknown_step_type`, `parallel_empty_branch` and
+`parallel_unknown_step_type` are not on the never-retry list, but nothing about them changes
+between attempts — listing one in `retryable_errors` buys retries that cannot succeed.
+
+## Why so many refusals
+
+Every code on this page replaces a **silent** failure. A binding that resolves to nothing
+raises nothing: the step still runs, still calls the provider, and is still billed — it just
+receives a blank where you meant a value. Refusing the definition at write time is the only
+place that mistake is free.
