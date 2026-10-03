@@ -1,0 +1,58 @@
+---
+title: "Create video generation"
+description: "POST /v1/videos/generations — submit an async video generation job."
+openapi: "openapi.json POST /v1/videos/generations"
+---
+
+Video generation is **asynchronous**. Submit → receive the job `id` → poll the [status endpoint](/api-reference/videos/status) until complete.
+
+## Submit a job
+
+```bash
+curl https://api.infery.ai/v1/videos/generations \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "veo-3.1-fast",
+    "prompt": "A cat surfing on a banana at sunset, cinematic",
+    "duration": 4,
+    "resolution": "720p",
+    "aspect_ratio": "16:9"
+  }'
+```
+
+Response:
+
+```json
+{
+  "id": "0f9c3b1e-6d2a-4c17-9f83-2b5e7a41c8d0",
+  "status": "queued",
+  "progress": 0,
+  "created": 1713204900,
+  "model": "veo-3.1-fast"
+}
+```
+
+The job handle is `id` (a UUID), not `job_id`, and the timestamp is `created`, not `created_at`. The duration field is `duration`; `duration_seconds` is not recognised and an unrecognised key is ignored rather than refused, so the model's default duration is rendered and billed instead.
+
+## Image-to-video
+
+Pass a reference image via `image_url`. There is no inline-base64 field on this endpoint:
+
+```json
+{
+  "model": "veo-3.1-fast",
+  "prompt": "Animate this photo with gentle camera pan",
+  "image_url": "https://cdn.example.com/source.jpg"
+}
+```
+
+The URL is fetched anonymously, so it must be publicly reachable, and it is SSRF-checked before anything is billed.
+
+## Supported models
+
+Google Veo (3 and 2), OpenAI Sora, xAI (Grok Video), Alibaba Wan. See [Models catalog](/models/catalog).
+
+## Storage
+
+The `result.url` of a completed job is the **upstream provider's URL and expires with it** — usually within an hour. Video jobs write no copy into workspace storage and return no `file_id`. Download the clip as soon as the job completes, and upload it through `POST /v1/files` if you need a durable handle.

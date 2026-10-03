@@ -1,0 +1,13 @@
+---
+title: "Run a workflow"
+description: "POST /v1/workflows/runs"
+openapi: "openapi.json POST /v1/workflows/runs"
+---
+
+The one endpoint that executes anything. Send a `definition` inline, or a `pipeline_id` for one you stored.
+
+`mode` decides how you get the result: `sync` (default) waits and returns the finished run, `stream` returns SSE progress events, `async` returns a run id immediately and you poll or take a webhook.
+
+Missing or wrongly-typed inputs are reported **all at once** with `invalid_pipeline_input`, before anything is executed or charged. Send an `Idempotency-Key` header to make a retry safe.
+
+See [Running a workflow](/workflows/running) for the modes, resuming a failed run, and the SSE contract.

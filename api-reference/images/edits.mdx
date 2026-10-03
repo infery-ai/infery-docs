@@ -1,0 +1,41 @@
+---
+title: "Edit an image"
+description: "POST /v1/images/edits — modify an existing image with a prompt."
+openapi: "openapi.json POST /v1/images/edits"
+---
+
+Models like Nano Banana (Gemini Image) support edits — provide a source image + prompt.
+
+<Warning>
+This endpoint takes **JSON with a base64 image**, not `multipart/form-data`. The OpenAI SDK's `client.images.edit(...)` sends multipart and will not work against it — call it over plain HTTP as below.
+</Warning>
+
+```bash
+curl https://api.infery.ai/v1/images/edits \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "nano-banana",
+    "prompt": "Replace the background with a tropical beach",
+    "image_base64": "<base64 of source image>",
+    "image_mime_type": "image/png"
+  }'
+```
+
+`image_mime_type` defaults to `image/png`. An optional `mask_base64` (transparent = the region to repaint) enables in-painting where the model supports a mask.
+
+### Sample output
+
+<Frame caption="Source image — autumn Japanese garden">
+  <img src="/samples/image.png" alt="Source image before edit" />
+</Frame>
+
+<Frame caption="Edited: 'Transform this into a snowy winter wonderland — keep the layout intact.' (nano-banana)">
+  <img src="/samples/image-edit.png" alt="Image after edit" />
+</Frame>
+
+*Image-edit output format matches [image generation](/api-reference/images/generations).*
+
+## Supported models
+
+Image-edit capability is model-dependent, and it is decided per source rather than per model: a request routed to a source that takes no input image is refused with `400 edit_not_supported` before anything is billed. See [Models catalog](/models/catalog) for which models edit.

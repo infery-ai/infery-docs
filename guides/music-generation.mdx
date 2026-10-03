@@ -1,0 +1,187 @@
+---
+title: "Music generation"
+description: "Pick a model, write prompts that render, handle async jobs, and control Suno custom mode."
+---
+
+For the endpoint contract see [Music API](/api-reference/music). This guide covers the practical side: picking a model, prompting, operation modes, costs.
+
+## Sample output
+
+<video controls src="/samples/music.mp3" style={{ width: '100%', maxWidth: 480, height: 54 }} />
+
+*30-second clip generated with `lyria-3-clip` (Google Lyria). Prompt: "Uplifting modern electronic track with warm synths, gentle beat, optimistic mood."*
+
+## Pick a model
+
+| Model | Strong for | Duration | Notes |
+| --- | --- | --- | --- |
+| `lyria-3-clip` (Google) | Instrumentals, atmosphere, demos | Fixed 30 s | English-only prompts; fast; no vocals |
+| `lyria-3-pro` (Google) | Longer, higher-fidelity instrumentals | Up to ~2 min | English-only; richer mix |
+| `suno-v4` | Full songs with vocals, any genre | 30 s – 5 min | Lyrics + singing supported |
+| `suno-v5` | Latest Suno — better vocals, sound effects | 30 s – 5 min | Supports `sounds` operation |
+
+List the catalog with `GET /v1/models` and keep the entries whose `_infery.modality` is `music`. Each entry's `_infery.allowed_params` carries `response_formats` and `default_params`.
+
+Rule of thumb:
+
+- **Background / UI / ad beds** → Lyria (instrumental, cheap, fast).
+- **Songs with lyrics, creator content** → Suno.
+- **Sound effects, short stingers** → Suno V5 `sounds` operation.
+
+## Prompting that renders
+
+Music models are literal about genre, instruments and mood — but imprecise about tempo and key unless forced.
+
+```
+[mood/energy], [genre/style], [key instruments], [production notes], [tempo/key if needed]
+
+Example that works:
+Bright, optimistic indie-pop,
+ukulele and warm acoustic guitar,
+hand-claps and soft kick drum, whistled melody,
+modern clean mix,
+around 110 BPM, major key, no vocals
+```
+
+Tips:
+
+- **Say "no vocals"** explicitly when you want an instrumental — Suno defaults to vocals.
+- **Reference era + region** for style anchoring ("90s British trip-hop", "early-2000s West Coast hip-hop").
+- **Describe production**, not just genre — "lo-fi tape warmth, sidechained pad, shuffled hi-hat" lands better than "chill beat".
+- **Specify BPM when it matters** (ads, workouts). Models don't always honour it, but without you get unpredictable tempo.
+- **Avoid copyrighted artist names.** Use stylistic descriptors instead ("operatic rock anthem in the vein of stadium classics", not "in the style of Queen").
+
+## One blocking call, not a job
+
+Unlike video, music generation is **synchronous**: a single `POST /v1/music/generations` holds the connection open until the track is rendered and answers with the audio. There is no `job_id` and no `GET /v1/music/generations/{id}` to poll.
+
+```python python
+import os, httpx
+
+http = httpx.Client(
+    base_url="https://api.infery.ai/v1",
+    headers={"Authorization": f"Bearer {os.environ['INFERY_API_KEY']}"},
+    timeout=httpx.Timeout(600.0, connect=10.0),
+)
+
+def generate_music(prompt: str, model: str = "suno-v4") -> dict:
+    r = http.post("/music/generations", json={"model": model, "prompt": prompt})
+    r.raise_for_status()
+    return r.json()   # {"created": ..., "data": [...], "credits_used": ...}
+
+track = generate_music("Uplifting modern electronic, warm synths, gentle beat")["data"][0]
+```
+
+Set a generous client timeout — 10 minutes is a safe default. Typical wall time:
+
+- Lyria clip (30 s): ~20–40 s
+- Lyria pro (2 min): ~60–120 s
+- Suno full song (3 min): ~60–90 s
+
+Because the call blocks, **never make it from inside an HTTP request handler** of your own — push it to a queue and let a worker hold the connection.
+
+Two escape hatches for the long tail:
+
+- **`?stream=true`** turns the call into SSE and emits `progress` events while the track renders, which is what you want behind a UI.
+- If rendering outruns our 5-minute wait budget, the response is **504** with a `job_id` in the error body. The track keeps rendering and is still billed — collect it from `GET /v1/images/jobs/{job_id}` (that endpoint serves every media job, whatever the modality).
+
+## Suno custom mode
+
+By default Suno writes the lyrics for you from your prompt. For full control, enable `custom_mode`:
+
+```python python
+song = http.post("/music/generations", json={
+    "model": "suno-v5",
+    "prompt": "Upbeat product launch anthem",
+    "custom_mode": True,
+    "title": "We Ship",
+    "style": "Stadium pop-rock, anthemic",
+    "lyrics": "[Verse 1]\nToday we push it live ...\n[Chorus]\nWe ship, we ship ...",
+    "instrumental": False,
+    "vocal_gender": "f",
+    "negative_tags": "Heavy Metal, Screaming",
+}).json()
+```
+
+There is no duration parameter. Length follows the model and the material you give it — Lyria 3 Clip is always 30 s, Suno takes its cue from the lyrics and style.
+
+Relevant Suno-only params:
+
+- `custom_mode: true` — unlocks `title`, `style`, `lyrics`
+- `style` — genre/style string (max 1000 chars)
+- `lyrics` — bring your own lyrics (max ~5000 chars), use `[Verse]` / `[Chorus]` / `[Bridge]` section tags for structure
+- `instrumental: true` — generate without vocals even with lyrics supplied
+- `vocal_gender` — exactly `m` or `f` (anything else is a 400)
+- `negative_tags` — styles to steer away from
+- `style_weight`, `weirdness_constraint`, `audio_weight` — 0.0–1.0 dials
+- `persona_id` + `persona_model` — reuse a stylistic or vocal persona
+
+See [Music API → Parameters](/api-reference/music) for the full list.
+
+## Operation modes (Suno)
+
+Suno supports several operations beyond plain generation, dispatched via the `operation` field:
+
+| Operation | What it does | Required fields |
+| --- | --- | --- |
+| `generate` (default) | Text-to-music | `prompt` |
+| `extend` | Continue an existing track | `audio_id`, optional `continue_at` |
+| `upload_cover` | Cover song from uploaded audio | `upload_url` |
+| `upload_extend` | Extend uploaded audio | `upload_url` |
+| `add_instrumental` | Make instrumental version | `upload_url`, `tags` |
+| `add_vocals` | Add vocals to instrumental | `upload_url` |
+| `vocal_removal` | Separate vocals / stems | `audio_id`, `task_id`, `separation_type` |
+| `sounds` (V5) | Sound effect with BPM/key/loop | `prompt`, `sound_loop`, `sound_tempo`, `sound_key` |
+| `lyrics` | Generate lyrics only (no audio) | `prompt` |
+
+Stems (from `vocal_removal`) are returned as additional items in the response's `data` array.
+
+## Persistence
+
+`data[].url` is a signed URL into our private storage with a **7-day expiry**. For long-term keeping:
+
+```python python
+import httpx
+from openai import OpenAI
+
+oai = OpenAI(api_key=os.environ["INFERY_API_KEY"], base_url="https://api.infery.ai/v1")
+
+mp3 = httpx.get(track["url"], follow_redirects=True).content
+f = oai.files.create(file=("track.mp3", mp3), purpose="user_data")
+# f.id is now a stable handle in your workspace storage
+```
+
+If GCS upload fails on our side (very rare), the response falls back to inline `b64_audio` for that track — decode and save yourself:
+
+```python python
+import base64
+if "b64_audio" in track:
+    open("track.mp3", "wb").write(base64.b64decode(track["b64_audio"]))
+```
+
+Every track in `data` also carries `content_type` and `duration_seconds` — the latter is what the model actually rendered, and it is a response field only, never a request one.
+
+## Costs at a glance
+
+Per 30-second clip / per 1-minute song:
+
+- Lyria 3 clip: ~10 credits per 30 s
+- Lyria 3 pro: ~25 credits per minute
+- Suno v4: ~30 credits per minute
+- Suno v5: ~40 credits per minute
+- Vocal removal (`separate_vocal`): ~10 credits; `split_stem` (up to 12 stems): ~30 credits
+
+Your invoice line shows model + operation + duration. Prototype on Lyria clip; promote to Suno for deliverables that need vocals.
+
+## Formats
+
+- Default: `mp3` (~128–192 kbps, universally supported, small enough to stream).
+- `wav` is supported on all Suno models — use for post-production editing only, files are ~10× larger. Lyria returns `mp3` only: Google offers WAV for Lyria 3 Pro on its Interactions API, which the gateway does not call yet, so asking for `wav` there is refused rather than silently downgraded.
+
+## Pitfalls
+
+- **Prompt language is the lyrics language on Lyria** — not a pitfall, a control: prompt in French and you get French lyrics, with the vocal style and pronunciation to match. (The gateway used to refuse non-Latin prompts to Lyria with a 400; it no longer does, because the model accepts them.)
+- **Copyrighted artists/songs** — refusal from upstream; not retryable by fallback. Describe the sound, not the artist.
+- **Suno `instrumental: true` + `lyrics` provided** — lyrics are ignored, the track is instrumental. Don't pay for generation that ignores a key input; set one or the other.
+- **Polling too fast** — stick to 5-second intervals. Faster polling won't speed up generation, it'll just eat your RPM.
+- **Storing 5-minute tracks as base64 in JSON** — the gateway already offloads to GCS and returns `url`; always prefer `url` over `b64_audio` when both are present.

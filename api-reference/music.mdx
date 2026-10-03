@@ -1,0 +1,60 @@
+---
+title: "Music"
+description: "Generate full songs from a prompt."
+openapi: "openapi.json POST /v1/music/generations"
+---
+
+```bash
+curl https://api.infery.ai/v1/music/generations \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "suno-v4",
+    "prompt": "Upbeat indie folk about a sunrise coastal drive"
+  }'
+```
+
+This call is **synchronous**: it holds the connection until the track is rendered and answers with the audio. There is no `job_id` and no status endpoint to poll — allow for a client timeout of several minutes.
+
+The response carries a URL to the MP3 for each rendered track, plus separate stems if the model exposes them (Suno supports vocals + instrumentals):
+
+```json
+{
+  "created": 1713204900,
+  "data": [
+    {
+      "url": "https://storage.googleapis.com/...mp3?X-Goog-Signature=...",
+      "content_type": "audio/mpeg",
+      "duration_seconds": 30
+    }
+  ],
+  "credits_used": 180
+}
+```
+
+Add `?stream=true` to receive SSE progress events instead of one blocking response. If rendering outruns the 5-minute wait budget the call answers **504** with a `job_id` in the error body; the track is still rendered and billed, and is collected from `GET /v1/images/jobs/{job_id}`, which serves media jobs of every modality.
+
+### Sample output
+
+<video controls src="/samples/music.mp3" style={{ width: '100%', maxWidth: 480, height: 54 }} />
+
+*30-second clip generated with `lyria-3-clip` (Google Lyria).*
+
+## Parameters
+
+- `prompt` — natural-language description (required)
+- `operation` — `generate` (default), `extend`, `upload_cover`, `upload_extend`, `add_instrumental`, `add_vocals`, `sounds`, `vocal_removal`, `lyrics`
+- `response_format` — `mp3` (default) or `wav`, where the model supports it
+- `custom_mode` — Suno: unlocks `title`, `style` and `lyrics`
+- `style` — Suno: genre/style string, max 1000 chars
+- `lyrics` — Suno: explicit lyrics, custom mode only
+- `instrumental` — Suno: render without vocals
+- `vocal_gender` — Suno: exactly `m` or `f`
+
+There is no duration parameter. Length is set by the model and the material you give it — Lyria 3 Clip always renders 30 s. `duration_seconds` appears on each track in the **response**, reporting what was actually rendered.
+
+See [Music generation](/guides/music-generation) for the full Suno parameter set.
+
+## Supported models
+
+Suno and Google Lyria. See [Models](/models/catalog) → Music.

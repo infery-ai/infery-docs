@@ -1,0 +1,138 @@
+---
+title: "Core concepts"
+description: "Workspaces, credits, Studio and API, models, tools and workflows — a mental model for the platform."
+---
+
+## Workspace
+
+A **workspace** is the container for everything: members, subscription plan, API keys, credits, chats, projects and files. Every API call and every Studio message is scoped to exactly one workspace.
+
+You can belong to multiple workspaces (switch via the top-left selector in the app).
+
+<Frame caption="Workspace settings: the id the API wants, the name people see, and the slug that never changes">
+  <img className="block dark:hidden" src="/samples/settings-general-light.webp" alt="The Workspace card under Settings, shown on its own with no other card below it. A Workspace ID field holds an opaque id next to a copy button. A Name field reads Infery Studio. A Slug field reads infery-studio, greyed to show it is read-only, with a note underneath: Slug cannot be changed. Below that sits a Save changes button, shown disabled because no field has been edited." />
+  <img className="hidden dark:block" src="/samples/settings-general-dark.webp" alt="The Workspace card under Settings, shown on its own with no other card below it. A Workspace ID field holds an opaque id next to a copy button. A Name field reads Infery Studio. A Slug field reads infery-studio, greyed to show it is read-only, with a note underneath: Slug cannot be changed. Below that sits a Save changes button, shown disabled because no field has been edited." />
+</Frame>
+
+The **Workspace ID** on that page is what every workspace-scoped API route wants.
+The **slug** is fixed at creation — the name above it is free to change, so
+anything that has to stay stable keys on the slug rather than on the name.
+
+## Members and roles
+
+Each member has a role that controls what they can do:
+
+| Role | Studio | API keys | Billing | Admin settings |
+| --- | --- | --- | --- | --- |
+| **Owner** | full | full | full | full |
+| **Admin** | full | full | view only | full |
+| **Developer** | full | own keys only | — | — |
+| **Billing** | full | — | full | — |
+| **Viewer** | read-only | — | — | — |
+
+There is exactly one owner per workspace. See [Members and roles](/workspaces/members-and-roles) for details.
+
+## Credits
+
+Everything on Infery is priced in **credits**. 1 credit ≈ $0.01. Every
+chat token, every generated image, every second of voice, every workflow step is
+metered to the same balance — no per-provider invoices to juggle.
+
+Two sources of credits:
+- **Monthly plan credits** — granted at the start of each billing cycle. Unused ones roll over up to three months' worth of your allowance on every paid plan; the excess expires at renewal.
+- **Topups** — one-off purchases that never expire.
+
+Monthly credits are spent first, so the ones with an expiry date go before the ones without.
+
+Details: [Credits](/billing/credits), [Plans](/billing/subscription-plans).
+
+## Studio
+
+The **Studio** is the in-browser product surface: chats, projects, file uploads, generations, sharing with teammates, bookmarks. If you're evaluating or exploring — this is where you live.
+
+Learn more: [Studio overview](/playground/overview).
+
+## API
+
+The **API** is how you build with Infery in production, authenticated with a Bearer token (`inf_live_…`).
+
+Where OpenAI has a route, ours is compatible at the wire level — `POST /v1/chat/completions`, `POST /v1/embeddings`, `POST /v1/images/generations`, `POST /v1/files`. Point the OpenAI SDK at our base URL and it works unchanged. Modalities OpenAI has no route for — video, music, 3D, upscaling, tools and workflows — are our own, and follow the same conventions: same key, same error shape, same credit balance.
+
+Both Studio and API share the **same credit balance** and **same catalogue**. A Studio message and an API call cost the same.
+
+Start: [API introduction](/api-reference/introduction).
+
+## Models
+
+More than **1,400 models** are callable right now, from nearly 200 owners —
+OpenAI, Anthropic, Google, xAI, DeepSeek, Alibaba, Black Forest Labs, MiniMax,
+ElevenLabs, Suno and the rest — across eleven modalities: text, image, video,
+audio, music, speech-to-text, vision, 3D, upscale, embedding and rerank.
+
+A request names a model by **slug** (`gpt-5.2`, `claude-opus-5`, `gemini-3.5-flash`, `nano-banana-pro`). The slug is the stable part: which provider serves it is routing, and that can change without your code changing. `owned_by` on `GET /v1/models` reports who *made* the model, never who is serving it.
+
+What a model accepts beyond the shared fields is the model's own business — an
+image model declares its sizes, a speech model its voices. `_infery.allowed_params`
+on [`GET /v1/models`](/api-reference/models) is the authoritative list, and the
+[capability flags](/models/capabilities) tell you which models stream, take
+images, honour tools or do JSON mode. Branch on the flag, never on the name.
+
+Browse by modality at [Model catalog](/models/catalog), or see [Owners](/models/owners) for who has what.
+
+## Tools
+
+Most of the work around a model is not inference. A **tool** does exactly one thing,
+deterministically, for a fixed price: trim a video, extract text from a PDF, pack an
+archive, run a Python snippet. No prompt, no sampling, no variance between two
+identical calls — and no inference pricing for what `ffmpeg` can do.
+
+Tools are listed by `GET /v1/tools` and invoked with `POST /v1/capabilities/{id}/run`.
+
+See the [Tool catalog](/tools/catalog).
+
+## Workflows
+
+A **workflow** chains model calls, tools, HTTP requests and media transforms into one
+JSON definition that runs on our side. One request in, one result out — a ten-step
+workflow is one HTTP request, not ten. Steps read each other's output by path
+(**bindings**), and an artifact a step produces is re-hosted in your workspace and
+handed onward by reference rather than re-uploaded by you.
+
+`POST /v1/workflows/estimate` prices a definition before it runs. Runs can be
+synchronous, async-and-polled, or [scheduled](/workflows/schedules). Author them as
+JSON through the API or visually in the editor — both write the same definition.
+
+Start: [Workflows](/workflows/overview).
+
+## Memory
+
+A Studio chat does not start from nothing. Before answering, the assistant pulls in
+**memory** (durable facts learned about you — "prefers TypeScript") and **excerpts**
+(passages from your earlier chats that resemble what you just asked). Both are scoped
+to you alone, whatever anyone's sharing settings say.
+
+What was recalled is shown above each reply, and **Settings → Profile → Memory** lists
+every fact with the chat it came from, deletable one by one.
+
+Details: [Memory and context](/playground/memory-and-context).
+
+## Files
+
+Two kinds of files, kept separate:
+
+- **Studio attachments** — dropped into a chat message. They inherit that chat's sharing scope: whoever can read the chat can read the attachment.
+- **API files** — uploaded via [`POST /v1/files`](/api-reference/files/upload) with OpenAI-compatible semantics. The id is `file_`-prefixed (not a UUID) and is referenced from chat completions as a content block.
+
+Both count against the workspace's storage quota.
+
+Details: [Files API](/api-reference/files/upload), [Files in chat](/playground/files-and-attachments).
+
+## Safety nets
+
+| Feature | What it does | Docs |
+| --- | --- | --- |
+| Fallback chains | Re-route to a backup model when primary errors/throttles | [Fallbacks](/workspaces/fallback-chains) |
+| Budget alerts | Email/Slack/Telegram/webhook when spend crosses a credit threshold | [Budget alerts](/workspaces/budget-alerts) |
+| Per-key quotas | RPM, daily tokens, allowed models, cost cap per API key | [Quotas](/workspaces/quotas-and-presets) |
+| Idempotency | `Idempotency-Key` on file uploads and workflow runs makes a retry safe | [Files API](/api-reference/files/upload) |
+| CAPTCHA | Turnstile on sign-up, sign-in, password reset, contact and support forms | [Security](/reference/security) |

@@ -1,0 +1,7 @@
+---
+title: "Update a workflow"
+description: "PUT /v1/workflows/{id}"
+openapi: "openapi.json PUT /v1/workflows/{id}"
+---
+
+Changing the `definition` mints a NEW version rather than editing the old one, so a run that is already going keeps executing the definition it started with, and `version=` still fetches what ran.

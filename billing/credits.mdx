@@ -1,0 +1,63 @@
+---
+title: "Credits"
+description: "One balance, every modality, predictable costs."
+---
+
+Everything on Infery is priced in **credits**. One credit is worth one hundredth of a unit of your billing currency ([Topups](/billing/topups) explains how that is set). All modalities (chat tokens, generated images, voice seconds, video frames, embeddings) use the same balance.
+
+## Your balance
+
+The top of every page shows your remaining credits. Hover for a breakdown:
+
+- **Monthly credits remaining** — from your subscription plan, resets each cycle (may roll over on higher plans)
+- **Topup credits remaining** — one-off purchases, never expire
+
+Both pools are used transparently — we draw from **monthly first**, then topup.
+
+## How costs are calculated
+
+Each model has its own credit price, visible in the model catalog (`GET /v1/models`) and on the pricing page.
+
+- **Text models** — priced per token (input and output rates may differ)
+- **Image / video / music** — flat per-asset or per-second rates
+
+Most endpoints return the exact cost as a `credits_used` field in the JSON response body; streaming responses carry it in the final SSE chunk instead. For endpoints with no JSON body to carry it (binary audio from text-to-speech), it comes back as an `x-credits-used` response header instead.
+
+## Seeing usage
+
+**Usage** (main navigation) shows charts by:
+- Day / week / month
+- Modality
+- Model
+- API key
+- Workspace member
+
+Export as CSV for your own BI.
+
+
+
+<Frame caption="Billing overview: the plan on the left, the wallet on the right">
+  <img className="block dark:hidden" src="/samples/billing-overview-light.webp" alt="A Billing overview with the current plan on the left and the wallet on the right. The Team plan card names its description, 8,000 credits/month, a renewal date, an active status badge and $99/mo, then twelve bullets of what the plan includes: 8,000 credits/mo, credits roll over up to 3 months, 10 members, 32 MB max file, 50 GB storage, 350 req/min, 10% off Studio spend, API access, fallback chains, priority queue, custom quotas and scheduled workflows every 5 min. The wallet card shows an available balance of 2,840 credits split into 2100 monthly and 740.5 top-up, a lifetime spent of 1966.5 credits, and a note that monthly credits are used first." />
+  <img className="hidden dark:block" src="/samples/billing-overview-dark.webp" alt="A Billing overview with the current plan on the left and the wallet on the right. The Team plan card names its description, 8,000 credits/month, a renewal date, an active status badge and $99/mo, then twelve bullets of what the plan includes: 8,000 credits/mo, credits roll over up to 3 months, 10 members, 32 MB max file, 50 GB storage, 350 req/min, 10% off Studio spend, API access, fallback chains, priority queue, custom quotas and scheduled workflows every 5 min. The wallet card shows an available balance of 2,840 credits split into 2100 monthly and 740.5 top-up, a lifetime spent of 1966.5 credits, and a note that monthly credits are used first." />
+</Frame>
+
+The wallet splits the balance because the two halves behave differently:
+**monthly credits reset**, top-up credits do not, and monthly is spent first so
+the ones with an expiry date go before the ones without.
+
+## Credit lifecycle
+
+- **Monthly credits** renew on your billing cycle start. Unused ones **roll over up to three months' worth** of your allowance (`monthlyCreditRolloverMultiple: 3` on every paid plan); the excess expires at renewal. Topped-up credits never expire.
+- **Topup credits** are permanent — no expiry.
+
+## When you run out
+
+- `403 insufficient_credits` on API calls, unconditionally — there is no setting that turns this off, and none that turns it on
+- Studio shows a banner "Out of credits — top up to continue"
+- The workspace owner is emailed once when the balance falls below 10 % of the plan allowance, and again when it reaches zero
+
+## Invoices
+
+Monthly invoices for subscriptions are sent by email and stored in **Billing** → History. Topup invoices are emailed immediately on payment.
+
+Stripe powers payment. Cards only (Visa, Mastercard, Amex) — checkout is configured card-only for every plan, including Enterprise.

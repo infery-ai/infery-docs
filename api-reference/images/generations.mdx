@@ -1,0 +1,44 @@
+---
+title: "Generate an image"
+description: "POST /v1/images/generations — text-to-image generation."
+openapi: "openapi.json POST /v1/images/generations"
+---
+
+```bash
+curl https://api.infery.ai/v1/images/generations \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "dall-e-3",
+    "prompt": "An isometric dev dashboard, neon green accents, dark theme",
+    "size": "1024x1024",
+    "n": 1
+  }'
+```
+
+### Sample output
+
+<Frame>
+  <img src="/samples/image.png" alt="Generated image sample" />
+</Frame>
+
+*Generated with Nano Banana (`nano-banana`).*
+
+Works unchanged with the OpenAI SDK: `client.images.generate(...)`.
+
+## Response formats
+
+- `response_format: "url"` (default) → a URL, ephemeral (~1 hour). Download within that window if you need to keep it.
+- `response_format: "b64_json"` → inline base64 PNG. DALL-E models honour this; GPT Image models always return base64 regardless.
+
+Some models are served through our durable job path, and those responses carry a `file_id` next to each `url` — already a permanent handle on bytes in your workspace storage. When `file_id` is absent, upload the decoded bytes via `POST /v1/files` to persist them.
+
+A generation that runs past the 5-minute wait budget answers **504** with a `job_id` in the error body rather than an image. The job continues and is still billed; collect the result from `GET /v1/images/jobs/{job_id}`.
+
+## Supported models
+
+See [Models catalog](/models/catalog) filtered to image modality. OpenAI (DALL·E), Google (Imagen, Gemini Image), xAI (Grok Image), Alibaba (Qwen Image), Suno-music, FLUX (self-hosted) — all accessed by slug.
+
+## Aspect ratios and sizes
+
+Per-model; common values: `1024x1024`, `1792x1024`, `1024x1792`, `512x512`. Check a model's `_infery.allowed_params.sizes` in `GET /v1/models`.

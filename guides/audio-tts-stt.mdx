@@ -1,0 +1,225 @@
+---
+title: "Audio: TTS and STT"
+description: "Generate speech, transcribe recordings, handle long-form audio and streaming."
+---
+
+For the endpoint contract see [Text-to-speech](/api-reference/audio/speech) and [Speech-to-text](/api-reference/audio/transcriptions). This guide covers practical recipes.
+
+Both endpoints work with `client.audio.speech.create(...)` and `client.audio.transcriptions.create(...)` for the common case. Neither is unconditionally drop-in — TTS can defer to a job on a long render (see the warning below), and STT drops a couple of OpenAI parameters silently. The gaps are called out in place below, and the full picture across every operation is the [compatibility matrix](/sdks/openai-compatibility).
+
+## Text-to-speech
+
+### Pick a voice and model
+
+| Model | Voices | Strong for |
+| --- | --- | --- |
+| `tts-1` (OpenAI) | alloy, echo, onyx, nova, shimmer, sage, ash, coral, fable | Fast, low cost, monolingual-EN strong |
+| `tts-1-hd` (OpenAI) | same | Higher fidelity, ~2× cost |
+| `gemini-2.5-flash-tts` | Multilingual | Natural prosody, 30+ languages |
+| `qwen-3-tts-text-to-speech-1.7b` | Multilingual incl. CN/JA/KO | PRC opt-in required |
+
+Voice character is fixed per voice — you can't fine-tune them. To pick, render the same line in 3–4 voices and listen.
+
+### Save to file
+
+```python python
+import os
+from openai import OpenAI
+
+client = OpenAI(api_key=os.environ["INFERY_API_KEY"], base_url="https://api.infery.ai/v1")
+
+audio = client.audio.speech.create(
+    model="tts-1",
+    voice="nova",
+    input="Welcome to Infery. Your audio is being generated now.",
+    response_format="mp3",
+    speed=1.0,
+)
+audio.stream_to_file("welcome.mp3")
+```
+
+#### Sample output
+
+<video controls src="/samples/tts.wav" style={{ width: '100%', maxWidth: 480, height: 54 }} />
+
+*"Welcome to Infery — one API for every AI model." Generated with `gemini-2.5-flash-tts`, voice Kore.*
+
+<Warning>
+For a fal/replicate-routed voice, synthesis that outruns the gateway's wait budget answers a **JSON error** (not audio bytes) carrying a `job_id`, in place of the `audio/*` response `client.audio.speech.create(...)` expects. The request is still running and still billed — collect the finished audio from `GET /v1/images/jobs/{job_id}`, which answers a signed download URL. The OpenAI SDK has no path for "JSON where I expected bytes"; a caller that doesn't check for it will treat this as a parse error rather than a job to poll.
+</Warning>
+
+### Stream to a player
+
+For long passages, stream the bytes directly to the user's audio element instead of downloading then playing:
+
+```python python
+with client.audio.speech.with_streaming_response.create(
+    model="tts-1",
+    voice="nova",
+    input=long_text,
+) as resp:
+    for chunk in resp.iter_bytes(8192):
+        write_to_pipe(chunk)
+```
+
+### Format choice
+
+| Format | Bitrate | Use |
+| --- | --- | --- |
+| `mp3` | ~96 kbps | Default; widely supported |
+| `opus` | ~64 kbps | Best for streaming voice (web/WebRTC) |
+| `wav` | uncompressed | Editing, further processing |
+| `flac` | lossless compressed | Archival |
+| `pcm` | raw 24kHz mono | Custom pipelines (synth, modems) |
+| `aac` | ~96 kbps | Apple-native playback |
+
+### Pacing
+
+`speed` is 0.25 → 4.0. Most listeners are comfortable at 0.95–1.15 . Speeding past 1.5 is intelligible but tiring; slowing below 0.85 gets robotic.
+
+## Speech-to-text
+
+### Quick transcription
+
+```python python
+tr = client.audio.transcriptions.create(
+    model="whisper-1",
+    file=open("meeting.mp3", "rb"),
+    response_format="verbose_json",
+    language="en",
+)
+print(tr.text)
+for s in tr.segments:
+    print(f"[{s.start:.1f}s] {s.text}")
+```
+
+### Long-form audio (>25 MB)
+
+Whisper-1 caps at 25 MB. For longer recordings, split first:
+
+```python python
+import subprocess, tempfile, os
+
+def split(input_path: str, segment_seconds: int = 600) -> list[str]:
+    out_dir = tempfile.mkdtemp()
+    pattern = os.path.join(out_dir, "part_%03d.mp3")
+    subprocess.run([
+        "ffmpeg", "-i", input_path,
+        "-f", "segment", "-segment_time", str(segment_seconds),
+        "-c:a", "libmp3lame", "-b:a", "64k",
+        pattern,
+    ], check=True)
+    return sorted(os.path.join(out_dir, f) for f in os.listdir(out_dir))
+
+def transcribe_long(path: str) -> str:
+    parts = split(path)
+    return "\n".join(
+        client.audio.transcriptions.create(
+            model="whisper-1",
+            file=open(p, "rb"),
+        ).text
+        for p in parts
+    )
+```
+
+Use 64 kbps mono MP3 — Whisper doesn't benefit from higher bitrate, and you stay well under the size cap.
+
+### Subtitle export
+
+`response_format="srt"` or `"vtt"` renders subtitles — but the body is always JSON, with the subtitle document inside `text`. Read that field rather than writing the response out whole:
+
+```python python
+import os, base64, httpx
+
+r = httpx.post(
+    "https://api.infery.ai/v1/audio/transcriptions",
+    headers={"Authorization": f"Bearer {os.environ['INFERY_API_KEY']}"},
+    json={
+        "model": "whisper-1",
+        "file_base64": base64.b64encode(open("video.mp4", "rb").read()).decode(),
+        "filename": "video.mp4",
+        "response_format": "vtt",
+    },
+    timeout=300,
+).json()
+
+open("subs.vtt", "w").write(r["text"])  # ready for HTML5 <track>
+```
+
+<Warning>
+The OpenAI SDK assumes `srt`/`vtt`/`text` come back as a bare document and hands you the raw body, which here is the JSON envelope — writing it straight to a file produces an unplayable subtitle track. Either use the HTTP call above, or parse the SDK's string as JSON and take `["text"]`.
+</Warning>
+
+### Timestamps
+
+`response_format="verbose_json"` returns **segment**-level timestamps:
+
+```python python
+tr = client.audio.transcriptions.create(
+    model="whisper-1",
+    file=open("call.wav", "rb"),
+    response_format="verbose_json",
+)
+for s in tr.segments:
+    print(f"[{s.start:.1f}s → {s.end:.1f}s] {s.text}")
+```
+
+<Warning>
+Word-level timestamps are **not supported**. `timestamp_granularities=["word"]` is accepted by the SDK but dropped before the request reaches the provider, so `tr.words` comes back empty and iterating it raises. Segment timestamps are the finest granularity available today.
+</Warning>
+
+### Translation
+
+There is no `/v1/audio/translations` endpoint, so `client.audio.translations.create(...)` fails with a 404. Transcribe first, then translate with a chat completion:
+
+```python python
+text = client.audio.transcriptions.create(
+    model="whisper-1",
+    file=open("interview.mp3", "rb"),
+).text
+
+english = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": f"Translate to English, preserving paragraph breaks:\n\n{text}"}],
+).choices[0].message.content
+```
+
+## Round-trip: voice agent
+
+Combining STT → chat → TTS gives you a basic voice agent:
+
+```python python
+def respond(user_audio_path: str) -> bytes:
+    user_text = client.audio.transcriptions.create(
+        model="whisper-1",
+        file=open(user_audio_path, "rb"),
+    ).text
+
+    reply = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": user_text}],
+    ).choices[0].message.content
+
+    speech = client.audio.speech.create(
+        model="tts-1",
+        voice="nova",
+        input=reply,
+        response_format="opus",
+    )
+    return speech.read()
+```
+
+End-to-end latency is dominated by the chat call. Realtime (WebSocket bidirectional voice) is on the [roadmap](/reference/changelog).
+
+## Costs at a glance
+
+- TTS: ~$15 per 1 M characters on `tts-1`, ~$30 on `tts-1-hd`
+- Whisper STT: ~$6 per hour of audio
+- Long meetings (1 h) typically cost less than the chat completion that follows them
+
+## Pitfalls
+
+- **Wrong language hint** drops STT accuracy. Auto-detect is good but a `language=` hint is better when known.
+- **Quiet/clipped recordings** — Whisper handles noise well but not clipping. Normalise levels before transcribing.
+- **TTS swallowing punctuation** — write naturally; "Hi—how are you?" reads better than "Hi how are you".
+- **Long base64 audio over JSON** wastes 33% bandwidth vs. multipart. Use multipart unless you have a JSON-only client.

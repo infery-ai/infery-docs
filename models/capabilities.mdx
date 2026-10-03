@@ -1,0 +1,41 @@
+---
+title: "Capabilities"
+description: "What each chat model can do — chat, streaming, vision, PDF, tools, JSON mode."
+---
+
+Each model declares capabilities as boolean flags. You can read them from each entry's `_infery` object in `GET /v1/models` to branch feature-by-feature in your app.
+
+| Capability | Meaning |
+| --- | --- |
+| `supportsChat` | Accepts chat completions format |
+| `supportsStreaming` | Can stream tokens via SSE |
+| `supportsVision` | Accepts image inputs |
+| `supportsPdf` | Accepts PDF natively (otherwise gateway auto-converts) |
+| `supportsTools` | Honours `tools` array + `tool_choice` |
+| `supportsJsonMode` | `response_format: {type: "json_object"}` or JSON schema |
+| `supportsImages` | Generates images as output (different from Vision) |
+| `isReasoning` | Chain-of-thought reasoning model (slower but more accurate on complex tasks) |
+| `isFlagship` | Provider's top-of-line model (highest quality + cost) |
+
+## Reading the flags for a real model
+
+These flags are per model, not per provider, and they move when a model is
+updated — so this page does not list them model by model. Two places do:
+
+- The [catalog pages](/models/catalog) show `streaming`, `tools`, `vision`,
+  `pdf` and `json mode` on every row, grouped by modality and sorted by owner.
+- `GET /v1/models` returns the full `_infery` object for each model, including
+  `isReasoning` and `isFlagship`, which the catalog pages do not show.
+
+Branch on the flag, never on the model name. A slug can gain `supportsTools`
+without changing its name, and a name-based check will not notice.
+
+## PDF fallback
+
+If a model without `supportsPdf` receives a PDF, our gateway:
+1. Extracts text via pdftotext
+2. Renders pages to PNG (for vision models)
+3. Injects text + images into the message
+4. Bills a small `pdf_extraction_per_page` fee
+
+You don't lift a finger — works on Grok, DeepSeek, older models. The response behaves as if the model read the PDF natively.

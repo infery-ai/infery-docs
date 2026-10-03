@@ -1,0 +1,9 @@
+---
+title: "Run a capability"
+description: "POST /v1/capabilities/{id}/run"
+openapi: "openapi.json POST /v1/capabilities/{id}/run"
+---
+
+Executes one capability from [`GET /v1/tools`](/api-reference/tools) and returns its result on the same request. There is no job to poll and no streaming, so a slow capability holds the connection for its whole duration.
+
+<Warning>This is billed. Credits are reserved before the work starts and settled against what it actually used.</Warning>

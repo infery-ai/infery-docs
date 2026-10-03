@@ -1,0 +1,40 @@
+---
+title: "Speech-to-text models"
+description: "Every speech-to-text model on Infery, grouped by what it takes as input."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+Transcription, through `POST /v1/audio/transcriptions`.
+
+**18 models.** Grouped by input, because that is the choice you make first — a model that
+turns an image into a video is not interchangeable with one that starts from a prompt.
+
+Prices are not listed here: they change, and a stale price is worse than none. See the
+[live catalogue](https://infery.ai/models) for current rates, and each model's own page there for its full
+parameter schema.
+
+## Audio → text (18)
+
+| Model | Owner | Also accepts | Notes |
+| --- | --- | --- | --- |
+| `paraformer-v2` | alibaba | — |  |
+| `qwen3-asr-flash` | alibaba | — |  |
+| `cohere-transcribe` | cohere-transcribe | — | Cohere Transcribe turns your business audio into accurate text, ready for search, analytics, and automation |
+| `elevenlabs-speech-to-text` | elevenlabs | — | Generate text from speech using ElevenLabs advanced speech-to-text model. |
+| `elevenlabs-speech-to-text-scribe-v2` | elevenlabs | — | Use Scribe-V2 from ElevenLabs to do blazingly fast speech to text inferences! |
+| `gemini-2.5-flash-stt` | google | — | 1049k ctx, 66k out |
+| `smart-turn` | infery | — | An open source, community-driven and native audio turn detection model by Pipecat AI. |
+| `speech-to-text` | infery | — | Leverage the rapid processing capabilities of AI models to enable accurate and efficient real-time speech-to-text transcription. |
+| `speech-to-text-stream` | infery | — | Leverage the rapid processing capabilities of AI models to enable accurate and efficient real-time speech-to-text transcription. |
+| `speech-to-text-turbo` | infery | — | Leverage the rapid processing capabilities of AI models to enable accurate and efficient real-time speech-to-text transcription. |
+| `speech-to-text-turbo-stream` | infery | — | Leverage the rapid processing capabilities of AI models to enable accurate and efficient real-time speech-to-text transcription. |
+| `nemotron-3-nano-omni-audio` | nvidia | — | Audio reasoning variant of NVIDIA's Nemotron 3 Nano Omni. |
+| `nemotron-asr-multilingual-asr` | nvidia | — | Nemotron-ASR-Streaming is a multi lingual, streaming Automatic Speech Recognition (ASR) engineered to deliver high-quality multi lingual… |
+| `gpt-4o-mini-transcribe` | openai | — | Speech-to-text model powered by GPT-4o Mini |
+| `gpt-4o-transcribe` | openai | — | Speech-to-text model powered by GPT-4o |
+| `gpt-4o-transcribe-diarize` | openai | — |  |
+| `whisper-1` | openai | — |  |
+| `silero-vad` | silero-vad | — | Detect speech presence and timestamps with accuracy and speed using the ultra-lightweight Silero VAD model |
+

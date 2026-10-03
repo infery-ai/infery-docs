@@ -1,0 +1,53 @@
+---
+title: "Changelog"
+description: "What shipped, when, and what's next."
+---
+
+What we ship in production. Breaking changes are flagged **BREAKING**; everything else is additive.
+
+## 2026-04
+
+- **Files API** — OpenAI-compatible `POST /v1/files` plus `file_id` references in chat completions. Workspace-scoped, MIME-sniffed, idempotent. See [Files API](/api-reference/files).
+- **Studio file access scope** — Studio now shares the same workspace file pool as the API; uploads from either side are referenceable from both.
+- **Billing role** — new `Billing` workspace role: invoices, payment methods and Studio access, no API key management. See [Members and roles](/workspaces/members-and-roles).
+- **Promo site** — fresh marketing site at `infery.ai` with full legal suite (Privacy, Terms, AUP, Subprocessors).
+- **Video polling mirror enqueue fix** — generated videos no longer occasionally get stuck in `processing` state when the upstream provider returns asynchronously.
+
+## 2026-03
+
+- **Fallback chains** — configure per-source-model fallback ladders in Settings → Fallbacks. Headers `x-model-used` / `x-fallback-from` on every response. See [Fallback chains](/workspaces/fallback-chains).
+- **Music generation** — `POST /v1/music/generations` with Suno and Udio backends.
+- **Budget alerts** — set a credit threshold per period (daily, weekly or monthly); notifies via email, Slack, Telegram or webhook when spend crosses it. See [Budget alerts](/workspaces/budget-alerts).
+- **OpenAI SDK extras** — `credits_used` in the streaming usage chunk, ignored by upstream SDKs but readable by raw parsers.
+
+## 2026-02
+
+- **Streaming for all chat models** — including Anthropic and Google, normalised to OpenAI SSE format.
+- **Vision + PDF** — automatic PDF-to-image conversion on the gateway for models without native PDF support.
+- **Quotas and presets** — workspace-level monthly token caps, per-key rate-limit profiles. See [Quotas](/workspaces/quotas-and-presets).
+
+## 2026-01
+
+- **Public launch.**
+- OpenAI-compatible chat, embeddings, image, audio, video endpoints.
+- OpenAI, Anthropic, Google, xAI, DeepSeek, Qwen providers.
+- Studio with chat, image, video, audio modalities.
+- Subscription plans + topups via Stripe.
+
+---
+
+## What's next (tentative)
+
+These are not commitments — see [the roadmap](https://infery.ai) for the canonical list.
+
+- **Batch API** — `POST /v1/batches` for cheap async bulk inference (50% discount on most models).
+- **Workspace-level PRC opt-in** — replace the support-email gate for Qwen/DeepSeek with a self-serve toggle.
+- **Fine-tuning passthrough** — submit + monitor OpenAI / Google fine-tune jobs through the Infery key.
+- **Realtime API** — websocket bidirectional audio for voice agents.
+
+## Staying informed
+
+This page is the record — there is no release RSS feed, no product-update mailing list and
+no status page today. What you *can* subscribe to is operational: Settings →
+**Notifications** wires workflow, billing, storage and catalog events to email, Slack,
+Telegram or a webhook. See [Notifications](/workspaces/notifications).

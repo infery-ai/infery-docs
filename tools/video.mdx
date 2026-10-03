@@ -1,0 +1,798 @@
+---
+title: "Video tools"
+description: "Video tools available as workflow steps and through /v1/capabilities."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+**10 tools.** Each one is deterministic: the same input gives the same output, and
+nothing is inferred. Call one directly with
+[`POST /v1/capabilities/{id}/run`](/api-reference/capabilities/run), or use it as a step in a
+[workflow](/workflows/step-types).
+
+Prices are on the [live catalogue](https://infery.ai/models) — they change, and a stale price here would be
+worse than none.
+
+| Tool | Does | In → out |
+| --- | --- | --- |
+| [`video.add_audio`](#videoadd_audio) | Attach an audio track to a video (replace the existing audio or mix with it). | video,audio → video |
+| [`video.concat`](#videoconcat) | Join multiple videos end-to-end. | video → video |
+| [`video.crop`](#videocrop) | Crop video frame to a rectangle. | video → video |
+| [`video.extract_audio`](#videoextract_audio) | Extract audio track from a video file. | video → audio |
+| [`video.extract_frame`](#videoextract_frame) | Pull a single frame from the video as an image. | video → image |
+| [`video.pipeline`](#videopipeline) | Chain multiple video operations in one step (up to 10). | video → video |
+| [`video.scale`](#videoscale) | Resize video to target width/height (preserves aspect if one omitted). | video → video |
+| [`video.transcode`](#videotranscode) | Re-encode a video to a different container/codec. | video → video |
+| [`video.trim`](#videotrim) | Extract a time range from a video. | video → video |
+| [`video.watermark`](#videowatermark) | Overlay an image watermark onto the video. | video → video |
+
+## `video.add_audio`
+
+**video,audio → video** · Billed per second
+
+Attach an audio track to a video, either replacing the existing audio entirely or mixing it
+with the audio already present in the video.
+
+### When to use
+
+- **Add a voiceover or narration** to a silent or muted video clip.
+- **Replace a shaky on-camera audio track** with a studio-recorded version.
+- **Mix in background music** alongside the original dialogue/audio.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Video file (URL) + Audio file (URL) |
+| **Output modality** | Video file (GCS URL) |
+| **Max input duration** | 30 min |
+| **Max input size** | 5 GB |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `mode` | no (default `replace`) | `replace` drops the video's original audio and uses the new track; `mix` combines both audio tracks. |
+| `shortest` | no | When `true`, trims the output to the length of the shorter of the two inputs. |
+
+### Examples
+
+#### Replace the original audio track
+
+```json
+{
+  "type": "video.add_audio",
+  "input": { "video_url": "https://example.com/example/input.mp4", "audio_url": "https://example.com/example/voiceover.mp3" },
+  "params": { "mode": "replace" }
+}
+```
+
+#### Mix a music bed under the existing audio
+
+```json
+{
+  "type": "video.add_audio",
+  "input": { "video_url": "https://example.com/example/input.mp4", "audio_url": "https://example.com/example/music.mp3" },
+  "params": { "mode": "mix", "shortest": true }
+}
+```
+
+### Related capabilities
+
+- `video.extract_audio` — pull the existing audio track out before replacing it
+- `video.trim` — trim the video or audio to matching lengths beforehand
+- `video.pipeline` — chain add_audio with other operations in one step
+
+### Examples
+
+**Replace audio track**
+
+```json
+{
+  "type": "video.add_audio",
+  "params": {
+    "mode": "replace"
+  }
+}
+```
+
+## `video.concat`
+
+**video → video** · Billed per second
+
+Join multiple video files end-to-end into a single output file.
+
+### When to use
+
+- **Merge clips** — combine multiple segments into one continuous video.
+- **Stitch recordings** — join separate recordings from the same session.
+- **Assemble a reel** — combine trimmed clips after `video.trim`.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Multiple video files (URLs array) |
+| **Output modality** | Video file (GCS URL) |
+| **Min inputs** | 2 videos |
+| **Max inputs** | 10 videos |
+
+### Parameters
+
+No parameters required. Clips are joined in the order provided in the `videos` array.
+
+| Param | Required | Description |
+|---|---|---|
+| *(none)* | — | Pass an empty object `{}` |
+
+### Examples
+
+#### Join two clips
+
+```json
+{
+  "type": "video.concat",
+  "input": { "videos": ["https://example.com/clip1.mp4", "https://example.com/clip2.mp4"] },
+  "params": {}
+}
+```
+
+#### Assemble a three-part video
+
+```json
+{
+  "type": "video.concat",
+  "input": {
+    "videos": [
+      "https://example.com/intro.mp4",
+      "https://example.com/main.mp4",
+      "https://example.com/outro.mp4"
+    ]
+  },
+  "params": {}
+}
+```
+
+### Related capabilities
+
+- `video.trim` — cut clips to size before joining
+- `video.transcode` — normalize all clips to the same codec before concatenating
+- `video.pipeline` — chain trim + concat + transcode in one step
+
+### Examples
+
+**Join two clips**
+
+```json
+{
+  "type": "video.concat",
+  "params": {}
+}
+```
+
+## `video.crop`
+
+**video → video** · Billed per second
+
+Crop the video frame to a rectangular region, discarding everything outside it.
+
+### When to use
+
+- **Remove black bars** from letterboxed or pillarboxed recordings.
+- **Focus on a region** of interest within the frame.
+- **Square crop** for social media formats.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Video file (URL) |
+| **Output modality** | Video file (GCS URL) |
+| **Max input duration** | 30 min |
+| **Max input size** | 5 GB |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `x` | yes | Left edge of the crop rectangle in pixels (non-negative) |
+| `y` | yes | Top edge of the crop rectangle in pixels (non-negative) |
+| `width` | yes | Width of the crop rectangle in pixels (positive) |
+| `height` | yes | Height of the crop rectangle in pixels (positive) |
+
+All coordinates are relative to the top-left corner of the original frame.
+
+### Examples
+
+#### Center crop to 640×480 from a 960×540 video
+
+```json
+{
+  "type": "video.crop",
+  "input": { "video_url": "https://example.com/example/input.mp4" },
+  "params": { "x": 160, "y": 30, "width": 640, "height": 480 }
+}
+```
+
+#### Remove 20px border on all sides from a 1280×720 video
+
+```json
+{
+  "type": "video.crop",
+  "input": { "video_url": "https://example.com/example/input.mp4" },
+  "params": { "x": 20, "y": 20, "width": 1240, "height": 680 }
+}
+```
+
+### Related capabilities
+
+- `video.scale` — resize after cropping to hit an exact output resolution
+- `video.watermark` — overlay a logo on the cropped result
+- `video.pipeline` — chain crop with scale and transcode in one step
+
+### Examples
+
+**Center crop 640×480**
+
+```json
+{
+  "type": "video.crop",
+  "params": {
+    "x": 160,
+    "y": 60,
+    "width": 640,
+    "height": 480
+  }
+}
+```
+
+## `video.extract_audio`
+
+**video → audio** · Billed per second
+
+Extract the audio track from a video file and return it as a standalone audio file.
+
+### When to use
+
+- **Create a podcast** or audio-only version of a recorded talk or webinar.
+- **Extract background music** from a video to reuse elsewhere.
+- **Transcribe audio** — feed the extracted track to a speech-to-text pipeline.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Video file (URL) |
+| **Output modality** | Audio file (GCS URL) |
+| **Supported output formats** | `mp3`, `wav`, `aac` |
+| **Max input duration** | 30 min |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `format` | yes | Output audio format — `mp3`, `wav`, or `aac` |
+| `bitrate` | no | Target bitrate as `<int>[k\|M]`, e.g. `192k`. Applies to compressed formats. |
+
+### Examples
+
+#### Extract MP3 at 192k
+
+```json
+{
+  "type": "video.extract_audio",
+  "input": { "video_url": "https://example.com/example/webinar.mp4" },
+  "params": { "format": "mp3", "bitrate": "192k" }
+}
+```
+
+#### Extract lossless WAV for further processing
+
+```json
+{
+  "type": "video.extract_audio",
+  "input": { "video_url": "https://example.com/example/recording.mp4" },
+  "params": { "format": "wav" }
+}
+```
+
+### Related capabilities
+
+- `video.trim` — trim the video to the relevant section before extracting audio
+- `video.pipeline` — chain trim and audio extraction in one request
+
+### Examples
+
+**MP3 at 192k**
+
+```json
+{
+  "type": "video.extract_audio",
+  "params": {
+    "format": "mp3",
+    "bitrate": "192k"
+  }
+}
+```
+
+## `video.extract_frame`
+
+**video → image** · Billed per second
+
+Pull a single frame from a video at a given timestamp and return it as an image.
+
+### When to use
+
+- **Generate thumbnails** for video previews or catalog displays.
+- **Capture a key moment** as a still image (e.g. the first frame, the midpoint).
+- **Create cover art** from existing video content.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Video file (URL) |
+| **Output modality** | Image file (GCS URL) |
+| **Supported output formats** | `png`, `jpeg` |
+| **Max input duration** | 30 min |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `time_sec` | yes | Timestamp in seconds to extract the frame from (non-negative) |
+| `format` | no | Output image format — `png` or `jpeg`. Default: `png` |
+
+### Examples
+
+#### JPEG thumbnail at 5 seconds
+
+```json
+{
+  "type": "video.extract_frame",
+  "input": { "video_url": "https://example.com/example/input.mp4" },
+  "params": { "time_sec": 5, "format": "jpeg" }
+}
+```
+
+#### PNG frame at the 1-minute mark
+
+```json
+{
+  "type": "video.extract_frame",
+  "input": { "video_url": "https://example.com/example/input.mp4" },
+  "params": { "time_sec": 60, "format": "png" }
+}
+```
+
+### Related capabilities
+
+- `video.trim` — cut a shorter clip first to target the right region
+- `video.scale` — resize the video before extracting a frame at a specific resolution
+- `video.pipeline` — combine trim and frame extraction in one request
+
+### Examples
+
+**Thumbnail at 5 seconds**
+
+```json
+{
+  "type": "video.extract_frame",
+  "params": {
+    "time_sec": 5,
+    "format": "jpeg"
+  }
+}
+```
+
+## `video.pipeline`
+
+**video → video** · Billed per second
+
+Chain up to 10 video operations in a single request. The operations are applied sequentially to the same video input.
+
+### When to use
+
+- **Reduce latency and cost** — avoid uploading/downloading intermediate files between steps.
+- **Complex workflows** — trim → scale → watermark → transcode in one call.
+- **Atomic processing** — all steps succeed or none persist output.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Video file (URL) |
+| **Output modality** | Video file (GCS URL) |
+| **Max operations** | 10 |
+| **Max input duration** | 30 min |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `operations` | yes | Array of 1–10 operation objects. Each is `{ "<op>": { ...params } }`. |
+
+Supported operation keys: `trim`, `scale`, `crop`, `watermark`, `transcode`, `extractFrame`, `audioExtract`, `concat`.
+
+### Examples
+
+#### Trim, scale, and transcode in one step
+
+```json
+{
+  "type": "video.pipeline",
+  "input": { "video_url": "https://example.com/example/raw.mov" },
+  "params": {
+    "operations": [
+      { "trim": { "start": 0, "end": 60 } },
+      { "scale": { "width": 1280 } },
+      { "transcode": { "format": "mp4", "codec": "h264", "bitrate": "2M" } }
+    ]
+  }
+}
+```
+
+#### Crop, watermark, and re-encode
+
+```json
+{
+  "type": "video.pipeline",
+  "input": { "video_url": "https://example.com/example/input.mp4" },
+  "params": {
+    "operations": [
+      { "crop": { "x": 0, "y": 0, "width": 1280, "height": 720 } },
+      { "watermark": { "watermark_url": "https://example.com/brand/logo.png", "position": "br" } },
+      { "transcode": { "format": "mp4", "codec": "h264" } }
+    ]
+  }
+}
+```
+
+### Related capabilities
+
+- `video.transcode` — single-op re-encoding
+- `video.trim` — single-op clip extraction
+- `video.watermark` — single-op overlay
+
+### Examples
+
+**Trim + scale + transcode**
+
+```json
+{
+  "type": "video.pipeline",
+  "params": {
+    "operations": [
+      {
+        "trim": {
+          "start": 0,
+          "end": 30
+        }
+      },
+      {
+        "scale": {
+          "width": 1280
+        }
+      },
+      {
+        "transcode": {
+          "format": "mp4",
+          "codec": "h264"
+        }
+      }
+    ]
+  }
+}
+```
+
+## `video.scale`
+
+**video → video** · Billed per second
+
+Resize a video to target width and/or height. If only one dimension is provided, the other is calculated automatically to preserve the original aspect ratio.
+
+### When to use
+
+- **Downscale for web** — reduce a 4K recording to 1080p or 720p.
+- **Normalize resolution** before concatenating clips of different sizes.
+- **Resize thumbnails** — scale to a fixed width for consistent display.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Video file (URL) |
+| **Output modality** | Video file (GCS URL) |
+| **Max input duration** | 30 min |
+| **Max input size** | 5 GB |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `width` | one of | Target width in pixels (positive integer) |
+| `height` | one of | Target height in pixels (positive integer) |
+
+At least one of `width` or `height` must be provided. If both are given, the video is scaled to fit those exact dimensions.
+
+### Examples
+
+#### Scale to 1280px wide (720p, auto height)
+
+```json
+{
+  "type": "video.scale",
+  "input": { "video_url": "https://example.com/example/input.mp4" },
+  "params": { "width": 1280 }
+}
+```
+
+#### Scale to exact 1920×1080
+
+```json
+{
+  "type": "video.scale",
+  "input": { "video_url": "https://example.com/example/input.mp4" },
+  "params": { "width": 1920, "height": 1080 }
+}
+```
+
+### Related capabilities
+
+- `video.crop` — crop to a specific region after scaling
+- `video.transcode` — re-encode after resizing to control output bitrate
+- `video.pipeline` — combine scale with other operations in one request
+
+### Examples
+
+**Resize to 720p width**
+
+```json
+{
+  "type": "video.scale",
+  "params": {
+    "width": 1280
+  }
+}
+```
+
+## `video.transcode`
+
+**video → video** · Billed per second
+
+Re-encode a video file from one container/codec combination to another.
+
+### When to use
+
+- **Compress** large videos for web delivery (MOV → MP4 H.264, lower bitrate).
+- **Transcode** for compatibility (HEVC → H.264 for older browsers).
+- **Re-encode for streaming** with target bitrate constraints.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Video file (URL) |
+| **Output modality** | Video file (GCS URL) |
+| **Max input duration** | 30 min |
+| **Max input size** | 5 GB |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `format` | yes | Output container — `mp4`, `webm`, `mov` |
+| `codec` | no | Video codec — `h264`, `h265`, `vp9`. Defaults to best for format. |
+| `bitrate` | no | Target bitrate as `<int>[k\|M]`, e.g. `2M`, `500k` |
+
+### Examples
+
+#### Compress to web-friendly MP4
+
+```json
+{
+  "type": "video.transcode",
+  "input": { "video_url": "https://example.com/example/input.mov" },
+  "params": { "format": "mp4", "codec": "h264", "bitrate": "2M" }
+}
+```
+
+#### Convert to WebM VP9
+
+```json
+{
+  "type": "video.transcode",
+  "input": { "video_url": "https://example.com/example/input.mov" },
+  "params": { "format": "webm", "codec": "vp9", "bitrate": "1M" }
+}
+```
+
+### Pricing
+
+Billed per second of output video. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `video.trim` — extract a time range before transcoding
+- `video.scale` — resize dimensions
+- `video.pipeline` — chain transcode with other ops in a single execution
+
+### Examples
+
+**MOV → MP4 H.264**
+
+```json
+{
+  "type": "video.transcode",
+  "params": {
+    "format": "mp4",
+    "codec": "h264",
+    "bitrate": "2M"
+  }
+}
+```
+
+**Compress to WebM VP9**
+
+```json
+{
+  "type": "video.transcode",
+  "params": {
+    "format": "webm",
+    "codec": "vp9",
+    "bitrate": "1M"
+  }
+}
+```
+
+## `video.trim`
+
+**video → video** · Billed per second
+
+Extract a time range from a video by specifying start and end positions in seconds.
+
+### When to use
+
+- **Cut a clip** from a longer recording (e.g. extract the first 30 seconds).
+- **Remove unwanted segments** from the beginning or end of a video.
+- **Prepare clips** before transcoding or concatenating.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Video file (URL) |
+| **Output modality** | Video file (GCS URL) |
+| **Max input duration** | 30 min |
+| **Max input size** | 5 GB |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `start` | yes | Start time in seconds (non-negative) |
+| `end` | yes | End time in seconds (must be > `start`) |
+
+### Examples
+
+#### Extract first 30 seconds
+
+```json
+{
+  "type": "video.trim",
+  "input": { "video_url": "https://example.com/example/input.mp4" },
+  "params": { "start": 0, "end": 30 }
+}
+```
+
+#### Extract a mid-section clip
+
+```json
+{
+  "type": "video.trim",
+  "input": { "video_url": "https://example.com/example/input.mp4" },
+  "params": { "start": 60, "end": 120 }
+}
+```
+
+### Related capabilities
+
+- `video.transcode` — re-encode the trimmed clip to a target format
+- `video.concat` — join multiple trimmed clips together
+- `video.pipeline` — chain trim with other operations in one step
+
+### Examples
+
+**First 30 seconds**
+
+```json
+{
+  "type": "video.trim",
+  "params": {
+    "start": 0,
+    "end": 30
+  }
+}
+```
+
+## `video.watermark`
+
+**video → video** · Billed per second
+
+Overlay a static image watermark onto every frame of the video.
+
+### When to use
+
+- **Brand videos** with a company logo before distribution.
+- **Protect content** with a semi-transparent watermark.
+- **Add a visual identifier** to user-generated content.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Video file (URL) |
+| **Output modality** | Video file (GCS URL) |
+| **Max input duration** | 30 min |
+| **Max input size** | 5 GB |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `watermark_url` | yes | GCS or HTTPS URL of the watermark image (PNG recommended for transparency) |
+| `position` | no | Corner or center — `tl`, `tr`, `bl`, `br`, `center`. Default: `br` |
+| `opacity` | no | Opacity from 0 (transparent) to 1 (opaque). Default: `0.8` |
+
+### Examples
+
+#### Bottom-right logo at 80% opacity
+
+```json
+{
+  "type": "video.watermark",
+  "input": { "video_url": "https://example.com/example/input.mp4" },
+  "params": {
+    "watermark_url": "https://example.com/brand/logo.png",
+    "position": "br",
+    "opacity": 0.8
+  }
+}
+```
+
+#### Subtle center watermark for draft preview
+
+```json
+{
+  "type": "video.watermark",
+  "input": { "video_url": "https://example.com/example/draft.mp4" },
+  "params": {
+    "watermark_url": "https://example.com/brand/draft-overlay.png",
+    "position": "center",
+    "opacity": 0.3
+  }
+}
+```
+
+### Related capabilities
+
+- `video.crop` — crop to frame before adding watermark
+- `video.transcode` — compress watermarked output for delivery
+- `video.pipeline` — combine watermark with other operations in one step
+
+### Examples
+
+**Bottom-right logo at 80% opacity**
+
+```json
+{
+  "type": "video.watermark",
+  "params": {
+    "watermark_url": "https://example.com/logo.png",
+    "position": "br",
+    "opacity": 0.8
+  }
+}
+```
+

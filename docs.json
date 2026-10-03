@@ -1,0 +1,304 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Infery.ai",
+  "colors": {
+    "primary": "#2E5BE8",
+    "light": "#7B99F2",
+    "dark": "#1F41B0"
+  },
+  "favicon": "/brand/icon.svg",
+  "logo": {
+    "light": "/brand/logo-light.svg",
+    "dark": "/brand/logo-dark.svg"
+  },
+  "background": {
+    "color": {
+      "light": "#FFFFFF",
+      "dark": "#08090B"
+    }
+  },
+  "fonts": {
+    "heading": {
+      "family": "Bricolage Grotesque",
+      "weight": 700
+    },
+    "body": {
+      "family": "IBM Plex Sans",
+      "weight": 400
+    }
+  },
+  "navbar": {
+    "links": [
+      { "label": "Studio", "href": "https://app.infery.ai" },
+      { "label": "Pricing", "href": "https://infery.ai/pricing" }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Sign in",
+      "href": "https://app.infery.ai/login"
+    }
+  },
+  "footer": {
+    "socials": {
+      "website": "https://infery.ai",
+      "x": "https://x.com/infery_ai",
+      "github": "https://github.com/infery-ai"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "concepts"
+            ]
+          },
+          {
+            "group": "Studio",
+            "pages": [
+              "playground/overview",
+              "playground/chats-and-projects",
+              "playground/memory-and-context",
+              "playground/topics-and-graph",
+              "playground/files-and-attachments",
+              "playground/sharing",
+              "playground/bookmarks",
+              "playground/modalities",
+              "playground/comparing-models",
+              "playground/web-search"
+            ]
+          },
+          {
+            "group": "Workspaces",
+            "pages": [
+              "workspaces/members-and-roles",
+              "workspaces/quotas-and-presets",
+              "workspaces/fallback-chains",
+              "workspaces/notifications",
+              "workspaces/budget-alerts"
+            ]
+          },
+          {
+            "group": "Billing",
+            "pages": [
+              "billing/credits",
+              "billing/subscription-plans",
+              "billing/topups",
+              "billing/usage"
+            ]
+          },
+          {
+            "group": "Models",
+            "pages": [
+              "models/catalog",
+              "models/text",
+              "models/image",
+              "models/video",
+              "models/audio",
+              "models/music",
+              "models/speech-to-text",
+              "models/vision",
+              "models/3d",
+              "models/upscale",
+              "models/embeddings",
+              "models/rerank",
+              "models/owners",
+              "models/capabilities",
+              "models/choosing"
+            ]
+          },
+          {
+            "group": "Tools",
+            "pages": [
+              "tools/catalog",
+              "tools/image",
+              "tools/video",
+              "tools/audio",
+              "tools/document",
+              "tools/archive",
+              "tools/web",
+              "tools/code"
+            ]
+          },
+          {
+            "group": "SDKs",
+            "pages": [
+              "sdks/overview",
+              "sdks/typescript",
+              "sdks/typescript-reference",
+              "sdks/python",
+              "sdks/python-reference",
+              "sdks/openai-compatibility"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/openai-sdk-migration",
+              "guides/streaming",
+              "guides/tool-calling",
+              "guides/file-attachments-in-chat",
+              "guides/embeddings-and-rag",
+              "guides/image-generation",
+              "guides/audio-tts-stt",
+              "guides/music-generation",
+              "guides/video-generation",
+              "guides/publishing-formats",
+              "guides/fallback-setup",
+              "guides/rate-limits-and-retries"
+            ]
+          },
+          {
+            "group": "Workflows",
+            "pages": [
+              "workflows/overview",
+              "workflows/editor",
+              "workflows/bindings",
+              "workflows/step-types",
+              "workflows/containers",
+              "workflows/running",
+              "workflows/schedules",
+              "workflows/errors"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/security",
+              "reference/changelog"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/introduction",
+              "api-reference/authentication",
+              "api-reference/errors",
+              "api-reference/rate-limits"
+            ]
+          },
+          {
+            "group": "Chat Completions",
+            "pages": ["api-reference/chat-completions"]
+          },
+          {
+            "group": "Embeddings",
+            "pages": ["api-reference/embeddings"]
+          },
+          {
+            "group": "Images",
+            "pages": [
+              "api-reference/images/generations",
+              "api-reference/images/edits",
+              "api-reference/images/upscale"
+            ]
+          },
+          {
+            "group": "Audio",
+            "pages": [
+              "api-reference/audio/speech",
+              "api-reference/audio/transcriptions",
+              "api-reference/audio/transformations"
+            ]
+          },
+          {
+            "group": "Video",
+            "pages": [
+              "api-reference/videos/generations",
+              "api-reference/videos/status",
+              "api-reference/videos/upscale"
+            ]
+          },
+          {
+            "group": "Music",
+            "pages": ["api-reference/music"]
+          },
+          {
+            "group": "Files",
+            "pages": [
+              "api-reference/files/upload",
+              "api-reference/files/list",
+              "api-reference/files/retrieve",
+              "api-reference/files/delete",
+              "api-reference/files/content"
+            ]
+          },
+          {
+            "group": "Models",
+            "pages": [
+              "api-reference/models",
+              "api-reference/models-estimate"
+            ]
+          },
+          {
+            "group": "Capabilities",
+            "pages": [
+              "api-reference/tools",
+              "api-reference/capabilities/run",
+              "api-reference/3d/generations"
+            ]
+          },
+          {
+            "group": "Workflows",
+            "pages": [
+              "api-reference/workflows/run",
+              "api-reference/workflows/run-retrieve",
+              "api-reference/workflows/run-cancel",
+              "api-reference/workflows/run-logs",
+              "api-reference/workflows/estimate",
+              "api-reference/workflows/create",
+              "api-reference/workflows/list",
+              "api-reference/workflows/retrieve",
+              "api-reference/workflows/update",
+              "api-reference/workflows/delete",
+              "api-reference/workflows/templates-list",
+              "api-reference/workflows/templates-retrieve"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "contextual": {
+    "options": ["copy", "view", "chatgpt", "claude"]
+  },
+  "seo": {
+    "indexing": "all",
+    "metatags": {
+      "og:site_name": "Infery.ai Docs",
+      "og:type": "website",
+      "og:image": "https://docs.infery.ai/brand/og.jpg",
+      "twitter:card": "summary_large_image",
+      "twitter:site": "@infery_ai",
+      "robots": "index, follow"
+    }
+  },
+  "redirects": [
+    { "source": "/pipelines/:slug*", "destination": "/workflows/:slug*" },
+    { "source": "/api-reference/pipelines/:slug*", "destination": "/api-reference/workflows/:slug*" },
+    { "source": "/api-reference/files", "destination": "/api-reference/files/upload" },
+    { "source": "/models/openai", "destination": "/models/catalog" },
+    { "source": "/models/anthropic", "destination": "/models/catalog" },
+    { "source": "/models/google", "destination": "/models/catalog" },
+    { "source": "/models/xai", "destination": "/models/catalog" },
+    { "source": "/models/deepseek", "destination": "/models/catalog" },
+    { "source": "/models/alibaba", "destination": "/models/catalog" },
+    { "source": "/models/suno", "destination": "/models/catalog" }
+  ],
+  "integrations": {
+    "gtm": {
+      "tagId": "GTM-P3237J9B"
+    }
+  }
+}

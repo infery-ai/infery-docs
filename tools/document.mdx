@@ -1,0 +1,285 @@
+---
+title: "Document tools"
+description: "Document tools available as workflow steps and through /v1/capabilities."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+**3 tools.** Each one is deterministic: the same input gives the same output, and
+nothing is inferred. Call one directly with
+[`POST /v1/capabilities/{id}/run`](/api-reference/capabilities/run), or use it as a step in a
+[workflow](/workflows/step-types).
+
+Prices are on the [live catalogue](https://infery.ai/models) — they change, and a stale price here would be
+worse than none.
+
+| Tool | Does | In → out |
+| --- | --- | --- |
+| [`document.convert_format`](#documentconvert_format) | Convert between markdown, html, docx, pdf, epub, latex. | document → document |
+| [`document.extract_text`](#documentextract_text) | Parse PDF/DOCX/HTML/etc. to markdown or JSON, with optional OCR. | document → text |
+| [`document.render_slides`](#documentrender_slides) | Convert markdown to a slide deck (pdf, pptx, html). | document → document |
+
+## `document.convert_format`
+
+**document → document** · Billed per request
+
+Convert documents between formats: markdown ↔ HTML ↔ DOCX ↔ PDF ↔ EPUB ↔ LaTeX.
+
+### When to use
+
+- **Generate PDFs** from markdown for reports, invoices, or documentation.
+- **Export DOCX** for users who need to edit in Word.
+- **Convert to HTML** for embedding content in web pages.
+- **Produce EPUB** for e-reader distribution.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Markdown (inline string or URL) |
+| **Output modality** | Document file (GCS URL) |
+| **Max inline size** | 1 MB |
+| **Max URL input size** | 50 MB |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `to` | yes | Target format — `pdf`, `html`, `docx`, `epub`, `latex` |
+| `toc` | no | Include a table of contents. Default: `false` |
+
+### Examples
+
+#### Markdown → PDF with table of contents
+
+```json
+{
+  "type": "document.convert_format",
+  "input": { "markdown_inline": "# Report\n\n## Section 1\n\nContent here." },
+  "params": { "to": "pdf", "toc": true }
+}
+```
+
+#### Markdown URL → DOCX
+
+```json
+{
+  "type": "document.convert_format",
+  "input": { "markdown_url": "https://example.com/content/article.md" },
+  "params": { "to": "docx" }
+}
+```
+
+### Pricing
+
+Billed per conversion. PDF conversions are slightly higher due to rendering cost. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `document.extract_text` — extract markdown from PDF/DOCX before converting
+- `document.render_slides` — render markdown as a slide deck instead of a document
+
+### Examples
+
+**Markdown → PDF with TOC**
+
+```json
+{
+  "type": "document.convert_format",
+  "params": {
+    "to": "pdf",
+    "toc": true
+  }
+}
+```
+
+## `document.extract_text`
+
+**document → text** · Billed per request
+
+Parse PDF, DOCX, HTML, and other document formats into structured markdown or JSON, with optional OCR for scanned pages.
+
+### When to use
+
+- **Extract content** from PDFs (reports, contracts, invoices) for downstream text processing.
+- **OCR scanned documents** — force OCR on image-only PDFs where no selectable text layer exists.
+- **Normalize to markdown** for ingestion into RAG pipelines or LLM context windows.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Document file — a public `http(s)` URL, or a file stored on the platform |
+| **Output modality** | Text (markdown or JSON) |
+| **Supported formats** | PDF, DOCX, XLSX, PPTX, HTML, PNG, JPEG, TIFF |
+| **Max input size** | 100 MB |
+
+The document is named ONE of two ways — set exactly one:
+
+| Input | What it is |
+|---|---|
+| `document_url` | A public `http(s)` URL, or a `${steps.<id>.outputRef}` binding (which resolves to a `gs://` object we hold) |
+| `file_id` | The id of a stored file — what `POST /v1/files` returned, or `${steps.<id>.output.file_id}` |
+
+> **Both spellings of a file we hold are workspace-scoped.** A `gs://` object or
+> a file id belonging to another workspace is a `404`, never a read. What
+> actually reaches the extraction worker is a short-lived signed `https` URL for
+> that one object, minted per call and never persisted.
+
+**The document type.** For a stored file it comes from the file's own recorded
+type (sniffed from its bytes at upload), so nothing has to be declared. For an
+external URL it is read from the extension, and a URL that ends in none — no
+`.pdf`, `.docx`, `.pptx`, `.xlsx`, `.html`, `.png`, `.jpg`, `.tif` — is refused
+with `400 unsupported_mime`. Upload it and pass `file_id` instead.
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `ocr` | no | OCR mode — `auto` (try text layer first), `force` (always OCR), `off` (text layer only). Default: `auto` |
+| `output_format` | no | Output format — `markdown` or `json`. Default: `markdown` |
+
+### Examples
+
+#### PDF with auto-OCR → markdown
+
+```json
+{
+  "type": "document.extract_text",
+  "input": { "document_url": "https://example.com/docs/report.pdf" },
+  "params": { "ocr": "auto", "output_format": "markdown" }
+}
+```
+
+#### Force OCR on scanned invoice → JSON
+
+```json
+{
+  "type": "document.extract_text",
+  "input": { "document_url": "https://example.com/docs/scanned_invoice.pdf" },
+  "params": { "ocr": "force", "output_format": "json" }
+}
+```
+
+#### A file you uploaded
+
+`POST /v1/files` returns a `file_id`; pass it directly. No extension is needed —
+the stored type is used.
+
+```json
+{
+  "type": "document.extract_text",
+  "input": { "file_id": "file_abc123" },
+  "params": { "ocr": "auto", "output_format": "markdown" }
+}
+```
+
+#### A document a previous step produced
+
+```json
+{
+  "type": "document.extract_text",
+  "input": { "document_url": "${steps.render.outputRef}" },
+  "params": { "ocr": "auto", "output_format": "markdown" }
+}
+```
+
+### Pricing
+
+Billed per page processed. OCR pages are billed at a higher rate than text-layer extraction. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `document.convert_format` — convert the extracted markdown to HTML, DOCX, or PDF
+- `document.render_slides` — render markdown as a slide deck
+
+### Examples
+
+**PDF with auto-OCR → markdown**
+
+```json
+{
+  "type": "document.extract_text",
+  "params": {
+    "ocr": "auto",
+    "output_format": "markdown"
+  }
+}
+```
+
+## `document.render_slides`
+
+**document → document** · Billed per request
+
+Convert a Marp-flavoured markdown file into a slide deck: PDF, PPTX, or interactive HTML.
+
+### When to use
+
+- **Generate presentation PDFs** from markdown for sharing or printing.
+- **Export PPTX** for further editing in PowerPoint or Keynote.
+- **Build HTML decks** for self-hosted or embedded presentations.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Markdown with Marp frontmatter (inline string or URL) |
+| **Output modality** | Slide deck file (GCS URL) |
+| **Max slides** | 200 per deck |
+| **Max inline size** | 500 KB |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `output_format` | yes | Output format — `pdf`, `html`, `pptx` |
+| `theme` | no | Marp built-in theme — `default`, `gaia`, `uncover`. Default: `default` |
+| `slide_size` | no | Aspect ratio — `16:9` or `4:3`. Default: `16:9` |
+
+### Examples
+
+#### 16:9 PDF deck with default theme
+
+```json
+{
+  "type": "document.render_slides",
+  "input": { "markdown_inline": "---\nmarp: true\n---\n# Slide 1\n\n---\n\n# Slide 2" },
+  "params": { "output_format": "pdf", "theme": "default", "slide_size": "16:9" }
+}
+```
+
+#### PPTX with Gaia theme from URL
+
+```json
+{
+  "type": "document.render_slides",
+  "input": { "markdown_url": "https://example.com/decks/pitch.md" },
+  "params": { "output_format": "pptx", "theme": "gaia", "slide_size": "4:3" }
+}
+```
+
+### Pricing
+
+Billed per slide rendered. See pricing dashboard for current rates.
+
+### Related capabilities
+
+- `document.convert_format` — convert plain markdown to PDF/DOCX (non-slide layout)
+- `document.extract_text` — extract content from existing PDF presentations
+
+### Examples
+
+**PDF deck 16:9**
+
+```json
+{
+  "type": "document.render_slides",
+  "params": {
+    "output_format": "pdf",
+    "theme": "default",
+    "slide_size": "16:9"
+  }
+}
+```
+

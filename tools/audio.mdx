@@ -1,0 +1,339 @@
+---
+title: "Audio tools"
+description: "Audio tools available as workflow steps and through /v1/capabilities."
+---
+
+{/* GENERATED from the public catalogue — do not edit.
+    Regenerate with `node scripts/generate-catalog-docs.js`. */}
+
+**4 tools.** Each one is deterministic: the same input gives the same output, and
+nothing is inferred. Call one directly with
+[`POST /v1/capabilities/{id}/run`](/api-reference/capabilities/run), or use it as a step in a
+[workflow](/workflows/step-types).
+
+Prices are on the [live catalogue](https://infery.ai/models) — they change, and a stale price here would be
+worse than none.
+
+| Tool | Does | In → out |
+| --- | --- | --- |
+| [`audio.concat`](#audioconcat) | Join multiple audio clips end-to-end. | audio → audio |
+| [`audio.pipeline`](#audiopipeline) | Chain multiple audio operations in one step. | audio → audio |
+| [`audio.transcode`](#audiotranscode) | Re-encode an audio file to a different format/bitrate. | audio → audio |
+| [`audio.trim`](#audiotrim) | Extract a time range from an audio file. | audio → audio |
+
+## `audio.concat`
+
+**audio → audio** · Billed per second
+
+Join two or more audio clips end-to-end into a single continuous output file.
+
+### When to use
+
+- **Assemble a podcast** — stitch intro, body segments, and outro together.
+- **Merge split recordings** — combine parts recorded in separate sessions.
+- **Build playlists** — produce a single deliverable file from ordered tracks.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Audio files (list of URLs) |
+| **Output modality** | Audio file (GCS URL) |
+| **Min clips** | 2 |
+| **Max clips** | 10 |
+| **Max total size** | 5 GB |
+
+### Parameters
+
+No operation-level parameters. All input URLs are supplied as `audios` in the input object.
+
+| Param | Required | Description |
+|---|---|---|
+| *(none)* | — | Clips are joined in the order provided in `audios`. |
+
+### Examples
+
+#### Join two podcast segments
+
+```json
+{
+  "type": "audio.concat",
+  "input": {
+    "audios": [
+      "https://example.com/example/part1.mp3",
+      "https://example.com/example/part2.mp3"
+    ]
+  },
+  "params": {}
+}
+```
+
+#### Assemble three tracks in order
+
+```json
+{
+  "type": "audio.concat",
+  "input": {
+    "audios": [
+      "https://example.com/example/intro.mp3",
+      "https://example.com/example/main.mp3",
+      "https://example.com/example/outro.mp3"
+    ]
+  },
+  "params": {}
+}
+```
+
+### Related capabilities
+
+- `audio.trim` — trim individual clips before concatenating
+- `audio.transcode` — re-encode the concatenated output
+- `audio.pipeline` — chain concat with other audio ops in one step
+- `video.concat` — equivalent operation for video files
+
+### Examples
+
+**Join two clips**
+
+```json
+{
+  "type": "audio.concat",
+  "params": {}
+}
+```
+
+## `audio.pipeline`
+
+**audio → audio** · Billed per second
+
+Chain up to 10 audio operations in a single execution, eliminating intermediate uploads.
+
+### When to use
+
+- **Trim then transcode** — cut a segment and immediately re-encode it.
+- **Complex workflows** — multiple dependent steps without round-trip overhead.
+- **Atomic processing** — all operations succeed or the whole pipeline fails cleanly.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Audio file (URL) |
+| **Output modality** | Audio file (GCS URL) |
+| **Max operations** | 10 |
+| **Max input size** | 2 GB |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `operations` | yes | Ordered array of 1–10 operation objects. Each object is one of: `{ trim }`, `{ transcode }`, `{ concat }`. |
+
+Each operation uses the same parameter shape as the corresponding standalone capability.
+
+### Examples
+
+#### Trim first 30 s, then convert to MP3
+
+```json
+{
+  "type": "audio.pipeline",
+  "input": { "audio_url": "https://example.com/example/recording.wav" },
+  "params": {
+    "operations": [
+      { "trim": { "start": 0, "end": 30 } },
+      { "transcode": { "format": "mp3", "bitrate": "192k" } }
+    ]
+  }
+}
+```
+
+#### Transcode to AAC at reduced bitrate
+
+```json
+{
+  "type": "audio.pipeline",
+  "input": { "audio_url": "https://example.com/example/master.flac" },
+  "params": {
+    "operations": [
+      { "trim": { "start": 10, "end": 120 } },
+      { "transcode": { "format": "aac", "bitrate": "128k" } }
+    ]
+  }
+}
+```
+
+### Related capabilities
+
+- `audio.transcode` — standalone format conversion
+- `audio.trim` — standalone time-range extraction
+- `audio.concat` — standalone clip joining
+- `video.pipeline` — equivalent multi-op pipeline for video files
+
+### Examples
+
+**Trim then transcode**
+
+```json
+{
+  "type": "audio.pipeline",
+  "params": {
+    "operations": [
+      {
+        "trim": {
+          "start": 0,
+          "end": 30
+        }
+      },
+      {
+        "transcode": {
+          "format": "mp3"
+        }
+      }
+    ]
+  }
+}
+```
+
+## `audio.transcode`
+
+**audio → audio** · Billed per second
+
+Re-encode an audio file to a different container format and/or bitrate.
+
+### When to use
+
+- **Convert for compatibility** — WAV or FLAC source needs MP3/AAC for web delivery.
+- **Reduce file size** — lower bitrate for streaming or podcast distribution.
+- **Normalize format** — standardize uploads to a single codec before pipeline processing.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Audio file (URL) |
+| **Output modality** | Audio file (GCS URL) |
+| **Max input duration** | 3 hours |
+| **Max input size** | 2 GB |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `format` | yes | Output container — `mp3`, `wav`, `aac`, `flac` |
+| `bitrate` | no | Target bitrate as `<int>[k\|M]`, e.g. `192k`, `320k`. Lossy formats only (`mp3`, `aac`) — sending it with `wav` or `flac` is **rejected**, because a lossless encoder has no bitrate to set. |
+
+### Examples
+
+#### WAV to MP3 at 192k
+
+```json
+{
+  "type": "audio.transcode",
+  "input": { "audio_url": "https://example.com/example/recording.wav" },
+  "params": { "format": "mp3", "bitrate": "192k" }
+}
+```
+
+#### FLAC to AAC for mobile delivery
+
+```json
+{
+  "type": "audio.transcode",
+  "input": { "audio_url": "https://example.com/example/master.flac" },
+  "params": { "format": "aac", "bitrate": "128k" }
+}
+```
+
+### Related capabilities
+
+- `audio.trim` — cut to a time range before transcoding
+- `audio.concat` — join clips first, then transcode the combined output
+- `audio.pipeline` — chain trim + transcode in one step
+- `video.extract_audio` — pull the audio track out of a video first
+
+### Examples
+
+**WAV → MP3 192k**
+
+```json
+{
+  "type": "audio.transcode",
+  "params": {
+    "format": "mp3",
+    "bitrate": "192k"
+  }
+}
+```
+
+## `audio.trim`
+
+**audio → audio** · Billed per second
+
+Extract a specific time range from an audio file, discarding everything outside it.
+
+### When to use
+
+- **Create a clip** — isolate a highlight or excerpt from a long recording.
+- **Remove silence** — cut leading/trailing silence from a podcast or voiceover.
+- **Prepare for concatenation** — trim individual segments before joining with `audio.concat`.
+
+### Inputs & outputs
+
+| | |
+|---|---|
+| **Input modality** | Audio file (URL) |
+| **Output modality** | Audio file (GCS URL) |
+| **Max input duration** | 3 hours |
+| **Max input size** | 2 GB |
+
+### Parameters
+
+| Param | Required | Description |
+|---|---|---|
+| `start` | yes | Start time in seconds (non-negative). `0` = beginning of file. |
+| `end` | yes | End time in seconds (positive, must be > `start`). |
+
+### Examples
+
+#### Extract the first 60 seconds
+
+```json
+{
+  "type": "audio.trim",
+  "input": { "audio_url": "https://example.com/example/podcast.mp3" },
+  "params": { "start": 0, "end": 60 }
+}
+```
+
+#### Extract a mid-section highlight (90–150 s)
+
+```json
+{
+  "type": "audio.trim",
+  "input": { "audio_url": "https://example.com/example/podcast.mp3" },
+  "params": { "start": 90, "end": 150 }
+}
+```
+
+### Related capabilities
+
+- `audio.transcode` — re-encode the trimmed output to a different format
+- `audio.concat` — join multiple trimmed segments end-to-end
+- `audio.pipeline` — combine trim with other audio ops in a single execution
+- `video.trim` — equivalent operation for video files
+
+### Examples
+
+**First 60 seconds**
+
+```json
+{
+  "type": "audio.trim",
+  "params": {
+    "start": 0,
+    "end": 60
+  }
+}
+```
+

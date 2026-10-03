@@ -1,0 +1,7 @@
+---
+title: "Cancel a run"
+description: "POST /v1/workflows/runs/{id}/cancel"
+openapi: "openapi.json POST /v1/workflows/runs/{id}/cancel"
+---
+
+Best-effort. A step already in flight with a provider is not clawed back — the run stops at the next boundary it can, and the work already done is still charged.

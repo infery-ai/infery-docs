@@ -1,0 +1,61 @@
+---
+title: "Models"
+description: "GET /v1/models — list available model slugs and capabilities."
+openapi: "openapi.json GET /v1/models"
+---
+
+```bash
+curl https://api.infery.ai/v1/models \
+  -H "Authorization: Bearer $INFERY_API_KEY"
+```
+
+Returns OpenAI-compatible payload:
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "gpt-4o",
+      "object": "model",
+      "created": 1713000000,
+      "owned_by": "openai"
+    },
+    ...
+  ]
+}
+```
+
+## Filter by modality
+
+There is no `modality` query parameter — the endpoint takes only `include_tools`, and any other query key is ignored rather than refused. List once and filter client-side on `_infery.modality`:
+
+```bash
+curl "https://api.infery.ai/v1/models" \
+  -H "Authorization: Bearer $INFERY_API_KEY" \
+  | jq '[.data[] | select(._infery.modality == "image")]'
+```
+
+Modality values: `text`, `image`, `audio`, `stt`, `video`, `music`, `embedding`, `upscale`, `vision`.
+
+## Capabilities
+
+There is no per-model `GET /v1/models/{slug}` — the list response already carries everything, under each entry's `_infery` object:
+- `supports_chat` / `supports_streaming` / `supports_tools` / `supports_embeddings`
+- `max_context_tokens` / `max_output_tokens`
+- `pricing` — retail rates in credits
+- `allowed_params` — the generation knobs the model accepts: `sizes`, `image_sizes`, `aspect_ratios`, `resolutions`, `qualities`, `voices`, `durations`, `response_formats`, `max_n`, `default_params`
+
+Fetch the list once at app startup and index it by `id` to learn what each model can do.
+
+To price a specific call before making it, `POST /v1/models/{slug}/estimate`.
+
+## Public catalog
+
+No-auth version available at:
+
+```
+GET https://api.infery.ai/public/models
+```
+
+Rate-limited (30 rpm per IP). Used by our marketing site to show a live model list.
